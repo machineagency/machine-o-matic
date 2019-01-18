@@ -45,8 +45,15 @@ let addMesh = () => {
 
 let init = () => {
     container = document.getElementById( 'container' );
-    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.z = 500;
+
+    let aspect = window.innerWidth / window.innerHeight;
+    let d = 20;
+    camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+    camera.zoom = 0.05
+    camera.updateProjectionMatrix();
+    camera.position.set(-500, 500, 500); // I don't know why this works
+
+
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf5f6f8);
     topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
@@ -57,6 +64,8 @@ let init = () => {
     scene.add(sideDirectionalLight);
     scene.add(ambientLight);
     addMesh();
+
+    // camera.lookAt(scene.position);
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
