@@ -36,7 +36,7 @@ let addMesh = () => {
     let scaleFactor = 160 / geometry.boundingSphere.radius;
     geometry.scale( scaleFactor, scaleFactor, scaleFactor );
     let edges = new THREE.EdgesGeometry(geometry);
-    let line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xffffff } ));
+    let line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x000000 } ));
     scene.add(line);
     mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
@@ -48,6 +48,7 @@ let init = () => {
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
     camera.position.z = 500;
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf5f6f8);
     topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
     sideDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
     sideDirectionalLight.position.set(-1.0, 0.0, 0.0);
