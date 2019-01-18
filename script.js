@@ -1,8 +1,11 @@
-var container, stats, gui;
-var camera, scene, renderer;
-var mesh, geometry;
+'use strict'
 
-var geometries = [
+let container, stats, gui;
+let camera, scene, renderer;
+let ambientLight, topDirectionalLight, sideDirectionalLight;
+let mesh, geometry;
+
+let geometries = [
     new THREE.BoxBufferGeometry( 200, 200, 200, 2, 2, 2 ),
     new THREE.CircleBufferGeometry( 200, 32 ),
     new THREE.CylinderBufferGeometry( 75, 75, 200, 8, 8 ),
@@ -15,16 +18,13 @@ var geometries = [
     new THREE.TorusKnotBufferGeometry( 64, 16 )
 ];
 
-var options = {
+let options = {
     Geometry: 0
 };
 
-var material = new THREE.MeshBasicMaterial( { color: 0xfefefe, wireframe: true, opacity: 0.5 } );
+let material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
 
-init();
-animate();
-
-function addMesh() {
+let addMesh = () => {
     if ( mesh !== undefined ) {
         scene.remove( mesh );
         geometry.dispose();
@@ -33,20 +33,28 @@ function addMesh() {
     // scale geometry to a uniform size
 
     geometry.computeBoundingSphere();
-    var scaleFactor = 160 / geometry.boundingSphere.radius;
+    let scaleFactor = 160 / geometry.boundingSphere.radius;
     geometry.scale( scaleFactor, scaleFactor, scaleFactor );
+    let edges = new THREE.EdgesGeometry(geometry);
+    let line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xffffff } ));
+    scene.add(line);
     mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
-    var vertexNormalsHelper = new THREE.VertexNormalsHelper( mesh, 10 );
-    mesh.add( vertexNormalsHelper );
 
 }
 
-function init() {
+let init = () => {
     container = document.getElementById( 'container' );
     camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
     camera.position.z = 500;
     scene = new THREE.Scene();
+    topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
+    sideDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+    sideDirectionalLight.position.set(-1.0, 0.0, 0.0);
+    ambientLight = new THREE.AmbientLight( 0x404040 );
+    scene.add(topDirectionalLight);
+    scene.add(sideDirectionalLight);
+    scene.add(ambientLight);
     addMesh();
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -55,7 +63,7 @@ function init() {
     container.appendChild( renderer.domElement );
     stats = new Stats();
     container.appendChild( stats.dom );
-    var geometries = {
+    let geometries = {
         BoxBufferGeometry: 0,
         CircleBufferGeometry: 1,
         CylinderBufferGeometry: 2,
@@ -73,25 +81,28 @@ function init() {
         addMesh();
     } );
 
-    var controls = new THREE.OrbitControls( camera, renderer.domElement );
+    let controls = new THREE.OrbitControls( camera, renderer.domElement );
 
     window.addEventListener( 'resize', onWindowResize, false );
 
 }
 
-function onWindowResize() {
+let onWindowResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function animate() {
+let animate = () => {
     requestAnimationFrame( animate );
     render();
     stats.update();
 }
 
-function render() {
+let render = () => {
     renderer.render( scene, camera );
 }
+
+init();
+animate();
