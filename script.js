@@ -2,11 +2,11 @@
 
 let container, stats, gui;
 let camera, scene, renderer;
-let ambientLight, topDirectionalLight, sideDirectionalLight;
+let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, geometry;
 
 let geometries = [
-    new THREE.BoxBufferGeometry( 200, 200, 200, 2, 2, 2 ),
+    new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
     new THREE.CircleBufferGeometry( 200, 32 ),
     new THREE.CylinderBufferGeometry( 75, 75, 200, 8, 8 ),
     new THREE.IcosahedronBufferGeometry( 100, 1 ),
@@ -47,25 +47,28 @@ let init = () => {
     container = document.getElementById( 'container' );
 
     let aspect = window.innerWidth / window.innerHeight;
-    let d = 20;
-    camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
-    camera.zoom = 0.05
+    let viewSize = 150;
+    camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect, viewSize, -viewSize, -1000, 10000);
+    camera.zoom = 0.35;
     camera.updateProjectionMatrix();
     camera.position.set(-500, 500, 500); // I don't know why this works
-
+    camera.frustumCulled = false;
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf5f6f8);
-    topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.0 );
-    sideDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-    sideDirectionalLight.position.set(-1.0, 0.0, 0.0);
-    ambientLight = new THREE.AmbientLight( 0x404040 );
+    topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.00 );
+    leftDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 );
+    rightDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.50 );
+    leftDirectionalLight.position.set(-1.0, 0.0, 0.0);
+    rightDirectionalLight.position.set(0.0, 0.0, 1.0);
     scene.add(topDirectionalLight);
-    scene.add(sideDirectionalLight);
-    scene.add(ambientLight);
+    scene.add(leftDirectionalLight);
+    scene.add(rightDirectionalLight);
     addMesh();
 
-    // camera.lookAt(scene.position);
+    let axesHelper = new THREE.AxesHelper( 5 );
+    scene.add( axesHelper );
+
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
