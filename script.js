@@ -29,97 +29,67 @@ function addMesh() {
         scene.remove( mesh );
         geometry.dispose();
     }
-
     geometry = geometries[ options.Geometry ];
-
     // scale geometry to a uniform size
 
     geometry.computeBoundingSphere();
-
     var scaleFactor = 160 / geometry.boundingSphere.radius;
     geometry.scale( scaleFactor, scaleFactor, scaleFactor );
-
     mesh = new THREE.Mesh( geometry, material );
     scene.add( mesh );
-
     var vertexNormalsHelper = new THREE.VertexNormalsHelper( mesh, 10 );
     mesh.add( vertexNormalsHelper );
 
 }
 
 function init() {
+    container = document.getElementById( 'container' );
+    camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+    camera.position.z = 500;
+    scene = new THREE.Scene();
+    addMesh();
 
-container = document.getElementById( 'container' );
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    container.appendChild( renderer.domElement );
+    stats = new Stats();
+    container.appendChild( stats.dom );
+    var geometries = {
+        BoxBufferGeometry: 0,
+        CircleBufferGeometry: 1,
+        CylinderBufferGeometry: 2,
+        IcosahedronBufferGeometry: 3,
+        OctahedronBufferGeometry: 4,
+        PlaneBufferGeometry: 5,
+        RingBufferGeometry: 6,
+        SphereBufferGeometry: 7,
+        TorusBufferGeometry: 8,
+        TorusKnotBufferGeometry: 9
+    };
 
-camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-camera.position.z = 500;
+    gui = new dat.GUI( { width: 350 } );
+    gui.add( options, 'Geometry', geometries ).onChange( function () {
+        addMesh();
+    } );
 
-scene = new THREE.Scene();
+    var controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-addMesh();
-
-//
-
-renderer = new THREE.WebGLRenderer( { antialias: true } );
-renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( window.innerWidth, window.innerHeight );
-container.appendChild( renderer.domElement );
-
-//
-
-stats = new Stats();
-container.appendChild( stats.dom );
-
-//
-
-var geometries = {
-BoxBufferGeometry: 0,
-CircleBufferGeometry: 1,
-CylinderBufferGeometry: 2,
-IcosahedronBufferGeometry: 3,
-OctahedronBufferGeometry: 4,
-PlaneBufferGeometry: 5,
-RingBufferGeometry: 6,
-SphereBufferGeometry: 7,
-TorusBufferGeometry: 8,
-TorusKnotBufferGeometry: 9
-};
-
-gui = new dat.GUI( { width: 350 } );
-gui.add( options, 'Geometry', geometries ).onChange( function () {
-
-addMesh();
-
-} );
-
-//
-
-var controls = new THREE.OrbitControls( camera, renderer.domElement );
-
-//
-
-window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener( 'resize', onWindowResize, false );
 
 }
 
 function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 
-camera.aspect = window.innerWidth / window.innerHeight;
-camera.updateProjectionMatrix();
-
-renderer.setSize( window.innerWidth, window.innerHeight );
-
+    renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-//
-
 function animate() {
-
-requestAnimationFrame( animate );
-
-render();
-stats.update();
-
+    requestAnimationFrame( animate );
+    render();
+    stats.update();
 }
 
 function render() {
