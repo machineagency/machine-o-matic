@@ -66,10 +66,6 @@ let init = () => {
     scene.add(rightDirectionalLight);
     addMesh();
 
-    let axesHelper = new THREE.AxesHelper( 5 );
-    scene.add( axesHelper );
-
-
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -94,28 +90,36 @@ let init = () => {
         addMesh();
     } );
 
-    let controls = new THREE.OrbitControls( camera, renderer.domElement );
+    let control = new THREE.TransformControls( camera, renderer.domElement );
+    control.addEventListener('change', render);
+    control.addEventListener('dragging-changed', function (event) {
+        //
+    });
+    control.attach(mesh);
+    scene.add(control);
+
+    camera.lookAt(scene.position);
 
     window.addEventListener( 'resize', onWindowResize, false );
 
-}
+};
 
 let onWindowResize = () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
-}
+};
 
 let animate = () => {
     requestAnimationFrame( animate );
     render();
     stats.update();
-}
+};
 
 let render = () => {
     renderer.render( scene, camera );
-}
+};
 
 init();
 animate();
