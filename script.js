@@ -4,7 +4,6 @@ let container, stats, gui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
-let groups = [];
 
 let geometries = [
     new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
@@ -44,6 +43,7 @@ let addMesh = () => {
     control.addEventListener('dragging-changed', (event) => {
         // console.log(event)
     });
+    // control.setMode('rotate');
     control.attach(group);
     scene.add(control);
 
@@ -51,11 +51,20 @@ let addMesh = () => {
 
 };
 
+let findGroups = () => {
+    return scene.children.filter((child) => {
+        return child.type === 'Group';
+    });
+};
+
 let initGui = () => {
     gui = new dat.GUI( { width: 350 } );
-    gui.add( options, 'Geometry', geometries ).onChange( function () {
+    // gui.add( options, 'Geometry', geometries ).onChange( function () {
+    //     addMesh();
+    // } );
+    gui.add({ AddStage: () => {
         addMesh();
-    } );
+    } }, 'AddStage');
 };
 
 let init = () => {
