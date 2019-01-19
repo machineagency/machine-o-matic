@@ -3,7 +3,8 @@
 let container, stats, gui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
-let mesh, geometry;
+let mesh, lines, geometry;
+let groups = [];
 
 let geometries = [
     new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
@@ -27,15 +28,34 @@ let addMesh = () => {
     let scaleFactor = 160 / geometry.boundingSphere.radius;
     geometry.scale( scaleFactor, scaleFactor, scaleFactor );
     let edges = new THREE.EdgesGeometry(geometry);
-    let line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
-    scene.add(line);
+    lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+    let group = new THREE.Group();
+    group.add(lines);
+    group.add(mesh);
+    scene.add(group);
+
+    // Add controls to the new mesh group
+
+    let control = new THREE.TransformControls( camera, renderer.domElement );
+    control.addEventListener('change', (event) => {
+        render();
+    });
+    control.addEventListener('dragging-changed', (event) => {
+        // console.log(event)
+    });
+    control.attach(group);
+    scene.add(control);
+
+    return group;
 
 };
 
 let initGui = () => {
-
+    gui = new dat.GUI( { width: 350 } );
+    gui.add( options, 'Geometry', geometries ).onChange( function () {
+        addMesh();
+    } );
 };
 
 let init = () => {
@@ -59,7 +79,6 @@ let init = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
-    addMesh();
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -71,23 +90,11 @@ let init = () => {
         BoxBufferGeometry: 0,
     };
 
-    gui = new dat.GUI( { width: 350 } );
-    gui.add( options, 'Geometry', geometries ).onChange( function () {
-        addMesh();
-    } );
-
-    let control = new THREE.TransformControls( camera, renderer.domElement );
-    control.addEventListener('change', render);
-    control.addEventListener('dragging-changed', function (event) {
-        //
-    });
-    control.attach(mesh);
-    scene.add(control);
+    let group = addMesh();
 
     camera.lookAt(scene.position);
-
     window.addEventListener( 'resize', onWindowResize, false );
-
+    initGui();
 };
 
 let onWindowResize = () => {
