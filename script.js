@@ -46,8 +46,11 @@ let addMesh = () => {
     control.attach(group);
     scene.add(control);
 
+    let groups = findGroups();
+    let stageId = groups[groups.length - 1].id;
+
     // Update gui
-    gui.add({ stageId: stageId }, 'StageId');
+    gui.add({ stageId: stageId }, 'stageId');
 
     return group;
 
@@ -67,6 +70,10 @@ let initGui = () => {
     gui.add({ AddStage: () => {
         addMesh();
     } }, 'AddStage');
+};
+
+let onDocumentMouseDown = (event) => {
+    console.log('clicked');
 };
 
 let init = () => {
@@ -101,11 +108,14 @@ let init = () => {
         BoxBufferGeometry: 0,
     };
 
+    initGui();
+
     let group = addMesh();
+
+    document.addEventListener('mousedown', onDocumentMouseDown, false);
 
     camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
-    initGui();
 };
 
 let onWindowResize = () => {
