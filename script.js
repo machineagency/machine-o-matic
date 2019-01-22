@@ -35,7 +35,6 @@ let addMesh = () => {
     scene.add(group);
 
     // Add controls to the new mesh group
-
     let control = new THREE.TransformControls( camera, renderer.domElement );
     control.addEventListener('change', (event) => {
         render();
@@ -46,6 +45,9 @@ let addMesh = () => {
     // control.setMode('rotate');
     control.attach(group);
     scene.add(control);
+
+    // Update gui
+    gui.add({ stageId: stageId }, 'StageId');
 
     return group;
 
