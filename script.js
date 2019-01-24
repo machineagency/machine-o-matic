@@ -48,8 +48,13 @@ let addMesh = () => {
     control.attach(group);
     scene.add(control);
 
+    // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
+    // May have to change this in the future
     let groups = findGroups();
-    let stageId = groups[groups.length - 1].id;
+    let stageId = groups[groups.length - 1]
+                    .children
+                    .find(obj => obj.type === 'Mesh')
+                    .id;
 
     // Update gui
     gui.add({ stageId: stageId }, 'stageId');
@@ -79,7 +84,8 @@ let onDocumentMouseDown = (event) => {
     let raycaster = new THREE.Raycaster();
     let dir = new THREE.Vector3();
 
-    vector.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, -1 ); // z = - 1 important!
+    vector.set((event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1, -1); // z = - 1 important!
     vector.unproject(camera);
     dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
     raycaster.set(vector, dir);
@@ -96,7 +102,8 @@ let init = () => {
 
     let aspect = window.innerWidth / window.innerHeight;
     let viewSize = 150;
-    camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect, viewSize, -viewSize, -1000, 10000);
+    camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
+        viewSize, -viewSize, -1000, 10000);
     camera.zoom = 0.35;
     camera.updateProjectionMatrix();
     camera.position.set(-500, 500, 500); // I don't know why this works
