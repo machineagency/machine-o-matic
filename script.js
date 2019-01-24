@@ -5,6 +5,8 @@ let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 
+let testVar;
+
 let geometries = [
     new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
 ];
@@ -73,7 +75,20 @@ let initGui = () => {
 };
 
 let onDocumentMouseDown = (event) => {
-    console.log('clicked');
+    let vector = new THREE.Vector3();
+    let raycaster = new THREE.Raycaster();
+    let dir = new THREE.Vector3();
+
+    vector.set((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, -1 ); // z = - 1 important!
+    vector.unproject(camera);
+    dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
+    raycaster.set(vector, dir);
+
+    let objects = findGroups();
+    let searchRecursively = true;
+    let intersects = raycaster.intersectObjects( objects, searchRecursively );
+    // TODO: do something with the value whcih != the group
+    console.log(intersects.map(isect => isect.object));
 };
 
 let init = () => {
