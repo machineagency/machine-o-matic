@@ -36,25 +36,10 @@ let addMesh = () => {
     group.add(mesh);
     scene.add(group);
 
-    // Add controls to the new mesh group
-    let control = new THREE.TransformControls( camera, renderer.domElement );
-    control.addEventListener('change', (event) => {
-        render();
-    });
-    control.addEventListener('dragging-changed', (event) => {
-        // console.log(event)
-    });
-    // control.setMode('rotate');
-    control.attach(group);
-    scene.add(control);
-
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
     let groups = findGroups();
-    let stageId = groups[groups.length - 1]
-                    .children
-                    .find(obj => obj.type === 'Mesh')
-                    .id;
+    let stageId = groups[groups.length - 1].id;
 
     // Update gui
     gui.add({ stageId: stageId }, 'stageId');
@@ -79,7 +64,7 @@ let initGui = () => {
     } }, 'AddStage');
 };
 
-let onDocumentMouseDown = (event) => {
+let _getIntersectingObjectsFromClickEvent = (event) => {
     let vector = new THREE.Vector3();
     let raycaster = new THREE.Raycaster();
     let dir = new THREE.Vector3();
@@ -92,9 +77,42 @@ let onDocumentMouseDown = (event) => {
 
     let objects = findGroups();
     let searchRecursively = true;
-    let intersects = raycaster.intersectObjects( objects, searchRecursively );
+    return raycaster.intersectObjects(objects, searchRecursively);
+};
+
+let generateControlForGroup = (group) => {
+    // Add controls to the new mesh group
+    let control = new THREE.TransformControls( camera, renderer.domElement );
+    control.addEventListener('change', (event) => {
+        render();
+    });
+    control.addEventListener('dragging-changed', (event) => {
+        // console.log(event)
+    });
+    scene.add(control);
+    control.attach(group);
+    return control;
+};
+
+let destroyControl = () => {
+    let control = scene.children.find(obj => obj instanceof THREE.TransformControls);
+    if (control !== undefined) {
+        control.detach();
+        scene.remove(control);
+    }
+};
+
+let onDocumentMouseDown = (event) => {
+    let intersects = _getIntersectingObjectsFromClickEvent(event);
+    console.log(intersects);
     // TODO: do something with the value whcih != the group
-    console.log(intersects.map(isect => isect.object));
+    let isectObjects = intersects.map(isect => isect.object)
+    if (isectObjects.length > 0) {
+        destroyControl();
+        let group = isectObjects[0].parent;
+        generateControlForGroup(group);
+    } else {
+    }
 };
 
 let init = () => {
