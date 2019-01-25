@@ -38,20 +38,27 @@ let addMesh = () => {
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
-    let groups = findGroups();
+    let groups = getGroups();
     let stageId = groups[groups.length - 1].id;
-
-    // Update gui
     gui.add({ stageId: stageId }, 'stageId');
 
     return group;
 
 };
 
-let findGroups = () => {
+let getGroups = () => {
     return scene.children.filter((child) => {
         return child.type === 'Group';
     });
+};
+
+let getObjectGroup = (obj) => {
+    return obj.parent;
+};
+
+let getControl = () => {
+    let control = scene.children.find(obj => obj instanceof THREE.TransformControls);
+    return control;
 };
 
 let initGui = () => {
@@ -64,7 +71,7 @@ let initGui = () => {
     } }, 'AddStage');
 };
 
-let _getIntersectingObjectsFromClickEvent = (event) => {
+let _getIntersectsFromClickWithCandidates = (event, candidates) => {
     let vector = new THREE.Vector3();
     let raycaster = new THREE.Raycaster();
     let dir = new THREE.Vector3();
@@ -75,9 +82,8 @@ let _getIntersectingObjectsFromClickEvent = (event) => {
     dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
     raycaster.set(vector, dir);
 
-    let objects = findGroups();
     let searchRecursively = true;
-    return raycaster.intersectObjects(objects, searchRecursively);
+    return raycaster.intersectObjects(candidates, searchRecursively);
 };
 
 let generateControlForGroup = (group) => {
@@ -95,7 +101,7 @@ let generateControlForGroup = (group) => {
 };
 
 let destroyControl = () => {
-    let control = scene.children.find(obj => obj instanceof THREE.TransformControls);
+    let control = getControl();
     if (control !== undefined) {
         control.detach();
         scene.remove(control);
@@ -103,15 +109,12 @@ let destroyControl = () => {
 };
 
 let onDocumentMouseDown = (event) => {
-    let intersects = _getIntersectingObjectsFromClickEvent(event);
-    console.log(intersects);
-    // TODO: do something with the value whcih != the group
-    let isectObjects = intersects.map(isect => isect.object)
-    if (isectObjects.length > 0) {
+    let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
+    let isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    // Kludge: isectControl length == 3 means we are clicking the controls
+    if (isectControl.length < 3 && isectGroups.length > 0) {
         destroyControl();
-        let group = isectObjects[0].parent;
-        generateControlForGroup(group);
-    } else {
+        generateControlForGroup(getObjectGroup(isectGroups[0].object));
     }
 };
 
@@ -151,6 +154,9 @@ let init = () => {
     initGui();
 
     let group = addMesh();
+
+    // Need to generate a control for the first group only
+    generateControlForGroup(group);
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
 
