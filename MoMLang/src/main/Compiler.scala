@@ -1,0 +1,5 @@
+package MoMLang
+
+object Compiler {
+
+}
