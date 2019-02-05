@@ -8,7 +8,7 @@ import scala.util.parsing.combinator._
 // }
 
 object MoMParser extends JavaTokenParsers {
-    def program: Parser[Any] = mblock~optpblock
+    def program: Parser[Any] = mblock~pblock
     def mblock: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
     def pblock: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
     def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
@@ -38,20 +38,14 @@ object MoMParser extends JavaTokenParsers {
     def actiondef: Parser[Any] = "action"~ident~"{"~actiondefbody~"}"
     def actiondefbody: Parser[Any] = rep(ident~".forward()"
                                       | ident~".reverse()"
-                                      | ident~".stopt()"
+                                      | ident~".stop()"
                                       | ident~".start()")
-    def pbody: Parser[Any] = pointsdef~opt(rep(actioncall~stdraw))
+    def pbody: Parser[Any] = pointsdef~opt(rep(actioncall | stdraw))
     // TODO: implement point arrays
-    def pointsdef: Parser[Any] = "points"~ident~"source"~filepath
+    def pointsdef: Parser[Any] = "points"~ident~"source"~stringLiteral
     def actioncall: Parser[Any] = ident~"."~ident~"()"
     def stdraw: Parser[Any] = "draw"~ident
     def char: Parser[Any] = """[a-z]""".r
-    def filepath: Parser[Any] = "/" | rep("/"~stringLiteral)
-
-    // TODO: how do I make the parser sensitive to whitespace?
-    def NL: String = "\n"
-    def INDENT: String = ""
-    def DEDENT: String = ""
 
     // TODO: handle comments
 }

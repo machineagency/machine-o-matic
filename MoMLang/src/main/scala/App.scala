@@ -23,7 +23,7 @@ object App {
         }
 
         Program DrawSquare {
-            points Square source '~/points/square.csv'
+            points Square source "~/points/square.csv"
             draw Square
         }
     """
@@ -31,6 +31,6 @@ object App {
         println(s"Input Program...")
         println(s"${testProgram}")
         println("Running parser...")
-        println(MoMParser.parseAll(MoMParser.mblock, testProgram))
+        println(MoMParser.parseAll(MoMParser.program, testProgram))
     }
 }
