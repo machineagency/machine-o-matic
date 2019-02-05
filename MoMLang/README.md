@@ -30,6 +30,8 @@ TODO: format this better
 
 *directional* ::= ABOVE | BELOW | LEFT | RIGHT | FRONT | BACK
 
+*side* ::= leftEdge | rightEdge | left | middle | right | platform
+
 *staccept* ::= accepts([{*char*,} *char*])
 
 *stposition* ::= position *directional*
@@ -42,8 +44,17 @@ TODO: format this better
 
 *pbody* ::= *pointsdef* [{ *actioncall* | *stdraw* }]
 
+*pointsdef* ::= points *identifier* source *filepath*
+                | points *identifier* \[ {([{*char*,}] *char*)} \]
+
 *actioncall* ::= *identifier*.*identifier*()
 
 *stdraw* ::= draw *identifier*
 
+*char* ::= {a | ... | b}
+
+*filepath* ::= / | {/*stringliteral*}
+
 *identifier* ::= < Java identifier >
+
+*stringliteral* ::= < Java string literal >
