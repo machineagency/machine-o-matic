@@ -4,15 +4,21 @@ Compile with
 
 `sbt compile`
 
+For now, try writing your own program in `App.scala` and parsing it. Run it with
+
+`sbt run`
+
 ## Machine-o-Matic Grammar
 
 TODO: format this better
+
+*program* :: *mblock* [NEWLINE *pblock*]
 
 *mblock* ::= Machine *identifier*: NEWLINE INDENT *mbody* DEDENT
 
 *pblock* ::= Program *identifier*: NEWLINE IDENT *pbody* DEDENT
 
-*mbody* ::= tool *identifier*: NEWLINE INDENT *tbody* stages: NEWLINE *sbody* connections: NEWLINE *cbody* DEDENT
+*mbody* ::= tool *identifier*: NEWLINE INDENT *tbody* NEWLINE stages: NEWLINE *sbody* NEWLINE connections: NEWLINE *cbody* DEDENT
 
 *tbody* ::= *staccept* NEWLINE *stposition* NEWLINE [{ *motordef* }] NEWLINE [{ *actiondef* }]
 
@@ -28,7 +34,7 @@ TODO: format this better
 
 *stposition* ::= position *directional*
 
-*motordef* :: motor *identifier
+*motordef* :: motor *identifier*
 
 *actiondef* ::= action *identifier*: NEWLINE INDENT *actiondefbody* DEDENT
 
