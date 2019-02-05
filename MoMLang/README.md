@@ -24,9 +24,9 @@ TODO: format this better
 
 *sbody* ::= {(linear | rotary) stage *identifier*}
 
-*cbody* ::= {*identifier* connectsto *conection*}
+*cbody* ::= {*connection* connectsto *connection*}
 
-*connection* ::= *identifier*.*side* | SURFACE *directional* | *identifier*
+*connection* ::= *identifier* | *identifier*.*side* | SURFACE *directional*
 
 *directional* ::= ABOVE | BELOW | LEFT | RIGHT | FRONT | BACK
 
