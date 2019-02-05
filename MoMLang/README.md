@@ -26,7 +26,7 @@ TODO: format this better
 
 *cbody* ::= {*connection* connectsto *connection*}
 
-*connection* ::= *identifier* | *identifier*.*side* | SURFACE *directional*
+*connection* ::= *identifier*.*side* | *identifier* | SURFACE *directional*
 
 *directional* ::= ABOVE | BELOW | LEFT | RIGHT | FRONT | BACK
 

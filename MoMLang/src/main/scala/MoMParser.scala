@@ -8,13 +8,13 @@ import scala.util.parsing.combinator._
 // }
 
 object MoMParser extends JavaTokenParsers {
-    def program: Parser[Any] = mblock~NL~pblock
-    def mblock: Parser[Any] = "Machine"~ident~":"~NL~mbody
-    def pblock: Parser[Any] = "Program"~ident~":"~NL~pbody
-    def mbody: Parser[Any] = "tool"~ident~":"~NL~tbody~NL~
-                             "stages:"~NL~sbody~NL~
-                             "connections:"~NL~cbody
-    def tbody: Parser[Any] = staccept~NL~stposition~opt(rep(motordef))~NL~opt(rep(actiondef))
+    def program: Parser[Any] = mblock~optpblock
+    def mblock: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
+    def pblock: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
+    def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
+                             "stages"~"{"~opt(sbody)~"}"~
+                             "connections"~"{"~opt(cbody)~"}"
+    def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sbody: Parser[Any] = rep(("linear" | "rotary")~"stage"~ident)
     def cbody: Parser[Any] = rep(connection~"connectsto"~connection)
     def connection: Parser[Any] = (ident~"."~side
@@ -35,8 +35,8 @@ object MoMParser extends JavaTokenParsers {
     def staccept: Parser[Any] = "accepts ("~opt(rep(char~",")~char)~")"
     def stposition: Parser[Any] = "position"~directional
     def motordef: Parser[Any] = "motor"~ident
-    def actiondef: Parser[Any] = "action"~ident~":"~NL~actiondefbody
-    def actiondefbody: Parser[Any] = (ident~".forward()"
+    def actiondef: Parser[Any] = "action"~ident~"{"~actiondefbody~"}"
+    def actiondefbody: Parser[Any] = rep(ident~".forward()"
                                       | ident~".reverse()"
                                       | ident~".stopt()"
                                       | ident~".start()")
@@ -49,7 +49,7 @@ object MoMParser extends JavaTokenParsers {
     def filepath: Parser[Any] = "/" | rep("/"~stringLiteral)
 
     // TODO: how do I make the parser sensitive to whitespace?
-    def NL: String = ""
+    def NL: String = "\n"
     def INDENT: String = ""
     def DEDENT: String = ""
 
