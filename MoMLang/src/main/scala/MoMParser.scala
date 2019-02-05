@@ -8,18 +8,18 @@ import scala.util.parsing.combinator._
 // }
 
 object MoMParser extends JavaTokenParsers {
-    def program: Parser[Any] = mblock~opt(NL~pblock)
-    def mblock: Parser[Any] = "Machine"~ident~NL~mbody
-    def pblock: Parser[Any] = "Program"~ident~NL~pbody
-    def mbody: Parser[Any] = "tool"~ident~NL~tbody~NL~
+    def program: Parser[Any] = mblock~NL~pblock
+    def mblock: Parser[Any] = "Machine"~ident~":"~NL~mbody
+    def pblock: Parser[Any] = "Program"~ident~":"~NL~pbody
+    def mbody: Parser[Any] = "tool"~ident~":"~NL~tbody~NL~
                              "stages:"~NL~sbody~NL~
                              "connections:"~NL~cbody
     def tbody: Parser[Any] = staccept~NL~stposition~opt(rep(motordef))~NL~opt(rep(actiondef))
     def sbody: Parser[Any] = rep(("linear" | "rotary")~"stage"~ident)
-    def cbody: Parser[Any] = rep(ident~"connectsto"~connection)
+    def cbody: Parser[Any] = rep(connection~"connectsto"~connection)
     def connection: Parser[Any] = (ident~"."~side
-                                   | "SURFACE"~directional
-                                   | ident)
+                                   | ident
+                                   | "SURFACE"~directional)
     def directional: Parser[Any] = ("ABOVE"
                                     | "BELOW"
                                     | "LEFT"
@@ -48,7 +48,10 @@ object MoMParser extends JavaTokenParsers {
     def char: Parser[Any] = """[a-z]""".r
     def filepath: Parser[Any] = "/" | rep("/"~stringLiteral)
 
-    def NL: String = "\n"
+    // TODO: how do I make the parser sensitive to whitespace?
+    def NL: String = ""
     def INDENT: String = ""
     def DEDENT: String = ""
+
+    // TODO: handle comments
 }
