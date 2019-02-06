@@ -35,7 +35,7 @@ object MoMParser extends JavaTokenParsers {
     def staccept: Parser[Any] = "accepts ("~opt(rep(char~",")~char)~")"
     def stposition: Parser[Any] = "position"~directional
     def motordef: Parser[Any] = "motor"~ident
-    def actiondef: Parser[Any] = "action"~ident~"{"~actiondefbody~"}"
+    def actiondef: Parser[Any] = "action"~ident~"{"~[actiondefbody]~"}"
     def actiondefbody: Parser[Any] = rep(ident~".forward()"
                                       | ident~".reverse()"
                                       | ident~".stop()"
