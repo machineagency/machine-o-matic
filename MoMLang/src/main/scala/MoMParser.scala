@@ -16,8 +16,8 @@ object MoMParser extends JavaTokenParsers {
                              "connections"~"{"~opt(rep(cstat))~"}"
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sstat: Parser[Any] = ("linear" | "rotary")~"stage"~ident ^^
-                                { case l~s~id => stageStatements = List[Any](id) }
-    def cstat: Parser[Any] = rep(connection~"connectsto"~connection)
+                                { case l~s~id => stageStatements = id :: stageStatements }
+    def cstat: Parser[Any] = connection~"connectsto"~connection
     def connection: Parser[Any] = (ident~"."~side
                                    | ident
                                    | "SURFACE"~directional)
@@ -49,4 +49,6 @@ object MoMParser extends JavaTokenParsers {
     def char: Parser[Any] = """[a-z]""".r
 
     // TODO: handle comments
+
+    var stageStatements: List[Any] = List[Any]()
 }
