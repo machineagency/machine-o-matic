@@ -17,10 +17,11 @@ object MoMParser extends JavaTokenParsers {
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sstat: Parser[Any] = ("linear" | "rotary")~"stage"~ident ^^
                                 { case l~s~id => stageStatements = id :: stageStatements }
-    def cstat: Parser[Any] = connection~"connectsto"~connection
+    def cstat: Parser[Any] = connection~"connectsto"~connection ^^
+                                { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "->" + evalConnection(c1)) :: connectstoStatements}
     def connection: Parser[Any] = (ident~"."~side
-                                   | ident
-                                   | "SURFACE"~directional)
+                                   | "SURFACE"~directional
+                                   | ident)
     def directional: Parser[Any] = ("ABOVE"
                                     | "BELOW"
                                     | "LEFT"
@@ -50,5 +51,13 @@ object MoMParser extends JavaTokenParsers {
 
     // TODO: handle comments
 
-    var stageStatements: List[Any] = List[Any]()
+    var stageStatements: List[String] = List[String]()
+    var connectstoStatements: List[String]= List[String]()
+
+    def evalConnection(subtree: Any): String = subtree match {
+        case axis~"."~part => s"${axis}.${part}"
+        case "SURFACE"~directional => s"S-${directional}"
+        case axis => s"(${axis})"
+        case _=> "???"
+    }
 }
