@@ -12,11 +12,12 @@ object MoMParser extends JavaTokenParsers {
     def mblock: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
     def pblock: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
     def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
-                             "stages"~"{"~opt(sbody)~"}"~
-                             "connections"~"{"~opt(cbody)~"}"
+                             "stages"~"{"~opt(rep(sstat))~"}"~
+                             "connections"~"{"~opt(rep(cstat))~"}"
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
-    def sbody: Parser[Any] = rep(("linear" | "rotary")~"stage"~ident)
-    def cbody: Parser[Any] = rep(connection~"connectsto"~connection)
+    def sstat: Parser[Any] = ("linear" | "rotary")~"stage"~ident ^^
+                                { case l~s~id => stageStatements = List[Any](id) }
+    def cstat: Parser[Any] = rep(connection~"connectsto"~connection)
     def connection: Parser[Any] = (ident~"."~side
                                    | ident
                                    | "SURFACE"~directional)

@@ -16,13 +16,13 @@ For now, try writing your own program in `App.scala` and parsing it. Run it with
 
 *pblock* ::= Program *identifier* {[*pbody*]}
 
-*mbody* ::= tool *identifier* {[*tbody*]} stages {[*sbody*]} connections {[*cbody*]}
+*mbody* ::= tool *identifier* {[*tbody*]} stages {[(*sstat*) \*]} connections {[(*cstat*) \*]}
 
 *tbody* ::= *staccept* *stposition* [(*motordef*)\*] [(*actiondef*)\*]
 
-*sbody* ::= ((linear | rotary) stage *identifier*)\*
+*sstat* ::= ((linear | rotary) stage *identifier*)\*
 
-*cbody* ::= {*connection* connectsto *connection*}
+*cstat* ::= {*connection* connectsto *connection*}
 
 *connection* ::= *identifier*.*side* | *identifier* | SURFACE *directional*
 
