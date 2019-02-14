@@ -37,12 +37,11 @@ Program DrawSquare {
 
     def main(args: Array[String]): Unit = {
         println("This is config reasoner")
-        val parse = MoMParser.parseAll(MoMParser.program, easyProgram)
+        val parse = MoMParser.parse(MoMParser.program, easyProgram)
         println(parse)
-        // println(MoMParser.stageStatements)
-        // println(MoMParser.connectstoStatements)
-        // MoMParser.constructComponentTree()
-        // println(MoMParser.stageNameToNode)
+        println("Attempting reduction...")
+        parse.map { node => {
+        } }
         println("Done")
     }
 }

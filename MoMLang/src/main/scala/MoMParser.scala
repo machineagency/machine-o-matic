@@ -8,12 +8,18 @@ import scala.util.parsing.combinator._
 // }
 
 object MoMParser extends JavaTokenParsers {
-    def program: Parser[Any] = mblock~pblock
-    def mblock: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
-    def pblock: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
-    def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
-                             "stages"~"{"~opt(rep(sstat))~"}"~
-                             "connections"~"{"~opt(rep(cstat))~"}"
+    def program: Parser[Any] = msection~psection
+    def msection: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
+    def psection: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
+    // def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
+    //                          "stages"~"{"~opt(rep(sstat))~"}"~
+    //                          "connections"~"{"~opt(rep(cstat))~"}"
+    def mbody: Parser[Any] = tblock~sblock~cblock
+    def tblock: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"
+    def sblock: Parser[List[StageNode]] = "stages"~"{"~rep(sstat)~"}" ^^
+                                                { case _~_~sstats~_ => sstats }
+    def cblock: Parser[List[ConnectionNode]] = "connections"~"{"~rep(cstat)~"}" ^^
+                                                { case _~_~cstats~_ => cstats }
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sstat: Parser[StageNode] = ("linear" | "rotary")~"stage"~ident ^^
                                 { case l~s~id => StageNode(name = id, stageType = l) }
@@ -65,9 +71,12 @@ object MoMParser extends JavaTokenParsers {
 
 }
 
-case class StageNode(val name: String, val stageType: String)
+sealed trait Node
 
-case class ConnectionNode(val connection0: (String, String), val connection1: (String, String)) {
+case class StageNode(val name: String, val stageType: String) extends Node
+
+case class ConnectionNode(val connection0: (String, String),
+                          val connection1: (String, String)) extends Node {
     val parentName = connection0._1 match {
         case "TOOL" => connection0._2
         case "SURFACE" => connection0._2
