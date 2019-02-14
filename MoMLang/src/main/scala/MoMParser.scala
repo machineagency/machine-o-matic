@@ -15,11 +15,15 @@ object MoMParser extends JavaTokenParsers {
                              "stages"~"{"~opt(rep(sstat))~"}"~
                              "connections"~"{"~opt(rep(cstat))~"}"
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
-    def sstat: Parser[Any] = ("linear" | "rotary")~"stage"~ident ^^
+    def sstat: Parser[StageNode] = ("linear" | "rotary")~"stage"~ident ^^
                                 // { case l~s~id => stageStatements = id :: stageStatements }
-                                { case l~s~id => new ComponentNode(name = id) }
-    def cstat: Parser[Any] = connection~"connectsto"~connection ^^
-                                { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "<-" + evalConnection(c1)) :: connectstoStatements}
+                                { case l~s~id => StageNode(name = id, stageType = l) }
+    def cstat: Parser[ConnectionNode] = connection~"connectsto"~connection ^^
+                                // { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "<-" + evalConnection(c1)) :: connectstoStatements}
+                                // { statement => ConnectionNode(statement)}
+                                {
+                                    case c0~_~c1 => ConnectionNode(evalConnection(c0), evalConnection(c1))
+                                }
     def connection: Parser[Any] = (ident~"."~side
                                    | "SURFACE"~directional
                                    | ident)
@@ -55,10 +59,13 @@ object MoMParser extends JavaTokenParsers {
     var stageStatements: List[String] = List[String]()
     var connectstoStatements: List[String]= List[String]()
 
-    def evalConnection(subtree: Any): String = subtree match {
-        case axis~"."~part => s"${axis}.${part}"
-        case "SURFACE"~directional => s"S-${directional}"
-        case axis => s"(${axis})"
+    /**
+     * Returns a tuple
+     */
+    def evalConnection(subtree: Any): (String, String) = subtree match {
+        case stage~"."~place => (stage.toString(), place.toString())
+        case "SURFACE"~directional => ("SURFACE", directional.toString())
+        case tool => ("TOOL", tool.toString())
     }
 
     var stageNameToNode: Map[String, ComponentNode] = Map[String, ComponentNode]();
@@ -88,9 +95,14 @@ object MoMParser extends JavaTokenParsers {
     }
 }
 
-case class stageNode(val name: String, val stageType: String)
-case class connectionNode(val parentName: String, val parentPlace: String,
-                          val childName: String, val childPlace: String)
+case class StageNode(val name: String, val stageType: String)
+// case class connectionNode(val parentName: String, val parentPlace: String,
+//                           val childName: String, val childPlace: String)
+case class ConnectionNode(val connection0: (String, String), val connection1: (String, String)) {
+
+    // statement match {
+    // }
+}
 
 class ComponentNode(var name: String = null, var parent:ComponentNode = null,
                     var childrenByConnectionPlace:Map[String, ComponentNode] = Map[String, ComponentNode]()) {
