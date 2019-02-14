@@ -20,13 +20,15 @@ object MoMParser extends JavaTokenParsers {
                                                 { case _~_~sstats~_ => sstats }
     def cblock: Parser[List[ConnectionNode]] = "connections"~"{"~rep(cstat)~"}" ^^
                                                 { case _~_~cstats~_ => cstats }
-    def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
-    def sstat: Parser[StageNode] = ("linear" | "rotary")~"stage"~ident ^^
-                                { case l~s~id => StageNode(name = id, stageType = l) }
-    def cstat: Parser[ConnectionNode] = connection~"connectsto"~connection ^^
-                                {
-                                    case c0~_~c1 => ConnectionNode(evalConnection(c0), evalConnection(c1))
-                                }
+    def tbody: Parser[ToolNode] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef)) ^^ {
+        case staccept~stposition~_~_ => ToolNode(evalStAccept(staccept), evalStPosition(stposition))
+    }
+    def sstat: Parser[StageNode] = ("linear" | "rotary")~"stage"~ident ^^ {
+        case l~s~id => StageNode(name = id, stageType = l)
+    }
+    def cstat: Parser[ConnectionNode] = connection~"connectsto"~connection ^^ {
+        case c0~_~c1 => ConnectionNode(evalConnection(c0), evalConnection(c1))
+    }
     def connection: Parser[Any] = (ident~"."~side
                                    | "SURFACE"~directional
                                    | ident)
@@ -69,11 +71,29 @@ object MoMParser extends JavaTokenParsers {
         case tool => ("TOOL", tool.toString())
     }
 
+    def evalStAccept(subtree: Any): List[String] = subtree match {
+        case "accepts ("~coordString~")" => coordString.toString()
+                                        .split(",").map(_.trim).toList
+        case _ => List[String]()
+    }
+
+    def evalStPosition(subtree: Any): String = subtree match {
+        case "position"~directional => directional.toString()
+        case _ => "UNDEFINED_POSITION"
+    }
+
 }
 
 sealed trait Node
 
-case class StageNode(val name: String, val stageType: String) extends Node
+case class ToolNode(val coords: List[String], val directional: String,
+                    val actions: List[String] = List[String]()) extends Node {
+
+}
+
+case class StageNode(val name: String, val stageType: String) extends Node {
+
+}
 
 case class ConnectionNode(val connection0: (String, String),
                           val connection1: (String, String)) extends Node {
