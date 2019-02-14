@@ -16,11 +16,8 @@ object MoMParser extends JavaTokenParsers {
                              "connections"~"{"~opt(rep(cstat))~"}"
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sstat: Parser[StageNode] = ("linear" | "rotary")~"stage"~ident ^^
-                                // { case l~s~id => stageStatements = id :: stageStatements }
                                 { case l~s~id => StageNode(name = id, stageType = l) }
     def cstat: Parser[ConnectionNode] = connection~"connectsto"~connection ^^
-                                // { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "<-" + evalConnection(c1)) :: connectstoStatements}
-                                // { statement => ConnectionNode(statement)}
                                 {
                                     case c0~_~c1 => ConnectionNode(evalConnection(c0), evalConnection(c1))
                                 }
@@ -99,9 +96,28 @@ case class StageNode(val name: String, val stageType: String)
 // case class connectionNode(val parentName: String, val parentPlace: String,
 //                           val childName: String, val childPlace: String)
 case class ConnectionNode(val connection0: (String, String), val connection1: (String, String)) {
+    val parentName = connection0._1 match {
+        case "TOOL" => connection0._2
+        case "SURFACE" => connection0._2
+        case _ => connection0._1
+    }
+    val parentPlace = connection0._1 match {
+        case "TOOL" | "SURFACE" => null
+        case _ => connection0._2
+    }
+    val childName = connection1._1 match {
+        case "TOOL" => connection1._2
+        case "SURFACE" => connection1._2
+        case _ => connection1._1
+    }
+    val childPlace = connection1._1 match {
+        case "TOOL" | "SURFACE" => null
+        case _ => connection1._2
+    }
 
-    // statement match {
-    // }
+    override def toString = {
+        s"CNODE(${parentName} @ ${parentPlace} -> ${childName} @ ${childPlace})"
+    }
 }
 
 class ComponentNode(var name: String = null, var parent:ComponentNode = null,

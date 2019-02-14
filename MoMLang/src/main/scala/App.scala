@@ -69,10 +69,10 @@ object App {
         }
         """
 
-    def main(args: Array[String]): Unit = {
-        println(s"Input Program...")
-        println(s"${mediumProgram}")
-        println("Running parser...")
-        println(MoMParser.parseAll(MoMParser.program, mediumProgram))
-    }
+    // def main(args: Array[String]): Unit = {
+    //     println(s"Input Program...")
+    //     println(s"${mediumProgram}")
+    //     println("Running parser...")
+    //     println(MoMParser.parseAll(MoMParser.program, mediumProgram))
+    // }
 }
