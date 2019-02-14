@@ -53,11 +53,9 @@ object MoMParser extends JavaTokenParsers {
 
     // TODO: handle comments
 
-    var stageStatements: List[String] = List[String]()
-    var connectstoStatements: List[String]= List[String]()
-
     /**
-     * Returns a tuple
+     * Returns a tuple representing one side of a connection statement, either:
+     * (TOOL, *toolName*), (SURFACE, *directional*), or (*stageName*, *place*)
      */
     def evalConnection(subtree: Any): (String, String) = subtree match {
         case stage~"."~place => (stage.toString(), place.toString())
@@ -65,36 +63,10 @@ object MoMParser extends JavaTokenParsers {
         case tool => ("TOOL", tool.toString())
     }
 
-    var stageNameToNode: Map[String, ComponentNode] = Map[String, ComponentNode]();
-    var componentTreeRoot: ComponentNode = null;
-
-    // TODO: make these operations functional?
-
-    /**
-     * Generate the component tree that we will use to generate constraints.
-     * Returns the root node.
-     */
-    def constructComponentTree(): ComponentNode = {
-        // First generate the nodes
-        stageStatements.foreach {
-            stat => println(stat)
-            val componentNode = new ComponentNode(name = stat)
-            stageNameToNode = stageNameToNode + (stat -> componentNode)
-        }
-
-        // Now connect them
-        connectstoStatements.foreach {
-            stat => println(stat)
-        }
-
-        // TODO: Return the tool node
-        return new ComponentNode()
-    }
 }
 
 case class StageNode(val name: String, val stageType: String)
-// case class connectionNode(val parentName: String, val parentPlace: String,
-//                           val childName: String, val childPlace: String)
+
 case class ConnectionNode(val connection0: (String, String), val connection1: (String, String)) {
     val parentName = connection0._1 match {
         case "TOOL" => connection0._2
