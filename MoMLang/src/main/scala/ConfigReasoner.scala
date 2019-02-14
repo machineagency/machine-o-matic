@@ -38,10 +38,10 @@ Program DrawSquare {
     def main(args: Array[String]): Unit = {
         println("This is config reasoner")
         val parse = MoMParser.parse(MoMParser.program, easyProgram)
-        println(parse)
-        println("Attempting reduction...")
-        parse.map { node => {
-        } }
+        val programMap = parse.get
+        println(programMap)
+        println("Trying to get one part")
+        println(programMap("msection")("cblock"))
         println("Done")
     }
 }

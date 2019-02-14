@@ -2,20 +2,22 @@ package MoMLang
 
 import scala.util.parsing.combinator._
 
-// class MoMParser extends JavaTokenParsers {
-//     def mblock: Parser[Any] = "Machine"~ident~":\n"~mbody
-//     def mbody: Parser[Any] = "pass"
-// }
-
 object MoMParser extends JavaTokenParsers {
-    def program: Parser[Any] = msection~psection
-    def msection: Parser[Any] = "Machine"~ident~"{"~opt(mbody)~"}"
-    def psection: Parser[Any] = "Program"~ident~"{"~opt(pbody)~"}"
-    // def mbody: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"~
-    //                          "stages"~"{"~opt(rep(sstat))~"}"~
-    //                          "connections"~"{"~opt(rep(cstat))~"}"
-    def mbody: Parser[Any] = tblock~sblock~cblock
-    def tblock: Parser[Any] = "tool"~ident~"{"~opt(tbody)~"}"
+    def program: Parser[Map[String, Map[String, Any]]] = msection~psection ^^ {
+        case msection~psection => Map("msection" -> msection, "psection" -> psection)
+    }
+    def msection: Parser[Map[String, Any]] = "Machine"~ident~"{"~mbody~"}" ^^ {
+        case _~_~_~mbody~_ => mbody
+    }
+    def psection: Parser[Map[String, Any]] = "Program"~ident~"{"~pbody~"}" ^^ {
+        case _ => Map[String, Any]() // TODO: implement
+    }
+    def mbody: Parser[Map[String, Any]] = tblock~sblock~cblock ^^ {
+        case tblock~sblock~cblock => Map("tblock" -> tblock, "sblock" ->sblock, "cblock" -> cblock)
+    }
+    def tblock: Parser[ToolNode] = "tool"~ident~"{"~tbody~"}" ^^ {
+        case _~id~_~tbody~_ => tbody
+    }
     def sblock: Parser[List[StageNode]] = "stages"~"{"~rep(sstat)~"}" ^^
                                                 { case _~_~sstats~_ => sstats }
     def cblock: Parser[List[ConnectionNode]] = "connections"~"{"~rep(cstat)~"}" ^^
