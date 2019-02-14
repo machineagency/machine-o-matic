@@ -16,9 +16,10 @@ object MoMParser extends JavaTokenParsers {
                              "connections"~"{"~opt(rep(cstat))~"}"
     def tbody: Parser[Any] = staccept~stposition~opt(rep(motordef))~opt(rep(actiondef))
     def sstat: Parser[Any] = ("linear" | "rotary")~"stage"~ident ^^
-                                { case l~s~id => stageStatements = id :: stageStatements }
+                                // { case l~s~id => stageStatements = id :: stageStatements }
+                                { case l~s~id => new ComponentNode(name = id) }
     def cstat: Parser[Any] = connection~"connectsto"~connection ^^
-                                { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "->" + evalConnection(c1)) :: connectstoStatements}
+                                { case c0~key~c1 => connectstoStatements = (evalConnection(c0) + "<-" + evalConnection(c1)) :: connectstoStatements}
     def connection: Parser[Any] = (ident~"."~side
                                    | "SURFACE"~directional
                                    | ident)
@@ -58,6 +59,40 @@ object MoMParser extends JavaTokenParsers {
         case axis~"."~part => s"${axis}.${part}"
         case "SURFACE"~directional => s"S-${directional}"
         case axis => s"(${axis})"
-        case _=> "???"
     }
+
+    var stageNameToNode: Map[String, ComponentNode] = Map[String, ComponentNode]();
+    var componentTreeRoot: ComponentNode = null;
+
+    // TODO: make these operations functional?
+
+    /**
+     * Generate the component tree that we will use to generate constraints.
+     * Returns the root node.
+     */
+    def constructComponentTree(): ComponentNode = {
+        // First generate the nodes
+        stageStatements.foreach {
+            stat => println(stat)
+            val componentNode = new ComponentNode(name = stat)
+            stageNameToNode = stageNameToNode + (stat -> componentNode)
+        }
+
+        // Now connect them
+        connectstoStatements.foreach {
+            stat => println(stat)
+        }
+
+        // TODO: Return the tool node
+        return new ComponentNode()
+    }
+}
+
+case class stageNode(val name: String, val stageType: String)
+case class connectionNode(val parentName: String, val parentPlace: String,
+                          val childName: String, val childPlace: String)
+
+class ComponentNode(var name: String = null, var parent:ComponentNode = null,
+                    var childrenByConnectionPlace:Map[String, ComponentNode] = Map[String, ComponentNode]()) {
+
 }
