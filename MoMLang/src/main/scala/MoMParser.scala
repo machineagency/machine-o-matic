@@ -84,9 +84,33 @@ object MoMParser extends JavaTokenParsers {
         case _ => "UNDEFINED_POSITION"
     }
 
+    def buildAst(tNode: ToolNode, sNodes: List[StageNode], cNodes: List[ConnectionNode],
+                 pNodes: Any): Node = {
+        /* Initialize a dummy stage node for the surface. This acts as the root. */
+        val surfaceStageNode = StageNode("SURFACE", "__SURFACE");
+
+        /* The tool must be the surface's child. */
+        surfaceStageNode.children = Vector[(Node, String)]((tNode, "__TOOL"));
+
+        /* Recurse on the toolNode. */
+        buildSubtree(tNode, sNodes, cNodes)
+
+        return ToolNode(coords = List("x", "y"), directional = "ABOVE")
+    }
+
+    def buildSubtree(node: Node, sNodes: List[StageNode],
+                     cNodes: List[ConnectionNode]): Node = {
+        // Okay this is really hard with map direction, should we just
+        // reverse kV pairs?
+        // val nodeChildren =
+        return node
+    }
+
 }
 
-sealed trait Node
+sealed trait Node {
+  var children: Vector[(Node, String)] = Vector[(Node, String)]()
+}
 
 case class ToolNode(val coords: List[String], val directional: String,
                     val actions: List[String] = List[String]()) extends Node {

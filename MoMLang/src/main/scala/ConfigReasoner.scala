@@ -17,9 +17,9 @@ Machine xyPlottter {
     }
 
     connections {
-        x1.platform connectsto y.left
-        x2.platform connectsto y.right
         pen connectsto y.platform
+        y.left connectsto x1.platform
+        y.right connectsto x2.platform
     }
 }
 
@@ -43,5 +43,15 @@ Program DrawSquare {
         println("Trying to get one part")
         println(programMap("msection")("cblock"))
         println("Done")
+    }
+
+    def findParallelInvariants(astRoot: Node): List[List[Node]] = {
+      return List[List[Node]]()
+    }
+
+
+
+    def treeByBfsLayers(astRoot: Node): List[List[Node]] = {
+      return List[List[Node]]()
     }
 }
