@@ -84,7 +84,7 @@ object MoMParser extends JavaTokenParsers {
         case _ => "UNDEFINED_POSITION"
     }
 
-    def buildAst(tNode: ToolNode, sNodes: List[StageNode], cNodes: List[ConnectionNode],
+    def buildCTree(tNode: ToolNode, sNodes: List[StageNode], cNodes: List[ConnectionNode],
                  pNodes: Any): Node = {
         /* Initialize a dummy stage node for the surface. This acts as the root. */
         val surfaceStageNode = StageNode("SURFACE", "__SURFACE");
@@ -93,16 +93,19 @@ object MoMParser extends JavaTokenParsers {
         surfaceStageNode.children = Vector[(Node, String)]((tNode, "__TOOL"));
 
         /* Recurse on the toolNode. */
-        buildSubtree(tNode, sNodes, cNodes)
+        buildSubCTree(tNode, cNodes)
 
         return ToolNode(coords = List("x", "y"), directional = "ABOVE")
     }
 
-    def buildSubtree(node: Node, sNodes: List[StageNode],
-                     cNodes: List[ConnectionNode]): Node = {
-        // Okay this is really hard with map direction, should we just
-        // reverse kV pairs?
-        // val nodeChildren =
+    def buildSubCTree(node: Node, cNodes: List[ConnectionNode]): Node = {
+        // BC: iff list is empty return NODE
+        // Go thru list of parent -> child nodes
+        // Find child node corresponding to NODE, which is parent
+        // return node + children + subtree
+        if (cNodes.length == 0) {
+          return 
+        }
         return node
     }
 
@@ -147,7 +150,3 @@ case class ConnectionNode(val connection0: (String, String),
     }
 }
 
-class ComponentNode(var name: String = null, var parent:ComponentNode = null,
-                    var childrenByConnectionPlace:Map[String, ComponentNode] = Map[String, ComponentNode]()) {
-
-}
