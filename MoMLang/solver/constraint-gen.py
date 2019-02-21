@@ -4,9 +4,9 @@ program = """tool Pen:
     accepts (x, y)
 
 stages:
-    linear stage y
-    linear stage x1
-    linear stage x2
+    linear stage y : y
+    linear stage x1 : x
+    linear stage x2 : x
 
 connections:
     Pen -> y.platform
@@ -42,8 +42,7 @@ def build_subtree(subtree_root_name, connections):
     with the name SUBTREE_ROOT_NAME, and where the node has children which is a
     frozen set with tuples (subsubtree: Node, connection_place: String)
     """
-    # TODO: base case
-
+    # TODO: base case -- seems to work without an explicit one...?
     node_connections = \
             frozenset(filter(lambda connection: connection.from_stage == subtree_root_name,
                     connections))
@@ -53,8 +52,10 @@ def build_subtree(subtree_root_name, connections):
     node = Node(subtree_root_name, children)
     return node
 
+# The variables below represent the AST-ish of the example program
 tool = Tool("Pen", ("COORD_x", "COORD_y"))
 
+# TODO: we need physical info on stages
 stages = [
     Stage("y", "linear"),
     Stage("x1", "linear"),
@@ -67,7 +68,10 @@ connections = [
     Connection("y", "right", "x2", "platform")
 ]
 
+# Lower the AST into a component tree
 component_tree = build_coomponent_tree(tool, connections)
+
+# Crawl the tree and generate constraints
 
 print component_tree
 
