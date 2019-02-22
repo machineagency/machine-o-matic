@@ -55,6 +55,24 @@ class Interpreter(cmd.Cmd):
             relative_coords = self.find_relative_coords(coords)
             steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
             print steps
+            step_succeeded = self.dipatch_steps(steps)
+            if step_succeeded:
+                print "Moved successfully!"
+                Interpreter.CURR_COORDS = coords
+            else:
+                print "Tried to move, but couldn't."
+
+    def dipatch_steps(self, steps):
+        """
+        NOT YET IMPLEMENTED.
+        Takes in dictionary of motor names -> steps as argument STEPS.
+        Dispatches steps to hardware to move motors synchronously.
+        Blocks thread until this finishes, and waits for hardware response.
+        Returns FALSE if we receive an error response indicating that the stepping
+        was not successful.
+        Returns TRUE otherwise.
+        """
+        return True
 
 Interpreter().cmdloop()
 
