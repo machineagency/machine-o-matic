@@ -1,5 +1,5 @@
 import sys, cmd
-from xy\-plotter import xyPlotterSolver
+from xy_plotter import xyPlotterSolver
 
 class Interpreter(cmd.Cmd):
     intro = "Welcome to the interpreter."
@@ -38,7 +38,7 @@ class Interpreter(cmd.Cmd):
         E.g. if the current position is (50, 20) and your goal is (30, 30),
         then the relative coordinates are (-20, 10).
         """
-        return (goal_coord - curr_coord for goal_coord, curr_coord \
+        return tuple(goal_coord - curr_coord for goal_coord, curr_coord \
                 in zip(goal_coords, Interpreter.CURR_COORDS))
 
     def move(self, coords):
