@@ -4,10 +4,11 @@ from xy_plotter import xyPlotterSolver
 class Interpreter(cmd.Cmd):
     intro = "Welcome to the interpreter."
     prompt = "machine > "
-    file = None
     CURR_COORDS = (0, 0)
     MAX_COORDS = (100, 100)
     NUM_AXES = 2
+
+    # COMMAND LINE METHODS #
 
     @staticmethod
     def parse_move_coords(arg):
@@ -20,6 +21,12 @@ class Interpreter(cmd.Cmd):
 
     def do_move(self, arg):
         self.move(Interpreter.parse_move_coords(arg))
+
+    def do_bye(self, arg):
+        print "Bye!"
+        return True
+
+    # FUNCTIONAL METHODS #
 
     def coords_in_bounds(self, coords):
         """
