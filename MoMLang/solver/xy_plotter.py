@@ -86,16 +86,17 @@ class xyPlotterSolver:
         s.add(goal_x)
         s.add(goal_y)
 
-        print s.check()
+        # print s.check()
+        s.check()
         model = s.model()
 
         sol_y_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[y_motor_steps])
         sol_x1_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[x1_motor_steps])
         sol_x2_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[x2_motor_steps])
 
-        print "Stage y motor steps: {}".format(sol_y_motor_steps)
-        print "Stage x1 motor steps: {}".format(sol_x1_motor_steps)
-        print "Stage x2 motor steps: {}".format(sol_x2_motor_steps)
+        # print "Stage y motor steps: {}".format(sol_y_motor_steps)
+        # print "Stage x1 motor steps: {}".format(sol_x1_motor_steps)
+        # print "Stage x2 motor steps: {}".format(sol_x2_motor_steps)
 
         return { "y_steps": sol_y_motor_steps, \
                  "x1_steps": sol_x1_motor_steps, \
