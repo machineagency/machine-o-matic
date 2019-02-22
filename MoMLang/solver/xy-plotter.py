@@ -1,4 +1,5 @@
 from z3 import *
+from codegen import Codegen
 
 s = Solver()
 
@@ -79,9 +80,12 @@ s.add(goal_y)
 
 print s.check()
 model = s.model()
-print model
-print "-----"
-print model[y_motor_steps]
-print model[x1_motor_steps]
-print model[x2_motor_steps]
+
+sol_y_motor_steps = model[y_motor_steps]
+sol_x1_motor_steps = model[x1_motor_steps]
+sol_x2_motor_steps = model[x2_motor_steps]
+
+print "Stage y motor steps: {}".format(sol_y_motor_steps)
+print "Stage x1 motor steps: {}".format(sol_x1_motor_steps)
+print "Stage x2 motor steps: {}".format(sol_x2_motor_steps)
 
