@@ -27,7 +27,7 @@ class Interpreter(cmd.Cmd):
         Returns TRUE iff coords is valid and bounded, FALSE otherwise.
         """
         for idx, coord in enumerate(coords):
-            if coord > Interpreter.MAX_COORDS:
+            if coord > Interpreter.MAX_COORDS[idx]:
                 return False
         return True
 
@@ -49,11 +49,12 @@ class Interpreter(cmd.Cmd):
         if len(coords) != Interpreter.NUM_AXES:
             print "{0} has {1} axes, but I need {2}" \
                     .format(coords, len(coords), Interpreter.NUM_AXES)
-        if not self.coords_in_bounds(coords):
+        elif not self.coords_in_bounds(coords):
             print "{0} is outside my bounds {1}".format(coords, Interpreter.CURR_COORDS)
-        relative_coords = self.find_relative_coords(coords)
-        steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
-        print steps
+        else:
+            relative_coords = self.find_relative_coords(coords)
+            steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
+            print steps
 
 Interpreter().cmdloop()
 
