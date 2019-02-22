@@ -4,6 +4,10 @@ from z3 import *
 class xyPlotterSolver:
 
     @staticmethod
+    def __z3_real_to_rounded_int(real):
+        return int(real.as_decimal(0).split(".")[0])
+
+    @staticmethod
     def solve_ik(x_coord, y_coord):
         s = Solver()
 
@@ -76,18 +80,18 @@ class xyPlotterSolver:
         s.add(And(x1_stage_steps_to_rev, x1_leadscrew_rev_to_mm))
         s.add(And(x2_stage_steps_to_rev, x2_leadscrew_rev_to_mm))
 
-        # Solve inverse kinematics
-        goal_x = (tool_x == 50)
-        goal_y = (tool_y == 20)
+        # Solve inverse kinematics with X_COORD, Y_COORD arguments as goal
+        goal_x = (tool_x == x_coord)
+        goal_y = (tool_y == y_coord)
         s.add(goal_x)
         s.add(goal_y)
 
         print s.check()
         model = s.model()
 
-        sol_y_motor_steps = model[y_motor_steps]
-        sol_x1_motor_steps = model[x1_motor_steps]
-        sol_x2_motor_steps = model[x2_motor_steps]
+        sol_y_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[y_motor_steps])
+        sol_x1_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[x1_motor_steps])
+        sol_x2_motor_steps = xyPlotterSolver.__z3_real_to_rounded_int(model[x2_motor_steps])
 
         print "Stage y motor steps: {}".format(sol_y_motor_steps)
         print "Stage x1 motor steps: {}".format(sol_x1_motor_steps)
