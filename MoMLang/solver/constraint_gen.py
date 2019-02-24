@@ -24,7 +24,7 @@ def build_coomponent_tree(tool, connections):
     Missing connections will cause problems
     """
     if (not tool or not stages or not connections):
-        return Node("EMPTY", frozenset([]))
+        return Node("EMPTY", frozenset(()))
     surface_connection = \
             filter(lambda connection: connection.from_stage == "SURFACE", \
                              connections)[0]
@@ -32,9 +32,9 @@ def build_coomponent_tree(tool, connections):
             filter(lambda connection: connection.from_stage != "SURFACE", \
                                       connections))
     return Node("SURFACE", \
-                frozenset([(build_subtree(surface_connection.to_stage, \
+                frozenset(tuple((build_subtree(surface_connection.to_stage, \
                     connections_without_surface), \
-                    surface_connection.from_place)]))
+                    surface_connection.from_place))))
 
 def build_subtree(subtree_root_name, connections):
     """
@@ -47,8 +47,8 @@ def build_subtree(subtree_root_name, connections):
             frozenset(filter(lambda connection: connection.from_stage == subtree_root_name,
                     connections))
     connections_without_node = connections - node_connections
-    children = frozenset([(build_subtree(connection.to_stage, connections_without_node), \
-                 connection.from_place) for connection in node_connections])
+    children = frozenset(tuple((build_subtree(connection.to_stage, connections_without_node), \
+                 connection.from_place) for connection in node_connections))
     node = Node(subtree_root_name, children)
     return node
 
