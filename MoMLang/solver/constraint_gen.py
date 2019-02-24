@@ -15,7 +15,7 @@ connections:
 """
 Node = namedtuple("Node", "name, children")
 Tool = namedtuple("Tool", "name, accepts")
-Stage = namedtuple("Stage", "name, stage_type")
+Stage = namedtuple("Stage", "name, stage_type, axis")
 Connection = namedtuple("Connection", "from_stage, from_place, to_stage, to_place")
 
 def build_coomponent_tree(tool, connections):
@@ -25,16 +25,16 @@ def build_coomponent_tree(tool, connections):
     """
     if (not tool or not stages or not connections):
         return Node("EMPTY", frozenset([]))
-    tool_connection = \
-            filter(lambda connection: connection.from_stage == tool.name, \
+    surface_connection = \
+            filter(lambda connection: connection.from_stage == "SURFACE", \
                              connections)[0]
-    connections_without_tool = frozenset( \
-            filter(lambda connection: connection.from_stage != tool.name, \
+    connections_without_surface = frozenset( \
+            filter(lambda connection: connection.from_stage != "SURFACE", \
                                       connections))
-    return Node(tool.name, \
-                frozenset([(build_subtree(tool_connection.to_stage, \
-                    connections_without_tool), \
-                    tool_connection.from_place)]))
+    return Node("SURFACE", \
+                frozenset([(build_subtree(surface_connection.to_stage, \
+                    connections_without_surface), \
+                    surface_connection.from_place)]))
 
 def build_subtree(subtree_root_name, connections):
     """
@@ -52,23 +52,26 @@ def build_subtree(subtree_root_name, connections):
     node = Node(subtree_root_name, children)
     return node
 
-# The variables below represent the AST-ish of the example program
+# AST = (tool, stages, connections) 
+
 tool = Tool("Pen", ("COORD_x", "COORD_y"))
 
-# TODO: we need physical info on stages
 stages = [
-    Stage("y", "linear"),
-    Stage("x1", "linear"),
-    Stage("x2", "linear")
+    Stage("y", "linear", "AXIS_y"),
+    Stage("x1", "linear", "AXIS_x"),
+    Stage("x2", "linear", "AXIS_x"),
 ]
 
 connections = [
+    Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
     Connection("Pen", "TOOL_CONNECT", "y", "platform"),
     Connection("y", "left", "x1", "platform"),
     Connection("y", "right", "x2", "platform")
 ]
 
 # Lower the AST into a component tree
+# TODO: handle the case where we have multiple trees among connections
+# This would be done by having the envelope as the root
 component_tree = build_coomponent_tree(tool, connections)
 
 # Crawl the tree and generate constraints
