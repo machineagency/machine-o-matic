@@ -32,9 +32,9 @@ def build_coomponent_tree(tool, connections):
             filter(lambda connection: connection.from_stage != "SURFACE", \
                                       connections))
     return Node("SURFACE", \
-                frozenset(tuple((build_subtree(surface_connection.to_stage, \
+                frozenset([(build_subtree(surface_connection.to_stage, \
                     connections_without_surface), \
-                    surface_connection.from_place))))
+                    surface_connection.from_place)]))
 
 def build_subtree(subtree_root_name, connections):
     """
@@ -47,8 +47,8 @@ def build_subtree(subtree_root_name, connections):
             frozenset(filter(lambda connection: connection.from_stage == subtree_root_name,
                     connections))
     connections_without_node = connections - node_connections
-    children = frozenset(tuple((build_subtree(connection.to_stage, connections_without_node), \
-                 connection.from_place) for connection in node_connections))
+    children = frozenset([(build_subtree(connection.to_stage, connections_without_node), \
+                 connection.from_place) for connection in node_connections])
     node = Node(subtree_root_name, children)
     return node
 
@@ -76,10 +76,8 @@ component_tree = build_coomponent_tree(tool, connections)
 
 # Crawl the tree and generate constraints
 
-print component_tree
-
-# Let's make some constraints!
-
+# FIXME: this currently works for STAGE NAMES, not AXIS, because we do not
+# yet store AXIS in the tree
 def path_for_axis(axis, conn_tree):
     """
     Given a connection tree CONN_TREE with nodes representing stages where
@@ -88,7 +86,18 @@ def path_for_axis(axis, conn_tree):
     ("Pen", "y", "x2"). Note that if there are multiple nodes for some axis
     A, we can return any one of the nodes.
     """
-    pass
+    if conn_tree.name == axis:
+        return (conn_tree.name,)
+    elif not conn_tree.children:
+        return ()
+    else:
+        children_paths = tuple(path_for_axis(axis, child_pair[0]) for \
+                child_pair in conn_tree.children)
+        viable_paths = filter(lambda path: len(path) > 0, children_paths)
+        # Just pick the first viable path - may want to change in the future
+        if len(viable_paths) == 0:
+            return ()
+        return (conn_tree.name,) + viable_paths[0]
 
 def constraint_function_for_path(path):
     """
@@ -125,4 +134,6 @@ def constraint_function_for_multistages(multistage_tuple):
     such as a coreXY gantry.
     """
     pass
+
+print path_for_axis("x1", component_tree)
 
