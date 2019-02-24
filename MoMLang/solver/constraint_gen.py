@@ -52,7 +52,7 @@ def build_subtree(subtree_root_name, connections):
     node = Node(subtree_root_name, children)
     return node
 
-# AST = (tool, stages, connections) 
+# AST = (tool, stages, connections)
 
 tool = Tool("Pen", ("COORD_x", "COORD_y"))
 
@@ -77,4 +77,52 @@ component_tree = build_coomponent_tree(tool, connections)
 # Crawl the tree and generate constraints
 
 print component_tree
+
+# Let's make some constraints!
+
+def path_for_axis(axis, conn_tree):
+    """
+    Given a connection tree CONN_TREE with nodes representing stages where
+    each stage controls one or more axes, finds *a* node that controls
+    AXIS. Then returns a path from the tool to the node as a tuple e.g.
+    ("Pen", "y", "x2"). Note that if there are multiple nodes for some axis
+    A, we can return any one of the nodes.
+    """
+    pass
+
+def constraint_function_for_path(path):
+    """
+    Takes a tuple representing a tool -> stage path and returns a unary function
+    that takes a z3 solver as an argument and adds constraints to the solver.
+    """
+    # TODO: how to add constraint in inner fn body based on PATH?
+    def constraint_writer(solver):
+        pass
+    return constraint_writer
+
+def list_multistage_axes_tuples(stages):
+    """
+    Returns a tuple of tuples, where each inner tuple represent the names of
+    all stages which control a particular axis. For example, below, we return
+    a tuple of one tuple that contains "x1" and "x2" because those stages
+    both determine the position on the x-axis for the tool.
+    >>> stages = [
+        Stage("y", "linear", "AXIS_y"),
+        Stage("x1", "linear", "AXIS_x"),
+        Stage("x2", "linear", "AXIS_x"),
+    ]
+    (("x1", "x2"),)
+    """
+    pass
+
+def constraint_function_for_multistages(multistage_tuple):
+    """
+    Given a tuple containing the names of tuples with stages that all
+    control a single axis in parallel, returns a unary function that takes
+    a z3 solver as an argument and adds these constraints to the solver.
+
+    In the future, we will consider stages with non-parallel relations
+    such as a coreXY gantry.
+    """
+    pass
 
