@@ -5,9 +5,12 @@ program = """tool Pen:
     accepts (x, y)
 
 stages:
-    linear stage y : y
-    linear stage x1 : x
-    linear stage x2 : x
+    linear y -> A(y):
+        step -> 0.696 mm
+    linear x1 -> A(x):
+        step -> 0.696 mm
+    linear x2 -> A(x):
+        step -> 0.696 mm
 
 connections:
     Pen -> y.platform
