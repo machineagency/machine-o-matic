@@ -148,7 +148,12 @@ def list_multistage_axes_tuples(stages):
     ]
     (("x1", "x2"),)
     """
-    pass
+    axes = set(tuple(stage.axis for stage in stages))
+    stages_by_axis = tuple(filter(lambda stage: stage.axis == axis, stages) \
+                        for axis in axes)
+    multistage_groups = tuple(group for group in stages_by_axis if len(group) > 1)
+    return tuple(tuple(map(lambda stage: stage.name, group)) \
+                    for group in multistage_groups)
 
 def constraint_function_for_multistages(multistage_tuple):
     """
