@@ -13,12 +13,12 @@ connections:
     y.left -> x1.platform
     y.right -> x2.platform
 """
-Node = namedtuple("Node", "name, children")
+Node = namedtuple("Node", "name, axis, children")
 Tool = namedtuple("Tool", "name, accepts")
 Stage = namedtuple("Stage", "name, stage_type, axis")
 Connection = namedtuple("Connection", "from_stage, from_place, to_stage, to_place")
 
-def build_coomponent_tree(tool, connections):
+def build_coomponent_tree(tool, connections, stages):
     """
     Assumes we have a complete set of connections and stages
     Missing connections will cause problems
@@ -31,26 +31,38 @@ def build_coomponent_tree(tool, connections):
     connections_without_surface = frozenset( \
             filter(lambda connection: connection.from_stage != "SURFACE", \
                                       connections))
-    return Node("SURFACE", \
+    return Node("SURFACE", None, \
                 frozenset([(build_subtree(surface_connection.to_stage, \
-                    connections_without_surface), \
+                    connections_without_surface, stages), \
                     surface_connection.from_place)]))
 
-def build_subtree(subtree_root_name, connections):
+def build_subtree(subtree_root_name, connections, stages):
     """
     Returns the root node of a tree, where the root node represents the stage
     with the name SUBTREE_ROOT_NAME, and where the node has children which is a
     frozen set with tuples (subsubtree: Node, connection_place: String)
     """
-    # TODO: base case -- seems to work without an explicit one...?
-    node_connections = \
-            frozenset(filter(lambda connection: connection.from_stage == subtree_root_name,
-                    connections))
+    # Base case: node_connections == [] means no recursive calls in
+    # the list comprehension below
+    node_connections = frozenset(filter(lambda connection: connection.from_stage \
+                        == subtree_root_name, connections))
     connections_without_node = connections - node_connections
-    children = frozenset([(build_subtree(connection.to_stage, connections_without_node), \
-                 connection.from_place) for connection in node_connections])
-    node = Node(subtree_root_name, children)
+    children = frozenset([(build_subtree(connection.to_stage, connections_without_node, \
+            stages), connection.from_place) for connection in node_connections])
+    stage_axis = axis_from_name(subtree_root_name, stages)
+    node = Node(subtree_root_name, stage_axis, children)
     return node
+
+def axis_from_name(name, stages):
+    """
+    Assuming NAME is a stage in STAGES, return the axis corresponding to
+    that stage. If NAME isn't a stage (e.g. a tool name) or isn't in STAGES,
+    return None.
+    """
+    axes_list = filter(lambda stage: stage.name == name, stages)
+    if len(axes_list) == 0:
+        return None
+    return axes_list[0].axis
 
 # AST = (tool, stages, connections)
 
@@ -72,7 +84,7 @@ connections = [
 # Lower the AST into a component tree
 # TODO: handle the case where we have multiple trees among connections
 # This would be done by having the envelope as the root
-component_tree = build_coomponent_tree(tool, connections)
+component_tree = build_coomponent_tree(tool, connections, stages)
 
 # Crawl the tree and generate constraints
 
