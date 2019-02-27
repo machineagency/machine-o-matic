@@ -119,16 +119,15 @@ def constraint_function_for_path(full_path, axis):
     that takes a z3 solver as an argument and adds constraints to the solver.
     Note that the inner function is impure because it would be inefficient to
     return a new solver with every iteration.
+    Note that we do not add a constraint relating the last stage in the path
+    to the motion of its motor, because that is done elsewhere.
     """
     def constraint_writer(solver):
         pairwise_constraints(full_path, solver)
 
     def pairwise_constraints(working_path, solver):
-        if len(working_path) == 0:
+        if len(working_path) < 2:
             return
-        elif len(working_path) == 1:
-            solver.add(Real(working_path[0] + "_" + axis) \
-                    == Real(working_path[0] + "_mm"))
         else:
             solver.add(Real(working_path[0] + "_" + axis) \
                             == Real(working_path[1] + "_" + axis))
@@ -181,11 +180,33 @@ def constraint_function_for_multistages(multistage_tuples, stages):
 
     return constraint_writer
 
-path = path_for_axis("x1", component_tree)
-cn_fn = constraint_function_for_path(path, "AXIS_x")
+def constraint_function_for_base_stages(component_tree):
+    """
+    Writes constraints relating the motor position of any stage to the axis
+    it controls.
+    """
+    def constraint_writer(solver):
+        base_stage_constraints(component_tree, solver)
+
+    def base_stage_constraints(subtree_node, solver):
+        if subtree_node.axis:
+            solver.add(Real(subtree_node.name + "_" + subtree_node.axis) \
+                                == Real(subtree_node.name + "_mm"))
+        for child_place_pair in subtree_node.children:
+            subsubtree = child_place_pair[0]
+            base_stage_constraints(subsubtree, solver)
+    return constraint_writer
+
+path_x_axis = path_for_axis("x1", component_tree)
+path_y_axis = path_for_axis("y", component_tree)
+cn_fn_x_axis = constraint_function_for_path(path_x_axis, "AXIS_x")
+cn_fn_y_axis = constraint_function_for_path(path_y_axis, "AXIS_y")
 multistage_tuples = list_multistage_axes_tuples(stages)
 ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
+bases_fn = constraint_function_for_base_stages(component_tree)
 s = Solver()
-cn_fn(s)
+cn_fn_x_axis(s)
+cn_fn_y_axis(s)
 ms_fn(s)
+bases_fn(s)
 
