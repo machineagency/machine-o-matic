@@ -156,7 +156,7 @@ def list_multistage_axes_tuples(stages):
     return tuple(tuple(map(lambda stage: stage.name, group)) \
                     for group in multistage_groups)
 
-def constraint_function_for_multistages(multistage_tuples):
+def constraint_function_for_multistages(multistage_tuples, stages):
     """
     Given a tuple containing tuples of the names of tuples with stages that all
     control a single axis in parallel, returns a unary function that takes
@@ -165,7 +165,6 @@ def constraint_function_for_multistages(multistage_tuples):
     In the future, we will consider stages with non-parallel relations
     such as a coreXY gantry.
     """
-    # TODO: we need to write constraints on a per-axis-name basis
     def constraint_writer(solver):
         multistage_constraints(multistage_tuples, solver)
 
@@ -173,16 +172,19 @@ def constraint_function_for_multistages(multistage_tuples):
         if len(working_multistage_tuples) == 0:
             return
         stages_tuple = working_multistage_tuples[0]
+        axis_name = filter(lambda stage: stage.name == stages_tuple[0], \
+                stages)[0].axis
         for i in range(len(stages_tuple) - 1):
-            solver.add(Real(stages_tuple[i]) == Real(stages_tuple[i + 1]))
+            solver.add(Real(stages_tuple[i] + "_" + axis_name) \
+                    == Real(stages_tuple[i + 1] + "_" + axis_name))
         multistage_constraints(working_multistage_tuples[1:], solver)
 
     return constraint_writer
 
 path = path_for_axis("x1", component_tree)
-cn_fn = constraint_function_for_path(path, "AXIS_X")
+cn_fn = constraint_function_for_path(path, "AXIS_x")
 multistage_tuples = list_multistage_axes_tuples(stages)
-ms_fn = constraint_function_for_multistages(multistage_tuples)
+ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
 s = Solver()
 cn_fn(s)
 ms_fn(s)
