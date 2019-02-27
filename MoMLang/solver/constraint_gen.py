@@ -89,8 +89,6 @@ component_tree = build_coomponent_tree(tool, connections, stages)
 
 # Crawl the tree and generate constraints
 
-# FIXME: this currently works for STAGE NAMES, not AXIS, because we do not
-# yet store AXIS in the tree
 def path_for_axis(axis, conn_tree):
     """
     Given a connection tree CONN_TREE with nodes representing stages where
@@ -155,19 +153,34 @@ def list_multistage_axes_tuples(stages):
     return tuple(tuple(map(lambda stage: stage.name, group)) \
                     for group in multistage_groups)
 
-def constraint_function_for_multistages(multistage_tuple):
+def constraint_function_for_multistages(multistage_tuples):
     """
-    Given a tuple containing the names of tuples with stages that all
+    Given a tuple containing tuples of the names of tuples with stages that all
     control a single axis in parallel, returns a unary function that takes
     a z3 solver as an argument and adds these constraints to the solver.
 
     In the future, we will consider stages with non-parallel relations
     such as a coreXY gantry.
     """
-    pass
+    # TODO: we need to write constraints on a per-axis-name basis
+    def constraint_writer(solver):
+        multistage_constraints(multistage_tuples, solver)
+
+    def multistage_constraints(working_multistage_tuples, solver):
+        if len(working_multistage_tuples) == 0:
+            return
+        stages_tuple = working_multistage_tuples[0]
+        for i in range(len(stages_tuple) - 1):
+            solver.add(Real(stages_tuple[i]) == Real(stages_tuple[i + 1]))
+        multistage_constraints(working_multistage_tuples[1:], solver)
+
+    return constraint_writer
 
 path = path_for_axis("x1", component_tree)
 cn_fn = constraint_function_for_path(path, "AXIS_X")
+multistage_tuples = list_multistage_axes_tuples(stages)
+ms_fn = constraint_function_for_multistages(multistage_tuples)
 s = Solver()
 cn_fn(s)
+ms_fn(s)
 
