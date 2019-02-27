@@ -1,4 +1,5 @@
 from collections import namedtuple
+from z3 import *
 
 program = """tool Pen:
     accepts (x, y)
@@ -111,14 +112,27 @@ def path_for_axis(axis, conn_tree):
             return ()
         return (conn_tree.name,) + viable_paths[0]
 
-def constraint_function_for_path(path):
+def constraint_function_for_path(full_path, axis):
     """
     Takes a tuple representing a tool -> stage path and returns a unary function
     that takes a z3 solver as an argument and adds constraints to the solver.
+    Note that the inner function is impure because it would be inefficient to
+    return a new solver with every iteration.
     """
-    # TODO: how to add constraint in inner fn body based on PATH?
     def constraint_writer(solver):
-        pass
+        pairwise_constraints(full_path, solver)
+
+    def pairwise_constraints(working_path, solver):
+        if len(working_path) == 0:
+            return
+        elif len(working_path) == 1:
+            solver.add(Real(working_path[0] + "_" + axis) \
+                    == Real(working_path[0] + "_mm"))
+        else:
+            solver.add(Real(working_path[0] + "_" + axis) \
+                            == Real(working_path[1] + "_" + axis))
+            pairwise_constraints(working_path[1:], solver)
+
     return constraint_writer
 
 def list_multistage_axes_tuples(stages):
@@ -147,5 +161,8 @@ def constraint_function_for_multistages(multistage_tuple):
     """
     pass
 
-print path_for_axis("x1", component_tree)
+path = path_for_axis("x1", component_tree)
+cn_fn = constraint_function_for_path(path, "AXIS_X")
+s = Solver()
+cn_fn(s)
 
