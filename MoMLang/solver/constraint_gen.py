@@ -216,8 +216,8 @@ def write_transfer_constraint(stage, solver):
     if stage.type == "linear":
         re_for_number = "\d+(\.\d+)?|\.\d+"
         mm_coeff = re.search(re_for_number, stage.transfer).group()
-        solver.add(Real(stage.name + "_mm") * mm_coeff
-                    == Real(stage.name + "_steps"))
+        solver.add(Real(stage.name + "_mm")
+                    == mm_coeff * Real(stage.name + "_steps"))
 
 path_x_axis = path_for_axis("x1", component_tree)
 path_y_axis = path_for_axis("y", component_tree)
@@ -232,6 +232,6 @@ cn_fn_y_axis(s)
 ms_fn(s)
 bases_fn(s)
 
-s.add(Real("Pen_AXIS_x" == Real(50)))
-s.add(Real("Pen_AXIS_y" == Real(30)))
+s.add(Real("Pen_AXIS_x") == 50)
+s.add(Real("Pen_AXIS_y") == 30)
 
