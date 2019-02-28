@@ -1,5 +1,6 @@
 from collections import namedtuple
 from z3 import *
+import re
 
 program = """tool Pen:
     accepts (x, y)
@@ -19,7 +20,7 @@ connections:
 """
 Node = namedtuple("Node", "name, axis, children")
 Tool = namedtuple("Tool", "name, accepts")
-Stage = namedtuple("Stage", "name, stage_type, axis")
+Stage = namedtuple("Stage", "name, type, axis, transfer")
 Connection = namedtuple("Connection", "from_stage, from_place, to_stage, to_place")
 
 def build_coomponent_tree(tool, connections, stages):
@@ -192,10 +193,31 @@ def constraint_function_for_base_stages(component_tree):
         if subtree_node.axis:
             solver.add(Real(subtree_node.name + "_" + subtree_node.axis) \
                                 == Real(subtree_node.name + "_mm"))
+            write_transfer_constraint(stage_from_node(subtree_node, stages), solver)
         for child_place_pair in subtree_node.children:
             subsubtree = child_place_pair[0]
             base_stage_constraints(subsubtree, solver)
+
     return constraint_writer
+
+def stage_from_node(node, stages):
+    """
+    Given NODE, find a stage in STAGES correspnding to the NODE.
+    Returns a stage or None if no stages is found.
+    """
+    return filter(lambda stage: stage.name == node.name, stages)[0]
+
+def write_transfer_constraint(stage, solver):
+    """
+    Given STAGE with some type, add a constraint to SOLVER for its
+    steps -> mm transfer function.
+    Note: this function is impure.
+    """
+    if stage.type == "linear":
+        re_for_number = "\d+(\.\d+)?|\.\d+"
+        mm_coeff = re.search(re_for_number, stage.transfer).group()
+        solver.add(Real(stage.name + "_mm") * mm_coeff
+                    == Real(stage.name + "_steps"))
 
 path_x_axis = path_for_axis("x1", component_tree)
 path_y_axis = path_for_axis("y", component_tree)
@@ -209,4 +231,7 @@ cn_fn_x_axis(s)
 cn_fn_y_axis(s)
 ms_fn(s)
 bases_fn(s)
+
+s.add(Real("Pen_AXIS_x" == Real(50)))
+s.add(Real("Pen_AXIS_y" == Real(30)))
 
