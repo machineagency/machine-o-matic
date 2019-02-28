@@ -6,11 +6,11 @@ program = """tool Pen:
 
 stages:
     linear y -> A(y):
-        step -> 0.696 mm
+        step -> 0.03048 mm
     linear x1 -> A(x):
-        step -> 0.696 mm
+        step -> 0.03048 mm
     linear x2 -> A(x):
-        step -> 0.696 mm
+        step -> 0.03048 mm
 
 connections:
     Pen -> y.platform
@@ -73,9 +73,9 @@ def axis_from_name(name, stages):
 tool = Tool("Pen", ("COORD_x", "COORD_y"))
 
 stages = [
-    Stage("y", "linear", "AXIS_y"),
-    Stage("x1", "linear", "AXIS_x"),
-    Stage("x2", "linear", "AXIS_x"),
+    Stage("y", "linear", "AXIS_y", "step -> 0.03048 mm"),
+    Stage("x1", "linear", "AXIS_x", "step -> 0.03048 mm"),
+    Stage("x2", "linear", "AXIS_x", "step -> 0.03048 mm"),
 ]
 
 connections = [
