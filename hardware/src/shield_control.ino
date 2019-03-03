@@ -19,8 +19,11 @@ AccelStepper yMotor(AccelStepper::DRIVER, YSTEP, YDIR);
 
 MultiStepper steppers;
 
+char read_c_string[32];
+
 void setup()
 {  
+    Serial.begin(9600);
     pinMode(8, OUTPUT); // Disable pin.
     digitalWrite(8, LOW);
     
@@ -38,8 +41,8 @@ void setup()
 
     long coords[2];
 
-    coords[0] = 1200;
-    coords[1] = 1200;
+    coords[0] = 0;
+    coords[1] = -4800;
     steppers.moveTo(coords);
     steppers.runSpeedToPosition(); // Blocks until all are in position
     delay(1000);
@@ -48,6 +51,15 @@ void setup()
 
 void loop()
 {
-
-
+//    Serial.println("Hello");
+//    delay(1000);
+//    while (!Serial.available()) {
+//      String read_arduino_string = Serial.readString();
+//      read_arduino_string.toCharArray(read_c_string, 32 + 1);
+//      Serial.println(read_arduino_string);
+//
+//      char *token;
+//      while ((token = strsep(&read_c_string[0], ",")) != NULL)
+//          printf("%s\n", token);
+//    }
 }
