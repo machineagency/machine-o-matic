@@ -219,12 +219,17 @@ def write_transfer_constraint(stage, solver):
         solver.add(Real(stage.name + "_mm")
                     == mm_coeff * Real(stage.name + "_steps"))
 
+def extract_axes(stages):
+    """
+    Given all stages, returns a tuple of all the distinct axes.
+    """
+    axes_set = frozenset([stage.axis for stage in stages])
+    return tuple(axes_set)
+
 class IKSolver():
-
-    @staticmethod
-    def __z3_real_to_rounded_int(real):
-        return int(real.as_decimal(0).split(".")[0])
-
+    """
+    This is the actual class that we return to the interpreter.
+    """
     @staticmethod
     def solve_ik(x_coord, y_coord):
         axes = extract_axes(stages)
@@ -233,24 +238,30 @@ class IKSolver():
         multistage_tuples = list_multistage_axes_tuples(stages)
         ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
         bases_fn = constraint_function_for_base_stages(component_tree)
+
         s = Solver()
-        cn_fn_x_axis(s)
-        cn_fn_y_axis(s)
+        for fn in path_constraint_fns:
+            fn(s)
         ms_fn(s)
         bases_fn(s)
 
+        # TODO: make this generic by constraining axes to args to this method
         s.add(Real("Pen_AXIS_x") == x_coord)
         s.add(Real("Pen_AXIS_y") == y_coord)
 
         try:
             s.check()
             model = s.model()
-            return { "y_steps": model[Real("y_steps")], \
-                "x1_steps": model[Real("x1_steps")], \
-                "x2_steps": model[Real("x2_steps")]
+            return { "y_steps": IKSolver.__z3_real_to_rounded_int(model[Real("y_steps")]), \
+                "x1_steps": IKSolver.__z3_real_to_rounded_int(model[Real("x1_steps")]), \
+                "x2_steps": IKSolver.__z3_real_to_rounded_int(model[Real("x2_steps")])
             }
         except Exception as e:
             print "Could not solve."
             print e
             return {}
+
+    @staticmethod
+    def __z3_real_to_rounded_int(real):
+        return int(real.as_decimal(0).split(".")[0])
 
