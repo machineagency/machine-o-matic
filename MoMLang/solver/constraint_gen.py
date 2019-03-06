@@ -101,7 +101,7 @@ def path_for_axis(axis, conn_tree):
     ("Pen", "y", "x2"). Note that if there are multiple nodes for some axis
     A, we can return any one of the nodes.
     """
-    if conn_tree.name == axis:
+    if conn_tree.axis == axis:
         return (conn_tree.name,)
     elif not conn_tree.children:
         return ()
@@ -227,10 +227,9 @@ class IKSolver():
 
     @staticmethod
     def solve_ik(x_coord, y_coord):
-        path_x_axis = path_for_axis("x1", component_tree)
-        path_y_axis = path_for_axis("y", component_tree)
-        cn_fn_x_axis = constraint_function_for_path(path_x_axis, "AXIS_x")
-        cn_fn_y_axis = constraint_function_for_path(path_y_axis, "AXIS_y")
+        axes = extract_axes(stages)
+        paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
+        path_constraint_fns = tuple(constraint_function_for_path(path, axis) for path, axis in zip(paths, axes))
         multistage_tuples = list_multistage_axes_tuples(stages)
         ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
         bases_fn = constraint_function_for_base_stages(component_tree)
