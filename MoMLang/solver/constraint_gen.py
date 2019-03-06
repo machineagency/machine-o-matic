@@ -219,19 +219,39 @@ def write_transfer_constraint(stage, solver):
         solver.add(Real(stage.name + "_mm")
                     == mm_coeff * Real(stage.name + "_steps"))
 
-path_x_axis = path_for_axis("x1", component_tree)
-path_y_axis = path_for_axis("y", component_tree)
-cn_fn_x_axis = constraint_function_for_path(path_x_axis, "AXIS_x")
-cn_fn_y_axis = constraint_function_for_path(path_y_axis, "AXIS_y")
-multistage_tuples = list_multistage_axes_tuples(stages)
-ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
-bases_fn = constraint_function_for_base_stages(component_tree)
-s = Solver()
-cn_fn_x_axis(s)
-cn_fn_y_axis(s)
-ms_fn(s)
-bases_fn(s)
+class IKSolver():
 
-s.add(Real("Pen_AXIS_x") == 50)
-s.add(Real("Pen_AXIS_y") == 30)
+    @staticmethod
+    def __z3_real_to_rounded_int(real):
+        return int(real.as_decimal(0).split(".")[0])
+
+    @staticmethod
+    def solve_ik(x_coord, y_coord):
+        path_x_axis = path_for_axis("x1", component_tree)
+        path_y_axis = path_for_axis("y", component_tree)
+        cn_fn_x_axis = constraint_function_for_path(path_x_axis, "AXIS_x")
+        cn_fn_y_axis = constraint_function_for_path(path_y_axis, "AXIS_y")
+        multistage_tuples = list_multistage_axes_tuples(stages)
+        ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
+        bases_fn = constraint_function_for_base_stages(component_tree)
+        s = Solver()
+        cn_fn_x_axis(s)
+        cn_fn_y_axis(s)
+        ms_fn(s)
+        bases_fn(s)
+
+        s.add(Real("Pen_AXIS_x") == x_coord)
+        s.add(Real("Pen_AXIS_y") == y_coord)
+
+        try:
+            s.check()
+            model = s.model()
+            return { "y_steps": model[Real("y_steps")], \
+                "x1_steps": model[Real("x1_steps")], \
+                "x2_steps": model[Real("x2_steps")]
+            }
+        except Exception as e:
+            print "Could not solve."
+            print e
+            return {}
 

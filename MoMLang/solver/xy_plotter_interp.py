@@ -1,5 +1,6 @@
 import sys, cmd
-from xy_plotter import xyPlotterSolver
+# from xy_plotter import xyPlotterSolver
+from constraint_gen import IKSolver
 
 class Interpreter(cmd.Cmd):
     intro = "Welcome to the interpreter."
@@ -65,7 +66,8 @@ class Interpreter(cmd.Cmd):
                     .format(coords, Interpreter.MIN_COORDS, Interpreter.MAX_COORDS)
         else:
             relative_coords = self.find_relative_coords(coords)
-            steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
+            # steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
+            steps = IKSolver.solve_ik(relative_coords[0], relative_coords[1])
             print steps
             step_succeeded = self.dipatch_steps(steps)
             if step_succeeded:
