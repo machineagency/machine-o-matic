@@ -1,5 +1,4 @@
 import sys, cmd
-# from xy_plotter import xyPlotterSolver
 from constraint_gen import MachineSolver
 
 class Interpreter(cmd.Cmd):
