@@ -11,6 +11,15 @@ class Interpreter(cmd.Cmd):
     MIN_COORDS = (0, 0)
     MAX_COORDS = (100, 100)
     NUM_AXES = 2
+    STAGE_NAMES = ("x1", "x2", "y")
+    # FIXME: physical motors need to be tied to electrical impulses
+    PHYS_MOTORS = ("PHYS_X", "PHYS_Y", "PHYS_Z", "PHYS_A")
+
+    def __init__(self):
+        # Need a call to the superclass's constructor to allo
+        # dictionary fields
+        cmd.Cmd.__init__(self)
+        self.map_motors()
 
     # COMMAND LINE METHODS #
 
@@ -25,6 +34,12 @@ class Interpreter(cmd.Cmd):
 
     def do_move(self, arg):
         self.move(Interpreter.parse_move_coords(arg))
+
+    def do_map(self, arg):
+        self.map_motors()
+
+    def do_getmap(self, arg):
+        print self.motor_map
 
     def do_bye(self, arg):
         print "Bye!"
@@ -75,6 +90,21 @@ class Interpreter(cmd.Cmd):
                 Interpreter.CURR_COORDS = coords
             else:
                 print "Tried to move, but couldn't."
+
+    def map_motors(self):
+        """
+        Go through the list of stages and press which physical motors represent
+        stage motors.
+        TODO: actually interface this with hardware
+        """
+        motor_map = {}
+        for stage in Interpreter.STAGE_NAMES:
+            user_str = raw_input("Which one is: " + stage + "?\n-> {0}\n ? "
+                                    .format(Interpreter.PHYS_MOTORS))
+            # TODO: sanitize and refuse if necessary
+            motor_map[stage] = user_str
+
+        self.motor_map = motor_map
 
     def dipatch_steps(self, steps):
         """
