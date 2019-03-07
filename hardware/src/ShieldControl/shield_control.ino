@@ -2,6 +2,7 @@
 #include "MultiStepper.h"
 #include "jsmn.h"
 #include "uthash.h"
+#include <ctype.h>
 
 // Assumes all steppers are configured identically with the following settings:
 // 0.9 Degree Steppers
@@ -16,9 +17,9 @@
 #define ZSTEP 4
 #define ZDIR 7
 
-AccelStepper xMotor(AccelStepper::DRIVER, XSTEP, XDIR);
-AccelStepper yMotor(AccelStepper::DRIVER, YSTEP, YDIR);
-AccelStepper zMotor(AccelStepper::DRIVER, ZSTEP, ZDIR);
+AccelStepper phys_x_motor(AccelStepper::DRIVER, XSTEP, XDIR);
+AccelStepper phys_y_motor(AccelStepper::DRIVER, YSTEP, YDIR);
+AccelStepper phys_z_motor(AccelStepper::DRIVER, ZSTEP, ZDIR);
 
 MultiStepper steppers;
 
@@ -32,8 +33,28 @@ int num_tok = 32;
 int num_tok_used = 0;
 jsmntok_t tokens[32];
 
-byte pgm_read_byte = 0;
+char token_string[32];
+
+char pgm_read_byte = 0;
 int num_open_braces = 0;
+
+void handle_move_inst(void);
+void handle_map_inst(void);
+
+void init_motor_map(void);
+
+struct stage_phys_pair {
+    char stage_name[16]; // KEY
+    char phys_name[16]; // VALUE
+    UT_hash_handle hh; // required for hashability
+};
+
+struct stage_phys_pair *motor_map = NULL;
+
+int INST_FIELD_IDX = 2;
+int STEPS_FIRST_TOK_IDX = 5;
+
+void set_substring(char *, char *, int, int);
 
 void setup()
 {
@@ -43,17 +64,17 @@ void setup()
 
     jsmn_init(&parser);
 
-    xMotor.setMaxSpeed(400.0);
-    xMotor.setAcceleration(200.0);
+    init_motor_map();
 
-    yMotor.setMaxSpeed(400.0);
-    yMotor.setAcceleration(200.0);
+    phys_x_motor.setMaxSpeed(400.0);
+    phys_x_motor.setAcceleration(200.0);
+    phys_y_motor.setMaxSpeed(400.0);
+    phys_y_motor.setAcceleration(200.0);
+    phys_z_motor.setMaxSpeed(400.0);
+    phys_z_motor.setAcceleration(200.0);
 
-    zMotor.setMaxSpeed(400.0);
-    zMotor.setAcceleration(200.0);
-
-    steppers.addStepper(xMotor);
-    steppers.addStepper(yMotor);
+    //steppers.addStepper(xMotor);
+    //steppers.addStepper(yMotor);
 
 //    yMotor.moveTo(1200);
 //    yMotor.run();
@@ -84,12 +105,12 @@ void loop()
             num_open_braces -= 1;
         }
 
-        if (num_open_braces == 0) {
+        if (num_open_braces == 0 && !isspace((int) pgm_read_byte)) {
             num_tok_used = jsmn_parse(&parser, receive_buffer, receive_buffer_idx + 1,
                         tokens, num_tok);
             Serial.print("Parsed # of tokens: ");
             Serial.println(num_tok_used);
-            // Serial.println(num_tok_used);
+            Serial.println(num_tok_used);
             for (int i = 0; i < num_tok_used - 1; i++) {
                 jsmntok_t curr_tok = tokens[i];
                 // Serial.println(curr_tok.type);
@@ -98,9 +119,52 @@ void loop()
                 }
                 Serial.println();
             }
+            Serial.print("INSTRUCTION: ");
+            set_substring(token_string, receive_buffer,
+                            tokens[INST_FIELD_IDX].start, tokens[INST_FIELD_IDX].end);
+            Serial.println(token_string);
+
+            if(strcmp(token_string, "move")) {
+                handle_move_inst();
+            }
+
             memset(receive_buffer, 0, sizeof receive_buffer);
             receive_buffer_idx = 0;
         }
+    }
+}
+
+/* TODO: un-hardcode this. */
+void init_motor_map(void) {
+    struct stage_phys_pair *x1_pair;
+    x1_pair = malloc(sizeof(struct stage_phys_pair));
+    x1_pair->stage_name = "x1";
+    x1_pair->phys_motor = phys_x_motor;
+    HASH_ADD_STR(motor_map, "x1", x1_pair);
+
+    struct stage_phys_pair *x2_pair;
+    x2_pair = malloc(sizeof(struct stage_phys_pair));
+    x2_pair->stage_name = "x2";
+    x2_pair->phys_motor = phys_y_motor;
+    HASH_ADD_STR(motor_map, "x2", x2_pair);
+
+    struct stage_phys_pair *y_pair;
+    y_pair = malloc(sizeof(struct stage_phys_pair));
+    y_pair->stage_name = "y";
+    y_pair->phys_motor = phys_z_motor;
+    HASH_ADD_STR(motor_map, "y", y_pair);
+}
+
+void set_substring(char *substr, char *str, int begins, int ends) {
+    int sub_idx = 0;
+    for (int s_idx = begins; s_idx < ends; s_idx++) {
+        substr[sub_idx++] = str[s_idx];
+    }
+    substr[sub_idx] = '\0';
+}
+
+void handle_move_inst(void) {
+    for (int i = STEPS_FIRST_TOK_IDX; i < num_tok_used - 1; i++) {
     }
 }
 
