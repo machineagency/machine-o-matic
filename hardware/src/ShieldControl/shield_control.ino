@@ -1,7 +1,6 @@
 #include "AccelStepper.h"
 #include "MultiStepper.h"
 #include "jsmn.h"
-#include "uthash.h"
 #include <ctype.h>
 
 // Assumes all steppers are configured identically with the following settings:
@@ -41,15 +40,11 @@ int num_open_braces = 0;
 void handle_move_inst(void);
 void handle_map_inst(void);
 
-void init_motor_map(void);
-
-struct stage_phys_pair {
-    char stage_name[16]; // KEY
-    char phys_name[16]; // VALUE
-    UT_hash_handle hh; // required for hashability
-};
-
-struct stage_phys_pair *motor_map = NULL;
+const char* stage_names[3] = { "x1", "x2", "y" };
+AccelStepper phys_motors[3] = { phys_x_motor, phys_y_motor, phys_z_motor };
+// TODO: un-hardcode mapping
+// index is stage index, value at index is physical index
+int stage_phys_map[3] = { 0, 1, 2 };
 
 int INST_FIELD_IDX = 2;
 int STEPS_FIRST_TOK_IDX = 5;
@@ -63,8 +58,6 @@ void setup()
     digitalWrite(8, LOW);
 
     jsmn_init(&parser);
-
-    init_motor_map();
 
     phys_x_motor.setMaxSpeed(400.0);
     phys_x_motor.setAcceleration(200.0);
@@ -132,27 +125,6 @@ void loop()
             receive_buffer_idx = 0;
         }
     }
-}
-
-/* TODO: un-hardcode this. */
-void init_motor_map(void) {
-    struct stage_phys_pair *x1_pair;
-    x1_pair = malloc(sizeof(struct stage_phys_pair));
-    x1_pair->stage_name = "x1";
-    x1_pair->phys_motor = phys_x_motor;
-    HASH_ADD_STR(motor_map, "x1", x1_pair);
-
-    struct stage_phys_pair *x2_pair;
-    x2_pair = malloc(sizeof(struct stage_phys_pair));
-    x2_pair->stage_name = "x2";
-    x2_pair->phys_motor = phys_y_motor;
-    HASH_ADD_STR(motor_map, "x2", x2_pair);
-
-    struct stage_phys_pair *y_pair;
-    y_pair = malloc(sizeof(struct stage_phys_pair));
-    y_pair->stage_name = "y";
-    y_pair->phys_motor = phys_z_motor;
-    HASH_ADD_STR(motor_map, "y", y_pair);
 }
 
 void set_substring(char *substr, char *str, int begins, int ends) {
