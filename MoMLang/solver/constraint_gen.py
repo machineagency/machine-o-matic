@@ -219,7 +219,7 @@ def write_transfer_constraint(stage, solver):
         solver.add(Real(stage.name + "_mm")
                     == mm_coeff * Real(stage.name + "_steps"))
 
-class IKSolver():
+class MachineSolver():
     """
     This is the actual class that we return to the interpreter.
     """
@@ -263,4 +263,14 @@ class IKSolver():
     @staticmethod
     def __z3_real_to_rounded_int(real):
         return int(real.as_decimal(0).split(".")[0])
+
+    # FIXME: need a way of passing config to interpreter without relying
+    # on global variables
+    @staticmethod
+    def get_machine_stage_names():
+        return tuple(stage.name for stage in stages)
+
+    @staticmethod
+    def get_machine_axes():
+        return tool.accepts
 
