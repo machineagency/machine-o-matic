@@ -40,6 +40,7 @@ int num_open_braces = 0;
 void handle_move_inst(void);
 void handle_map_inst(void);
 
+int num_stages = 3;
 const char* stage_names[3] = { "x1", "x2", "y" };
 AccelStepper phys_motors[3] = { phys_x_motor, phys_y_motor, phys_z_motor };
 // TODO: un-hardcode mapping
@@ -136,7 +137,7 @@ void set_substring(char *substr, char *str, int begins, int ends) {
 }
 
 void handle_move_inst(void) {
-    for (int i = STEPS_FIRST_TOK_IDX; i < num_tok_used - 1; i++) {
+    for (int i = STEPS_FIRST_TOK_IDX; i < num_tok_used - 1; i += 2) {
     }
 }
 

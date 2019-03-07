@@ -252,7 +252,7 @@ class MachineSolver():
             model = s.model()
             stage_steps = tuple(stage.name + "_steps" for stage in stages)
             return {
-                stage_step: IKSolver.__z3_real_to_rounded_int(model[Real(stage_step)]) \
+                stage_step: MachineSolver.__z3_real_to_rounded_int(model[Real(stage_step)]) \
                     for stage_step in stage_steps
             }
         except Exception as e:
