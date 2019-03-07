@@ -1,6 +1,7 @@
 #include "AccelStepper.h"
 #include "MultiStepper.h"
 #include "jsmn.h"
+#include "uthash.h"
 
 // Assumes all steppers are configured identically with the following settings:
 // 0.9 Degree Steppers
@@ -17,20 +18,22 @@
 
 AccelStepper xMotor(AccelStepper::DRIVER, XSTEP, XDIR);
 AccelStepper yMotor(AccelStepper::DRIVER, YSTEP, YDIR);
+AccelStepper zMotor(AccelStepper::DRIVER, ZSTEP, ZDIR);
 
 MultiStepper steppers;
 
-char receive_buffer[255];
-byte receive_buffer_idx = 0;
+char receive_buffer[512];
+int receive_buffer_idx = 0;
 size_t bytes_to_read = 0;
 size_t num_bytes_read = 0;
 
 jsmn_parser parser;
-byte num_tok = 10;
-byte num_tok_used = 0;
-jsmntok_t tokens[10];
+int num_tok = 32;
+int num_tok_used = 0;
+jsmntok_t tokens[32];
 
 byte pgm_read_byte = 0;
+int num_open_braces = 0;
 
 void setup()
 {
@@ -46,6 +49,9 @@ void setup()
     yMotor.setMaxSpeed(400.0);
     yMotor.setAcceleration(200.0);
 
+    zMotor.setMaxSpeed(400.0);
+    zMotor.setAcceleration(200.0);
+
     steppers.addStepper(xMotor);
     steppers.addStepper(yMotor);
 
@@ -60,6 +66,8 @@ void setup()
     // steppers.runSpeedToPosition(); // Blocks until all are in position
     // delay(1000);
 
+    Serial.println("Hello! I am the motor hub.");
+
 }
 
 void loop()
@@ -68,14 +76,23 @@ void loop()
         pgm_read_byte = Serial.read();
         receive_buffer[receive_buffer_idx++] = pgm_read_byte;
         Serial.println(receive_buffer);
+
+        if (pgm_read_byte == '{') {
+            num_open_braces += 1;
+        }
         if (pgm_read_byte == '}') {
+            num_open_braces -= 1;
+        }
+
+        if (num_open_braces == 0) {
             num_tok_used = jsmn_parse(&parser, receive_buffer, receive_buffer_idx + 1,
                         tokens, num_tok);
-            Serial.println("Parsed!");
+            Serial.print("Parsed # of tokens: ");
+            Serial.println(num_tok_used);
             // Serial.println(num_tok_used);
             for (int i = 0; i < num_tok_used - 1; i++) {
                 jsmntok_t curr_tok = tokens[i];
-                Serial.println(curr_tok.type);
+                // Serial.println(curr_tok.type);
                 for (int j = curr_tok.start; j < curr_tok.end; j++) {
                     Serial.print(receive_buffer[j]);
                 }
