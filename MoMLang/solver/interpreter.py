@@ -1,5 +1,5 @@
 import sys, cmd
-from constraint_gen import MachineSolver
+from machine_solver import MachineSolver
 
 class Interpreter(cmd.Cmd):
     intro = "Welcome to the interpreter."
