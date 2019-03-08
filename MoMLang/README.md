@@ -1,56 +1,65 @@
-# Machine-o-Matic Language
+# MoM Domain Specific Language
 
-Compile with
+This directory contains files 
 
-`sbt compile`
+`_archived`: old Scala implementation of MoM
+`solver`: current Python implementation.
 
-For now, try writing your own program in `App.scala` and parsing it. Run it with
+## Usage as of 2019_03_08
 
-`sbt run`
+Go to the `solver/` directory and then open `machine_solver.py` and manually construct the AST e.g. the program:
 
-## Machine-o-Matic Grammar
+```
+tool Pen:
+    accepts (x, y)
 
-*program* :: *mblock* *pblock*
+stages:
+    linear y -> A(y):
+        step -> 0.03048 mm
+    linear x1 -> A(x):
+        step -> 0.03048 mm
+    linear x2 -> A(x):
+        step -> 0.03048 mm
 
-*mblock* ::= Machine *identifier* {[*mbody*]}
+connections:
+    Pen -> y.platform
+    y.left -> x1.platform
+    y.right -> x2.platform
+```
 
-*pblock* ::= Program *identifier* {[*pbody*]}
+when parsed, corresponds to the AST:
 
-*mbody* ::= tool *identifier* {[*tbody*]} stages {[(*sstat*) \*]} connections {[(*cstat*) \*]}
+```
+# AST = (tool, stages, connections)
 
-*tbody* ::= *staccept* *stposition* [(*motordef*)\*] [(*actiondef*)\*]
+tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
 
-*sstat* ::= ((linear | rotary) stage *identifier*)\*
+stages = [
+    Stage("y", "linear", "AXIS_y", "step -> 0.03048 mm"),
+    Stage("x1", "linear", "AXIS_x", "step -> 0.03048 mm"),
+    Stage("x2", "linear", "AXIS_x", "step -> 0.03048 mm"),
+]
 
-*cstat* ::= {*connection* connectsto *connection*}
+connections = [
+    Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
+    Connection("Pen", "TOOL_CONNECT", "y", "platform"),
+    Connection("y", "left", "x1", "platform"),
+    Connection("y", "right", "x2", "platform")
+]
+```
 
-*connection* ::= *identifier*.*side* | *identifier* | SURFACE *directional*
+Because I have not yet implemented an updated parser, you will have to construct the AST yourself for now.
 
-*directional* ::= ABOVE | BELOW | LEFT | RIGHT | FRONT | BACK
+Once you create the AST, run:
 
-*side* ::= leftEdge | rightEdge | left | middle | right | platform
+`$ python machine_solver.py`
 
-*staccept* ::= accepts([(*char*,)\* *char*])
+Assuming that goes okay, run:
 
-*stposition* ::= position *directional*
+`$ python interpreter.py`
 
-*motordef* :: motor *identifier*
+You should get a prompt where you can type in `move` instructions, e.g.
 
-*actiondef* ::= action *identifier* {[*actiondefbody*]}
+`machine > move 10 10`
 
-*actiondefbody* :: = *identifier*.forward() | *identifier*.reverse() | *identifier*.stop() | *identifier*.start()
-
-*pbody* ::= *pointsdef* [{ *actioncall* | *stdraw* }]
-
-*pointsdef* ::= points *identifier* source *filepath*
-                | points *identifier* [ (([(*char*,)\*] *char*))\* ]
-
-*actioncall* ::= *identifier*.*identifier*()
-
-*stdraw* ::= draw *identifier*
-
-*char* ::= {a | ... | b}
-
-*identifier* ::= < Java identifier >
-
-*stringliteral* ::= < Java string literal >
+Which moves the tool to $(10, 10)$. The number of arguments that the move instruction takes corresponds to the number of arguments in the `accepts` statement.
