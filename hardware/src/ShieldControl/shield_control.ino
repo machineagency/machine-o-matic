@@ -70,10 +70,10 @@ void setup()
     //steppers.addStepper(xMotor);
     //steppers.addStepper(yMotor);
 
-//    yMotor.moveTo(1200);
-//    yMotor.run();
+    // yMotor.moveTo(1200);
+    // yMotor.run();
 
-    long coords[2];
+    // long coords[2];
 
     // coords[0] = -400;
     // coords[1] = 400;
@@ -118,7 +118,7 @@ void loop()
                             tokens[INST_FIELD_IDX].start, tokens[INST_FIELD_IDX].end);
             Serial.println(token_string);
 
-            if(strcmp(token_string, "move")) {
+            if(!strcmp(token_string, "move")) {
                 handle_move_inst();
             }
 
@@ -126,6 +126,15 @@ void loop()
             receive_buffer_idx = 0;
         }
     }
+}
+
+int str_index_of(char *cand_str, char **str_arr, int arr_len) {
+    for (int i = 0; i < arr_len; i += 1) {
+        if (!strcmp(str_arr[i], cand_str)) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void set_substring(char *substr, char *str, int begins, int ends) {
@@ -137,7 +146,25 @@ void set_substring(char *substr, char *str, int begins, int ends) {
 }
 
 void handle_move_inst(void) {
+    Serial.println("Handling move command.");
     for (int i = STEPS_FIRST_TOK_IDX; i < num_tok_used - 1; i += 2) {
+        set_substring(token_string, receive_buffer,
+                        tokens[i].start, tokens[i].end);
+        Serial.print(token_string);
+        Serial.print("->");
+
+        int stage_idx = str_index_of(token_string, (char **) stage_names, num_stages);
+        if (stage_idx == -1) {
+            Serial.println("Error: could not find stage.");
+        }
+        int phys_motor_idx = stage_phys_map[stage_idx];
+        AccelStepper motor_to_spin = phys_motors[phys_motor_idx];
+
+        set_substring(token_string, receive_buffer,
+                        tokens[i + 1].start, tokens[i + 1].end);
+        Serial.print(token_string);
+        Serial.print(": ");
+        Serial.println(phys_motor_idx);
     }
 }
 
