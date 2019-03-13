@@ -61,6 +61,13 @@ void loop() {
         const char *inst = root["inst"];
         Serial.println(inst);
 
+        JsonObject& steps = root["steps"];
+
+        for (auto kv : steps) {
+            Serial.println(kv.key);
+            Serial.println(kv.value.as<char*>());
+        }
+
         free(json_str);
 
     }
