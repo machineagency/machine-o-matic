@@ -20,6 +20,15 @@ AccelStepper phys_x_motor(AccelStepper::DRIVER, XSTEP, XDIR);
 AccelStepper phys_y_motor(AccelStepper::DRIVER, YSTEP, YDIR);
 AccelStepper phys_z_motor(AccelStepper::DRIVER, ZSTEP, ZDIR);
 
+const int NUM_STAGES = 3;
+String stage_names[3] = { "x1", "x2", "y" };
+AccelStepper *phys_motors[3] = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
+// TODO: un-hardcode mapping
+// index is stage index, value at index is physical index
+int stage_to_phys[3] = { 0, 1, 2 };
+
+int string_index_of(String, String *, int);
+
 void setup() {
     Serial.begin(9600);
     pinMode(8, OUTPUT); // Disable pin.
@@ -63,12 +72,35 @@ void loop() {
 
         JsonObject& steps = root["steps"];
 
-        for (auto kv : steps) {
-            Serial.println(kv.key);
-            Serial.println(kv.value.as<char*>());
+        MultiStepper steppers;
+        long motor_steps[NUM_STAGES];
+        int step_idx = 0;
+
+        for (auto stage_step : steps) {
+            Serial.println(stage_step.key);
+            Serial.println(stage_step.value.as<char*>());
+            int stage_idx = string_index_of(stage_step.key, stage_names, NUM_STAGES);
+            if (stage_idx >= 0) {
+                int phys_motor_idx = stage_to_phys[stage_idx];
+                steppers.addStepper(*phys_motors[phys_motor_idx]);
+                motor_steps[step_idx++] = stage_step.value.as<long>();
+            }
         }
+
+        steppers.moveTo(motor_steps);
+        steppers.runSpeedToPosition(); // Blocks until all are in position
 
         free(json_str);
 
     }
 }
+
+int string_index_of(String candidate, String strings[], int num_strings) {
+    for (int i = 0; i < num_strings; i += 1) {
+        if (candidate.compareTo(strings[i])) {
+            return i;
+        }
+    }
+    return -1;
+}
+
