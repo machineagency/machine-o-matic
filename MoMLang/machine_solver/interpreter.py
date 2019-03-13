@@ -17,11 +17,6 @@ class Interpreter(cmd.Cmd):
                         in MachineSolver.get_machine_axes())
     NUM_AXES = len(CLEAN_AXES)
     STAGE_NAMES = MachineSolver.get_machine_stage_names()
-    # FIXME: physical motors need to be tied to electrical impulses
-    PHYS_MOTORS = ("PHYS_X", "PHYS_Y", "PHYS_Z", "PHYS_A")
-
-    # Set the class variable with the static map method
-    # MOTOR_MAP = {}
 
     # Uncomment the line below for debugging
     MOTOR_MAP = {'y': 'PHYS_X', 'x2': 'PHYS_Z', 'x1': 'PHYS_Y'}
