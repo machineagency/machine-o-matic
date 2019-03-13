@@ -7,7 +7,8 @@ class Interpreter(cmd.Cmd):
     prompt = "machine > "
 
     # Serial port
-    PORT = serial.Serial("/dev/tty.usbmodem14101")
+    DEFAULT_PORT = "/dev/tty.usbmodem14101"
+    PORT = None
 
     CURR_COORDS = (0, 0)
 
@@ -25,6 +26,10 @@ class Interpreter(cmd.Cmd):
     # Uncomment the line below for debugging
     MOTOR_MAP = {'y': 'PHYS_X', 'x2': 'PHYS_Z', 'x1': 'PHYS_Y'}
     PHYS_MOTOR_NUMS = { 'PHYS_X': 0, 'PHYS_Y': 1, 'PHYS_Z': 2 }
+
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        Interpreter.PORT = Interpreter.make_open_port(self.DEFAULT_PORT)
 
     # COMMAND LINE METHODS #
 
@@ -45,6 +50,9 @@ class Interpreter(cmd.Cmd):
 
     def do_getmap(self, arg):
         print Interpreter.MOTOR_MAP
+
+    def do_connect(self, arg):
+        Interpreter.PORT = Interpreter.make_open_port(arg)
 
     def do_bye(self, arg):
         print "Bye!"
@@ -134,6 +142,18 @@ class Interpreter(cmd.Cmd):
         except Exception as e:
             print e
             return False
+
+    @staticmethod
+    def make_open_port(port):
+        try:
+            ser = serial.Serial()
+            ser.port = port
+            ser.open()
+            print "Connected to {0}".format(Interpreter.PORT.port)
+            return ser
+        except OSError as e:
+            print "Could not connect to port: {0}".format(e)
+            return None
 
 Interpreter().cmdloop()
 
