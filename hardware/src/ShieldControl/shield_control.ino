@@ -16,31 +16,35 @@
 #define ZSTEP 4
 #define ZDIR 7
 
-AccelStepper phys_x_motor(AccelStepper::DRIVER, XSTEP, XDIR);
-AccelStepper phys_y_motor(AccelStepper::DRIVER, YSTEP, YDIR);
-AccelStepper phys_z_motor(AccelStepper::DRIVER, ZSTEP, ZDIR);
-
 const int NUM_STAGES = 3;
 String stage_names[3] = { "x1", "x2", "y" };
-AccelStepper *phys_motors[3] = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
+AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
 // TODO: un-hardcode mapping
 // index is stage index, value at index is physical index
 int stage_to_phys[3] = { 0, 1, 2 };
 
 int string_index_of(String, String *, int);
 AccelStepper& get_phys_motor(String, String *);
+void test_motors(void);
+void zero_motors(void);
+
+// TODO: send from interpreter, don't hardcode
+int MS_FACTOR = 4;
+float SPEED = 100.0;
 
 void setup() {
     Serial.begin(9600);
     pinMode(8, OUTPUT); // Disable pin.
     digitalWrite(8, LOW);
 
-    phys_x_motor.setMaxSpeed(400.0);
-    phys_x_motor.setAcceleration(200.0);
-    phys_y_motor.setMaxSpeed(400.0);
-    phys_y_motor.setAcceleration(200.0);
-    phys_z_motor.setMaxSpeed(400.0);
-    phys_z_motor.setAcceleration(200.0);
+    phys_motors[0] = AccelStepper(AccelStepper::DRIVER, XSTEP, XDIR);
+    phys_motors[1] = AccelStepper(AccelStepper::DRIVER, YSTEP, YDIR);
+    phys_motors[2] = AccelStepper(AccelStepper::DRIVER, ZSTEP, ZDIR);
+
+    for (int i = 0; i < NUM_STAGES; i++) {
+        phys_motors[i].setMaxSpeed(MS_FACTOR * SPEED);
+        phys_motors[i].setAcceleration(MS_FACTOR * SPEED / 2.0);
+    }
 
     // Uncomment to test motors
     // test_motors();
@@ -69,23 +73,23 @@ void loop() {
         }
 
         const char *inst = root["inst"];
-        Serial.println(inst);
 
         JsonObject& steps = root["steps"];
 
-        MultiStepper steppers;
-        long motor_steps[NUM_STAGES];
-        int step_idx = 0;
+        if (strcmp("move", inst) == 0) {
+            MultiStepper steppers;
+            long motor_steps[NUM_STAGES];
+            int step_idx = 0;
 
-        for (auto stage_step : steps) {
-            Serial.println(stage_step.key);
-            Serial.println(stage_step.value.as<char*>());
-            steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
-            motor_steps[step_idx++] = stage_step.value.as<long>();
+            for (auto stage_step : steps) {
+                steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
+                motor_steps[step_idx++] = MS_FACTOR * stage_step.value.as<long>();
+            }
+
+            steppers.moveTo(motor_steps);
+            steppers.runSpeedToPosition(); // Blocks until all are in position
+            zero_motors();
         }
-
-        steppers.moveTo(motor_steps);
-        steppers.runSpeedToPosition(); // Blocks until all are in position
 
         free(json_str);
 
@@ -103,14 +107,32 @@ int string_index_of(String candidate, String strings[], int num_strings) {
 
 AccelStepper& get_phys_motor(String stage_name, String *stage_names) {
     int stage_idx = string_index_of(stage_name, stage_names, NUM_STAGES);
-    Serial.println(stage_idx);
     if (stage_idx == -1) {
         Serial.println("Error: cannot find stage");
-        return *phys_motors[0];
+        return phys_motors[0];
     }
     int phys_motor_idx = stage_to_phys[stage_idx];
-    Serial.println(phys_motor_idx);
-    Serial.println("---");
-    return *phys_motors[phys_motor_idx];
+    return phys_motors[phys_motor_idx];
+}
+
+void test_motors(void) {
+    long coords0[3] = { 4 * 328, 4 * 328, 0 };
+    long coords1[3] = { 4 * -328, 4 * -328, 0 };
+    MultiStepper steppers;
+    for (int i = 0; i < NUM_STAGES; i += 1) {
+        steppers.addStepper(phys_motors[i]);
+    }
+    steppers.moveTo(coords0);
+    steppers.runSpeedToPosition();
+    zero_motors();
+    steppers.moveTo(coords1);
+    steppers.runSpeedToPosition();
+    zero_motors();
+}
+
+void zero_motors(void) {
+    for (int i = 0; i < NUM_STAGES; i += 1) {
+        phys_motors[i].setCurrentPosition(0);
+    }
 }
 
