@@ -28,6 +28,7 @@ AccelStepper *phys_motors[3] = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
 int stage_to_phys[3] = { 0, 1, 2 };
 
 int string_index_of(String, String *, int);
+AccelStepper& get_phys_motor(String, String *);
 
 void setup() {
     Serial.begin(9600);
@@ -79,12 +80,8 @@ void loop() {
         for (auto stage_step : steps) {
             Serial.println(stage_step.key);
             Serial.println(stage_step.value.as<char*>());
-            int stage_idx = string_index_of(stage_step.key, stage_names, NUM_STAGES);
-            if (stage_idx >= 0) {
-                int phys_motor_idx = stage_to_phys[stage_idx];
-                steppers.addStepper(*phys_motors[phys_motor_idx]);
-                motor_steps[step_idx++] = stage_step.value.as<long>();
-            }
+            steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
+            motor_steps[step_idx++] = stage_step.value.as<long>();
         }
 
         steppers.moveTo(motor_steps);
@@ -97,10 +94,23 @@ void loop() {
 
 int string_index_of(String candidate, String strings[], int num_strings) {
     for (int i = 0; i < num_strings; i += 1) {
-        if (candidate.compareTo(strings[i])) {
+        if (!candidate.compareTo(strings[i])) {
             return i;
         }
     }
     return -1;
+}
+
+AccelStepper& get_phys_motor(String stage_name, String *stage_names) {
+    int stage_idx = string_index_of(stage_name, stage_names, NUM_STAGES);
+    Serial.println(stage_idx);
+    if (stage_idx == -1) {
+        Serial.println("Error: cannot find stage");
+        return *phys_motors[0];
+    }
+    int phys_motor_idx = stage_to_phys[stage_idx];
+    Serial.println(phys_motor_idx);
+    Serial.println("---");
+    return *phys_motors[phys_motor_idx];
 }
 
