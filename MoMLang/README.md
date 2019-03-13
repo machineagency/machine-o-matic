@@ -3,6 +3,7 @@
 This directory contains files 
 
 `_archived`: old Scala implementation of MoM
+
 `solver`: current Python implementation.
 
 ## Usage as of 2019_03_08
@@ -62,4 +63,4 @@ You should get a prompt where you can type in `move` instructions, e.g.
 
 `machine > move 10 10`
 
-Which moves the tool to $(10, 10)$. The number of arguments that the move instruction takes corresponds to the number of arguments in the `accepts` statement.
+Which moves the tool to (10, 10). The number of arguments that the move instruction takes corresponds to the number of arguments in the `accepts` statement.
