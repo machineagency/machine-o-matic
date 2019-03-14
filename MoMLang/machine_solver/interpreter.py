@@ -147,7 +147,7 @@ class Interpreter(cmd.Cmd):
             ser = serial.Serial()
             ser.port = port
             ser.open()
-            print "Connected to {0}".format(Interpreter.PORT.port)
+            print "Connected to {0}".format(port)
             return ser
         except OSError as e:
             print "Could not connect to port: {0}".format(e)
