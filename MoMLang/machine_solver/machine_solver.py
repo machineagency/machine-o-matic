@@ -1,6 +1,7 @@
 from collections import namedtuple
 from z3 import *
-import re
+import re, sys
+from parser import MoMParser
 
 program = """tool Pen:
     accepts (x, y)
@@ -87,23 +88,26 @@ def axis_from_name(name, stages):
 #     Connection("y", "right", "x2", "platform")
 # ]
 
-tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
+# tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
+#
+# stages = [
+#     Stage("c", "rotary", "AXIS_theta", "step -> 0.03048 mm"),
+#     Stage("l", "linear", "AXIS_r", "step -> 0.005 deg"),
+# ]
+#
+# connections = [
+#     Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
+#     Connection("Pen", "TOOL_CONNECT", "l", "platform"),
+#     Connection("l", "center", "c", "platform"),
+# ]
 
-stages = [
-    Stage("c", "rotary", "AXIS_theta", "step -> 0.03048 mm"),
-    Stage("l", "linear", "AXIS_r", "step -> 0.005 deg"),
-]
-
-connections = [
-    Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
-    Connection("Pen", "TOOL_CONNECT", "l", "platform"),
-    Connection("l", "center", "c", "platform"),
-]
+file_to_parse = sys.argv[1] if sys.argv[1] else "test.mom"
+ast = MoMParser.parse(file_to_parse)
 
 # Lower the AST into a component tree
 # TODO: handle the case where we have multiple trees among connections
 # This would be done by having the envelope as the root
-component_tree = build_coomponent_tree(tool, connections, stages)
+component_tree = build_coomponent_tree(ast.tool, ast.connections, ast.stages)
 
 # Crawl the tree and generate constraints
 
@@ -164,7 +168,7 @@ def from_cartesian_coord_transform_constraint(stages):
     unless those coordinates match the stage coordinates e.g. accepts polar
     coordinates, stages use polar coordinates.
     """
-    t = tool.name
+    t = ast.tool.name
     # Define transform constraint functions
     # FIXME: uses small angle approximations
     def cartestian_to_polar_constraint(solver):
@@ -177,7 +181,7 @@ def from_cartesian_coord_transform_constraint(stages):
         pass
 
     stage_axes = get_stage_axes_set(stages)
-    accepts_axes = frozenset(tool.accepts)
+    accepts_axes = frozenset(ast.tool.accepts)
 
     if (stage_axes == accepts_axes):
         return noop_constraint
@@ -238,7 +242,7 @@ def constraint_function_for_multistages(multistage_tuples, stages):
 
     return constraint_writer
 
-def constraint_function_for_base_stages(component_tree):
+def constraint_function_for_base_stages(stages, component_tree):
     """
     Writes constraints relating the motor position of any stage to the axis
     it controls.
@@ -296,15 +300,15 @@ class MachineSolver():
         # Write constraints based on component tree
         # NOTE: use the stage axes, not the accept axes. Generate a transform
         # Into the accepts axes (possibly cartesian if needed)
-        axes = get_stage_axes_set(stages)
+        axes = get_stage_axes_set(ast.stages)
         paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
-        coord_trans_constraint = from_cartesian_coord_transform_constraint(stages)
+        coord_trans_constraint = from_cartesian_coord_transform_constraint(ast.stages)
 
         path_constraint_fns = tuple(constraint_function_for_path(path, axis) \
                                 for path, axis in zip(paths, axes))
-        multistage_tuples = list_multistage_axes_tuples(stages)
-        ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
-        bases_fn = constraint_function_for_base_stages(component_tree)
+        multistage_tuples = list_multistage_axes_tuples(ast.stages)
+        ms_fn = constraint_function_for_multistages(multistage_tuples, ast.stages)
+        bases_fn = constraint_function_for_base_stages(ast.stages, component_tree)
 
         # Instantiate solver and add constraints from above
         s = Solver()
@@ -317,15 +321,16 @@ class MachineSolver():
         # Add goal tool axis constraints e.g.
         # Pen_AXIS_x = 10
         for idx, coord in enumerate(coords):
-            s.add(Real(tool.name + "_" + tool.accepts[idx]) == coord)
+            s.add(Real(ast.tool.name + "_" + ast.tool.accepts[idx]) == coord)
 
         try:
             s.check()
             model = s.model()
 
-            print s
-            print s.model()
-            stage_steps = tuple(stage.name + "_steps" for stage in stages)
+            # print s
+            #print s.model()
+
+            stage_steps = tuple(stage.name + "_steps" for stage in ast.stages)
             return {
                 stage_step: MachineSolver.__z3_real_to_rounded_int(model[Real(stage_step)]) \
                     for stage_step in stage_steps
@@ -343,9 +348,9 @@ class MachineSolver():
     # on global variables
     @staticmethod
     def get_machine_stage_names():
-        return tuple(stage.name for stage in stages)
+        return tuple(stage.name for stage in ast.stages)
 
     @staticmethod
     def get_machine_axes():
-        return tool.accepts
+        return ast.tool.accepts
 

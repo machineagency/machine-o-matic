@@ -34,19 +34,19 @@ def first_word(tokens):
     return tokens[0]
 
 def tool_name(tokens):
-    return tokens[0]
+    return tokens[1].replace(":", "")
 
 def accepts_tuple(tokens):
     lst = tokens[1:]
     lst = map(lambda s: s.replace("(", ""), lst)
     lst = map(lambda s: s.replace(")", ""), lst)
     lst = map(lambda s: s.replace(",", ""), lst)
-    return tuple(lst)
+    return tuple("AXIS_" + letter for letter in lst)
 
 def stage_name_type_axis(tokens):
     name = tokens[1]
     ttype = tokens[0]
-    axis = re.search("[a-z]", tokens[3]).group()
+    axis = "AXIS_" + re.search("\((.*?)\)", tokens[3]).group(1)
     return (name, ttype, axis)
 
 def connection_tuple_from_string(string):
@@ -60,27 +60,36 @@ def connection_tuple_from_string(string):
     flattened = [item for sublist in stage_places for item in sublist]
     return tuple(flattened)
 
-name = tool_name(tokenize(nl(f)))
-accepts = accepts_tuple(tokenize(nl(f)))
-tool = Tool(name, accepts)
+class MoMParser():
 
-while nl(f) == "\n":
-    pass
+    @staticmethod
+    def parse(filename):
+        f = open(filename)
+        name = tool_name(tokenize(nl(f)))
+        accepts = accepts_tuple(tokenize(nl(f)))
+        tool = Tool(name, accepts)
 
-while peek_line(f) != "\n":
-    nta = stage_name_type_axis(tokenize(nl(f)))
-    transfer = nl(f).strip()
-    stage = Stage(nta[0], nta[1], nta[2], transfer)
-    stages.append(stage)
+        while nl(f) == "\n":
+            pass
 
-while nl(f) == "\n":
-    pass
+        while peek_line(f) != "\n":
+            nta = stage_name_type_axis(tokenize(nl(f)))
+            transfer = nl(f).strip()
+            stage = Stage(nta[0], nta[1], nta[2], transfer)
+            stages.append(stage)
 
-while peek_line(f) != "\n":
-    tp = connection_tuple_from_string(nl(f))
-    connection = Connection(tp[0], tp[1], tp[2], tp[3])
-    connections.append(connection)
+        while nl(f) == "\n":
+            pass
 
-ast = AST(tool, stages, connections)
-print ast
+        while peek_line(f) != "\n":
+            tp = connection_tuple_from_string(nl(f))
+            connection = Connection(tp[0], tp[1], tp[2], tp[3])
+            connections.append(connection)
+
+        # FIXME: add implicit surface statement
+        surface_cxn = Connection("SURFACE", "SURFACE_CONNECT", tool.name, "BELOW")
+        connections.append(surface_cxn)
+
+        ast = AST(tool, stages, connections)
+        return ast
 
