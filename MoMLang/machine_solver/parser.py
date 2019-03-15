@@ -5,6 +5,7 @@ import re
 
 f = open('test.mom')
 
+AST = namedtuple("AST", "tool, stages, connections")
 Node = namedtuple("Node", "name, axis, children")
 Tool = namedtuple("Tool", "name, accepts")
 Stage = namedtuple("Stage", "name, type, axis, transfer")
@@ -20,8 +21,14 @@ def peek_line(f):
     f.seek(pos)
     return line
 
-def tokenize_line(fd):
-    return fd.peek_line().split(" ")
+def nl(f):
+    """
+    Next line alias
+    """
+    return f.readline()
+
+def tokenize(s):
+    return s.strip().split(" ")
 
 def first_word(tokens):
     return tokens[0]
@@ -31,9 +38,9 @@ def tool_name(tokens):
 
 def accepts_tuple(tokens):
     lst = tokens[1:]
-    lst = map(lambda s: s.replace("(", ""), broken_tuple)
-    lst = map(lambda s: s.replace(")", ""), broken_tuple)
-    lst = map(lambda s: s.replace(",", ""), broken_tuple)
+    lst = map(lambda s: s.replace("(", ""), lst)
+    lst = map(lambda s: s.replace(")", ""), lst)
+    lst = map(lambda s: s.replace(",", ""), lst)
     return tuple(lst)
 
 def stage_name_type_axis(tokens):
@@ -42,5 +49,38 @@ def stage_name_type_axis(tokens):
     axis = re.search("[a-z]", tokens[3]).group()
     return (name, ttype, axis)
 
-line = f.readline()
+def connection_tuple_from_string(string):
+    both_sides = string.split("->")
+    stage_places = map(lambda s: s.strip().split("."), both_sides)
+    if len(stage_places[0]) == 1:
+        if stage_places[0][0] == "SURFACE":
+            stage_places[0].append("SURFACE_CONNECT")
+        else:
+            stage_places[0].append("TOOL_CONNECT")
+    flattened = [item for sublist in stage_places for item in sublist]
+    return tuple(flattened)
+
+name = tool_name(tokenize(nl(f)))
+accepts = accepts_tuple(tokenize(nl(f)))
+tool = Tool(name, accepts)
+
+while nl(f) == "\n":
+    pass
+
+while peek_line(f) != "\n":
+    nta = stage_name_type_axis(tokenize(nl(f)))
+    transfer = nl(f).strip()
+    stage = Stage(nta[0], nta[1], nta[2], transfer)
+    stages.append(stage)
+
+while nl(f) == "\n":
+    pass
+
+while peek_line(f) != "\n":
+    tp = connection_tuple_from_string(nl(f))
+    connection = Connection(tp[0], tp[1], tp[2], tp[3])
+    connections.append(connection)
+
+ast = AST(tool, stages, connections)
+print ast
 
