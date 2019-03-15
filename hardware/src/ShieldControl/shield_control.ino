@@ -16,8 +16,18 @@
 #define ZSTEP 4
 #define ZDIR 7
 
-const int NUM_STAGES = 3;
-String stage_names[3] = { "x1", "x2", "y" };
+
+/* Cartesian example */
+// const int NUM_STAGES = 3;
+// String stage_names[3] = { "x1", "x2", "y" };
+// AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
+// // TODO: un-hardcode mapping
+// // index is stage index, value at index is physical index
+// int stage_to_phys[3] = { 0, 1, 2 };
+
+/* Polar example */
+const int NUM_STAGES = 2;
+String stage_names[2] = { "l", "c"};
 AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
 // TODO: un-hardcode mapping
 // index is stage index, value at index is physical index
@@ -30,7 +40,7 @@ void zero_motors(void);
 
 // TODO: send from interpreter, don't hardcode
 int MS_FACTOR = 4;
-float SPEED = 100.0;
+float SPEED = 200.0;
 
 void setup() {
     Serial.begin(9600);

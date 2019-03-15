@@ -5,7 +5,7 @@ stages:
     linear l -> A(r):
         step -> 0.03048 mm
     rotary c -> A(theta):
-        step -> 0.005 deg
+        step -> 0.06 deg
 
 connections:
     Pen -> l.platform
