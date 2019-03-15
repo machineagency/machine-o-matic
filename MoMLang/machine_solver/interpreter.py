@@ -119,7 +119,6 @@ class Interpreter(cmd.Cmd):
 
     def dipatch_steps(self, steps):
         """
-        NOT YET IMPLEMENTED.
         Takes in dictionary of motor names -> steps as argument STEPS.
         Dispatches steps to hardware to move motors synchronously.
         Blocks thread until this finishes, and waits for hardware response.
