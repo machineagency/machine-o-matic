@@ -153,47 +153,16 @@ def constraint_function_for_path(full_path, axis):
 def get_stage_axes_set(stages):
     return frozenset(stage.axis for stage in stages)
 
-# FIXME: right now we return the coordinate transform functions which is messy
-# FIXME: you actually don't need to write paths differently, just apply transform
-# and always use stage axes
-def write_paths_for_axes(axes, stages, tool, component_tree):
-    """
-    For all axes in the accepts statement, generate paths leading from the
-    tool to a stage which controlls the axis. For example, if we have a
-    tool head that accepts (x, y) and stages A(x) and A(y), then we just
-    trace paths to those stages. But, if we have Tool:(x, y), and stages
-    A(r), A(theta), then we cannot write paths as-is, and need to first write
-    constraints relating (x, y) -> (r, theta).
-
-    Returns (transform_funtion, paths)
-    """
-    t = tool.name
-    # FIXME: uses small angle approximations
-    def cartestian_to_polar_constraint(solver):
-        solver.add(Real(t + "_AXIS_x") == Real(t + "_AXIS_r") \
-                * Real(t + "_AXIS_theta"))
-        solver.add(Real(t + "_AXIS_y") == Real(t + "_AXIS_r") \
-                * (1 - (Real(t + "_AXIS_theta") ** 2) / 2))
-
-    def noop_constraint(solver):
-        pass
-
-    stage_axes = get_stage_axes_set(stages)
-    accepts_axes = frozenset(tool.accepts)
-    print stage_axes
-    print accepts_axes
-    if (accepts_axes == stage_axes):
-        return (noop_constraint, tuple(path_for_axis(axis, component_tree) for axis in axes))
-
-    coord_transforms = {
-        frozenset(["AXIS_r", "AXIS_theta"]): cartestian_to_polar_constraint
-    }
-
-    transformed_paths = tuple(path_for_axis(axis, component_tree) for axis in stage_axes)
-    return (coord_transforms[stage_axes], transformed_paths)
-
 def from_cartesian_coord_transform_constraint(stages):
     """
+    Return a unary function that takes a solver and adds constraints to map
+    the accepts axes to the stage axes. If the accepts axes and stage axes
+    match, return a noop constraint. Otherwise, assume that the accepts axes
+    are cartesian, and return an appropriate transform (e.g. polar, H-bot).
+
+    Note that we currently don't suppor non-cartesian accepts coordinates
+    unless those coordinates match the stage coordinates e.g. accepts polar
+    coordinates, stages use polar coordinates.
     """
     t = tool.name
     # Define transform constraint functions
@@ -210,10 +179,19 @@ def from_cartesian_coord_transform_constraint(stages):
     stage_axes = get_stage_axes_set(stages)
     accepts_axes = frozenset(tool.accepts)
 
+    if (stage_axes == accepts_axes):
+        return noop_constraint
+
     coord_transforms = {
         frozenset(["AXIS_r", "AXIS_theta"]): cartestian_to_polar_constraint,
         frozenset(["AXIS_x", "AXIS_y"]): noop_constraint
     }
+
+    try:
+        return coord_transforms[stage_axes]
+    except KeyError:
+        print "Error: no coordinate transform available."
+        return noop_constraint
 
 def list_multistage_axes_tuples(stages):
     """
@@ -308,17 +286,17 @@ class MachineSolver():
     def solve_ik(*coords):
 
         # Write constraints based on component tree
-        # axes = tool.accepts
+        # NOTE: use the stage axes, not the accept axes. Generate a transform
+        # Into the accepts axes (possibly cartesian if needed)
         axes = get_stage_axes_set(stages)
-        coord_trans_constraint, paths = write_paths_for_axes(axes, stages, tool, component_tree)
-        # paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
+        paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
+        coord_trans_constraint = from_cartesian_coord_transform_constraint(stages)
+
         path_constraint_fns = tuple(constraint_function_for_path(path, axis) \
                                 for path, axis in zip(paths, axes))
         multistage_tuples = list_multistage_axes_tuples(stages)
         ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
         bases_fn = constraint_function_for_base_stages(component_tree)
-
-        print paths
 
         # Instantiate solver and add constraints from above
         s = Solver()

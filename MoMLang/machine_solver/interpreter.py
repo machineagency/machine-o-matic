@@ -138,7 +138,7 @@ class Interpreter(cmd.Cmd):
             Interpreter.PORT.write(packet_json + "\n")
             return True
         except Exception as e:
-            print e
+            # print e
             return False
 
     @staticmethod
