@@ -90,8 +90,8 @@ def axis_from_name(name, stages):
 tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
 
 stages = [
-    Stage("c", "linear", "AXIS_theta", "step -> 0.03048 mm"),
-    Stage("l", "linear", "AXIS_r", "step -> 0.03048 mm"),
+    Stage("c", "rotary", "AXIS_theta", "step -> 0.03048 mm"),
+    Stage("l", "linear", "AXIS_r", "step -> 0.005 deg"),
 ]
 
 connections = [
@@ -248,8 +248,12 @@ def constraint_function_for_base_stages(component_tree):
 
     def base_stage_constraints(subtree_node, solver):
         if subtree_node.axis:
-            solver.add(Real(subtree_node.name + "_" + subtree_node.axis) \
-                                == Real(subtree_node.name + "_mm"))
+            if stage_from_node(subtree_node, stages).type == "linear":
+                solver.add(Real(subtree_node.name + "_" + subtree_node.axis) \
+                                    == Real(subtree_node.name + "_mm"))
+            if stage_from_node(subtree_node, stages).type == "rotary":
+                solver.add(Real(subtree_node.name + "_" + subtree_node.axis) \
+                                    == Real(subtree_node.name + "_deg"))
             write_transfer_constraint(stage_from_node(subtree_node, stages), solver)
         for child_place_pair in subtree_node.children:
             subsubtree = child_place_pair[0]
@@ -276,7 +280,11 @@ def write_transfer_constraint(stage, solver):
         solver.add(Real(stage.name + "_mm")
                     == mm_coeff * Real(stage.name + "_steps"))
     if stage.type == "rotary":
-        pass
+        re_for_number = "\d+(\.\d+)?|\.\d+"
+        deg_coeff = re.search(re_for_number, stage.transfer).group()
+        deg_adjusted = float(deg_coeff) % 360
+        solver.add(Real(stage.name + "_deg")
+                    == deg_adjusted * Real(stage.name + "_steps"))
 
 class MachineSolver():
     """
