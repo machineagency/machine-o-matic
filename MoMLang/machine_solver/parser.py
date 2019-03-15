@@ -3,8 +3,6 @@
 from collections import namedtuple
 import re
 
-f = open('test.mom')
-
 AST = namedtuple("AST", "tool, stages, connections")
 Node = namedtuple("Node", "name, axis, children")
 Tool = namedtuple("Tool", "name, accepts")
