@@ -100,8 +100,10 @@ def axis_from_name(name, stages):
 #     Connection("Pen", "TOOL_CONNECT", "l", "platform"),
 #     Connection("l", "center", "c", "platform"),
 # ]
-
-file_to_parse = sys.argv[1] if sys.argv[1] else "test.mom"
+if len(sys.argv) != 2:
+    print "Usage: python interpreter.py [MOM FILE]"
+    exit(1)
+file_to_parse = sys.argv[1]
 ast = MoMParser.parse(file_to_parse)
 
 # Lower the AST into a component tree
