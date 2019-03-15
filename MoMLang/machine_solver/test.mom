@@ -1,0 +1,16 @@
+tool Pen:
+    accepts (x, y)
+
+stages:
+    linear y -> A(y):
+        step -> 0.03048 mm
+    linear x1 -> A(x):
+        step -> 0.03048 mm
+    linear x2 -> A(x):
+        step -> 0.03048 mm
+
+connections:
+    Pen -> y.platform
+    y.left -> x1.platform
+    y.right -> x2.platform
+
