@@ -69,21 +69,35 @@ def axis_from_name(name, stages):
         return None
     return axes_list[0].axis
 
-# AST = (tool, stages, connections)
+# NOTE: Below are two programs' ASTs for testing, uncomment as needed
+# NOTE: AST = (tool, stages, connections)
+
+# tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
+#
+# stages = [
+#     Stage("y", "linear", "AXIS_y", "step -> 0.03048 mm"),
+#     Stage("x1", "linear", "AXIS_x", "step -> 0.03048 mm"),
+#     Stage("x2", "linear", "AXIS_x", "step -> 0.03048 mm"),
+# ]
+#
+# connections = [
+#     Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
+#     Connection("Pen", "TOOL_CONNECT", "y", "platform"),
+#     Connection("y", "left", "x1", "platform"),
+#     Connection("y", "right", "x2", "platform")
+# ]
 
 tool = Tool("Pen", ("AXIS_x", "AXIS_y"))
 
 stages = [
-    Stage("y", "linear", "AXIS_y", "step -> 0.03048 mm"),
-    Stage("x1", "linear", "AXIS_x", "step -> 0.03048 mm"),
-    Stage("x2", "linear", "AXIS_x", "step -> 0.03048 mm"),
+    Stage("c", "linear", "AXIS_theta", "step -> 0.03048 mm"),
+    Stage("l", "linear", "AXIS_r", "step -> 0.03048 mm"),
 ]
 
 connections = [
     Connection("SURFACE", "SURFACE_CONNECT", "Pen", "BELOW"), # implicit
-    Connection("Pen", "TOOL_CONNECT", "y", "platform"),
-    Connection("y", "left", "x1", "platform"),
-    Connection("y", "right", "x2", "platform")
+    Connection("Pen", "TOOL_CONNECT", "l", "platform"),
+    Connection("l", "center", "c", "platform"),
 ]
 
 # Lower the AST into a component tree
@@ -135,6 +149,71 @@ def constraint_function_for_path(full_path, axis):
             pairwise_constraints(working_path[1:], solver)
 
     return constraint_writer
+
+def get_stage_axes_set(stages):
+    return frozenset(stage.axis for stage in stages)
+
+# FIXME: right now we return the coordinate transform functions which is messy
+# FIXME: you actually don't need to write paths differently, just apply transform
+# and always use stage axes
+def write_paths_for_axes(axes, stages, tool, component_tree):
+    """
+    For all axes in the accepts statement, generate paths leading from the
+    tool to a stage which controlls the axis. For example, if we have a
+    tool head that accepts (x, y) and stages A(x) and A(y), then we just
+    trace paths to those stages. But, if we have Tool:(x, y), and stages
+    A(r), A(theta), then we cannot write paths as-is, and need to first write
+    constraints relating (x, y) -> (r, theta).
+
+    Returns (transform_funtion, paths)
+    """
+    t = tool.name
+    # FIXME: uses small angle approximations
+    def cartestian_to_polar_constraint(solver):
+        solver.add(Real(t + "_AXIS_x") == Real(t + "_AXIS_r") \
+                * Real(t + "_AXIS_theta"))
+        solver.add(Real(t + "_AXIS_y") == Real(t + "_AXIS_r") \
+                * (1 - (Real(t + "_AXIS_theta") ** 2) / 2))
+
+    def noop_constraint(solver):
+        pass
+
+    stage_axes = get_stage_axes_set(stages)
+    accepts_axes = frozenset(tool.accepts)
+    print stage_axes
+    print accepts_axes
+    if (accepts_axes == stage_axes):
+        return (noop_constraint, tuple(path_for_axis(axis, component_tree) for axis in axes))
+
+    coord_transforms = {
+        frozenset(["AXIS_r", "AXIS_theta"]): cartestian_to_polar_constraint
+    }
+
+    transformed_paths = tuple(path_for_axis(axis, component_tree) for axis in stage_axes)
+    return (coord_transforms[stage_axes], transformed_paths)
+
+def from_cartesian_coord_transform_constraint(stages):
+    """
+    """
+    t = tool.name
+    # Define transform constraint functions
+    # FIXME: uses small angle approximations
+    def cartestian_to_polar_constraint(solver):
+        solver.add(Real(t + "_AXIS_x") == Real(t + "_AXIS_r") \
+                * Real(t + "_AXIS_theta"))
+        solver.add(Real(t + "_AXIS_y") == Real(t + "_AXIS_r") \
+                * (1 - (Real(t + "_AXIS_theta") ** 2) / 2))
+
+    def noop_constraint(solver):
+        pass
+
+    stage_axes = get_stage_axes_set(stages)
+    accepts_axes = frozenset(tool.accepts)
+
+    coord_transforms = {
+        frozenset(["AXIS_r", "AXIS_theta"]): cartestian_to_polar_constraint,
+        frozenset(["AXIS_x", "AXIS_y"]): noop_constraint
+    }
 
 def list_multistage_axes_tuples(stages):
     """
@@ -218,6 +297,8 @@ def write_transfer_constraint(stage, solver):
         mm_coeff = re.search(re_for_number, stage.transfer).group()
         solver.add(Real(stage.name + "_mm")
                     == mm_coeff * Real(stage.name + "_steps"))
+    if stage.type == "rotary":
+        pass
 
 class MachineSolver():
     """
@@ -227,13 +308,17 @@ class MachineSolver():
     def solve_ik(*coords):
 
         # Write constraints based on component tree
-        axes = tool.accepts
-        paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
+        # axes = tool.accepts
+        axes = get_stage_axes_set(stages)
+        coord_trans_constraint, paths = write_paths_for_axes(axes, stages, tool, component_tree)
+        # paths = tuple(path_for_axis(axis, component_tree) for axis in axes)
         path_constraint_fns = tuple(constraint_function_for_path(path, axis) \
                                 for path, axis in zip(paths, axes))
         multistage_tuples = list_multistage_axes_tuples(stages)
         ms_fn = constraint_function_for_multistages(multistage_tuples, stages)
         bases_fn = constraint_function_for_base_stages(component_tree)
+
+        print paths
 
         # Instantiate solver and add constraints from above
         s = Solver()
@@ -241,6 +326,7 @@ class MachineSolver():
             fn(s)
         ms_fn(s)
         bases_fn(s)
+        coord_trans_constraint(s)
 
         # Add goal tool axis constraints e.g.
         # Pen_AXIS_x = 10
@@ -250,6 +336,9 @@ class MachineSolver():
         try:
             s.check()
             model = s.model()
+
+            print s
+            print s.model()
             stage_steps = tuple(stage.name + "_steps" for stage in stages)
             return {
                 stage_step: MachineSolver.__z3_real_to_rounded_int(model[Real(stage_step)]) \
