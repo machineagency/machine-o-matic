@@ -13,8 +13,8 @@ let focus = (object) => {
 let getFocus = () => {
     return focusedStage;
 };
-let unfocus = (object) => {
-    focusedStage = object;
+let unfocus = () => {
+    focusedStage = null;
 };
 
 let testVar;
@@ -48,18 +48,22 @@ let addStage = () => {
     // May have to change this in the future
     let groups = getGroups();
     let stageId = groups[groups.length - 1].id;
-    gui.add({ stageId: stageId }, 'stageId');
+    group.dgController = gui.add({ stageId: stageId }, 'stageId');
 
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
+
+    focus(group);
 
     return group;
 
 };
 
 let deleteStage = (stage) => {
+    unfocus();
     destroyControl();
+    gui.remove(stage.dgController);
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -144,6 +148,9 @@ let onDocumentMouseDown = (event) => {
         destroyControl();
         generateControlForGroup(getObjectGroup(isectGroups[0].object));
         focus(getObjectGroup(isectGroups[0].object));
+    }
+    else {
+        unfocus();
     }
 };
 
