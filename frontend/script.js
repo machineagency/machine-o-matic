@@ -27,6 +27,16 @@ const options = {
     Geometry: 0
 };
 
+const defaultStageNames = [
+    "sheep", "spinny", "rocket", "ike", "stagezilla", "unicorn", "mustache",
+    "plant", "rutabaga", "turnip", "queen", "cedar", "douglas", "quaternion",
+    "thevenin", "norton", "ada", "hopper", "derby", "moose", "cliff", "sonoma",
+    "hessian", "jacobian", "emerald", "alki", "quilcene", "cascade", "saturn",
+    "asteroid", "apricot", "monad", "asymptote", "martingale", "batman",
+    "forty-two", "gravenstein", "october", "hyphybot", "gravitas", "charmer",
+    "kingman", "euclid", "mechano", "rumbler", "descartes"
+];
+
 const material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
 
 let addStage = () => {
@@ -48,7 +58,11 @@ let addStage = () => {
     // May have to change this in the future
     let groups = getGroups();
     let stageId = groups[groups.length - 1].id;
-    group.dgController = gui.add({ stageId: stageId }, 'stageId');
+
+    let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
+    let stageName = defaultStageNames[stageNameIndex];
+    // group.dgController = gui.add({ stageId: stageId }, 'stageId');
+    group.dgController = gui.add({ stageName: stageName }, 'stageName');
 
     scene.add(group);
     destroyControl();
