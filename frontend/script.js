@@ -5,6 +5,18 @@ let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 
+let focusedStage;
+
+let focus = (object) => {
+    focusedStage = object;
+};
+let getFocus = () => {
+    return focusedStage;
+};
+let unfocus = (object) => {
+    focusedStage = object;
+};
+
 let testVar;
 
 const geometries = [
@@ -17,8 +29,7 @@ const options = {
 
 const material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
 
-let makeStage = () => {
-
+let addStage = () => {
     geometry = geometries[ options.Geometry ];
     // scale geometry to a uniform size
 
@@ -39,8 +50,22 @@ let makeStage = () => {
     let stageId = groups[groups.length - 1].id;
     gui.add({ stageId: stageId }, 'stageId');
 
+    scene.add(group);
+    destroyControl();
+    generateControlForGroup(group);
+
     return group;
 
+};
+
+let deleteStage = (stage) => {
+    destroyControl();
+
+    scene.remove(stage);
+    stage.children.forEach((el) => {
+        el.geometry.dispose();
+        el.material.dispose();
+    });
 };
 
 let getGroups = () => {
@@ -64,7 +89,7 @@ let initGui = () => {
     //     addMesh();
     // } );
     gui.add({ AddStage: () => {
-        makeStage();
+        addStage();
     } }, 'AddStage');
 };
 
@@ -107,11 +132,18 @@ let destroyControl = () => {
 
 let onDocumentMouseDown = (event) => {
     let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
-    let isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    let isectControl;
+    if (getControl() === undefined) {
+        isectControl = [];
+    }
+    else {
+        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    }
     // Kludge: isectControl length == 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
         destroyControl();
         generateControlForGroup(getObjectGroup(isectGroups[0].object));
+        focus(getObjectGroup(isectGroups[0].object));
     }
 };
 
@@ -160,8 +192,7 @@ let init = () => {
     initStats();
     initGui();
 
-    let stage = makeStage();
-    generateControlForGroup(stage);
+    let stage = addStage();
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
 
