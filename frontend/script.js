@@ -149,8 +149,17 @@ let onDocumentMouseDown = (event) => {
         generateControlForGroup(getObjectGroup(isectGroups[0].object));
         focus(getObjectGroup(isectGroups[0].object));
     }
-    else {
+    else if (isectControl.length != 3) {
         unfocus();
+        destroyControl();
+    }
+};
+
+let onDocumentKeyDown = (event) => {
+    if (event.key === "Backspace") {
+        if (getFocus() !== null) {
+            deleteStage(getFocus());
+        }
     }
 };
 
@@ -202,6 +211,7 @@ let init = () => {
     let stage = addStage();
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('keydown', onDocumentKeyDown, false);
 
     camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
