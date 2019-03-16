@@ -7,21 +7,18 @@ let mesh, lines, geometry;
 
 let testVar;
 
-let geometries = [
+const geometries = [
     new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
 ];
 
-let options = {
+const options = {
     Geometry: 0
 };
 
-let material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
+const material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
 
-let addMesh = () => {
-    // if ( mesh !== undefined ) {
-    //     scene.remove( mesh );
-    //     geometry.dispose();
-    // }
+let makeStage = () => {
+
     geometry = geometries[ options.Geometry ];
     // scale geometry to a uniform size
 
@@ -67,7 +64,7 @@ let initGui = () => {
     //     addMesh();
     // } );
     gui.add({ AddStage: () => {
-        addMesh();
+        makeStage();
     } }, 'AddStage');
 };
 
@@ -118,9 +115,7 @@ let onDocumentMouseDown = (event) => {
     }
 };
 
-let init = () => {
-    container = document.getElementById( 'container' );
-
+let initCamera = () => {
     let aspect = window.innerWidth / window.innerHeight;
     let viewSize = 150;
     camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
@@ -129,7 +124,9 @@ let init = () => {
     camera.updateProjectionMatrix();
     camera.position.set(-500, 500, 500); // I don't know why this works
     camera.frustumCulled = false;
+};
 
+let initScene = () => {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf5f6f8);
     topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.00 );
@@ -140,23 +137,31 @@ let init = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
+};
 
+let initRenderer = () => {
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     container.appendChild( renderer.domElement );
+};
+
+let initStats = () => {
     stats = new Stats();
     container.appendChild( stats.dom );
-    let geometries = {
-        BoxBufferGeometry: 0,
-    };
+};
 
+let init = () => {
+    container = document.getElementById( 'container' );
+
+    initCamera();
+    initScene();
+    initRenderer();
+    initStats();
     initGui();
 
-    let group = addMesh();
-
-    // Need to generate a control for the first group only
-    generateControlForGroup(group);
+    let stage = makeStage();
+    generateControlForGroup(stage);
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
 
@@ -183,3 +188,4 @@ let render = () => {
 
 init();
 animate();
+
