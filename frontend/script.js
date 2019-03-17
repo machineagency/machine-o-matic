@@ -94,9 +94,8 @@ let addStage = () => {
 
 };
 
-/* Kludge to set datGUI dom element because datGUI's setter is broken. */
 let setDgFolderName = (dgFolder, name) => {
-    dgFolder.domElement.getElementsByClassName('title')[0].innerText = name;
+    dgFolder.name = name;
 };
 
 let getStageName = (stage) => {
@@ -106,7 +105,7 @@ let getStageName = (stage) => {
 let deleteStage = (stage) => {
     unfocus();
     destroyControl();
-    gui.remove(stage.dgController);
+    gui.removeFolder(stage.dgFolder);
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -131,7 +130,7 @@ let getControl = () => {
 };
 
 let initGui = () => {
-    gui = new dat.GUI( { width: 350 } );
+    gui = new dat.GUI( { width: 200 } );
     gui.add({ AddStage: () => {
         addStage();
     } }, 'AddStage');
