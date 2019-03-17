@@ -72,10 +72,14 @@ let addStage = () => {
 
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
     let stageName = defaultStageNames[stageNameIndex];
-    group.dgController = gui.add({ stageName: stageName }, 'stageName');
+    // group.dgcontroller = gui.add({ stageName: stageName }, 'stageName');
 
     // TODO: investigate how to use folders/colors. Leave commented for now.
-    // group.dgFolder = gui.addFolder(stageName);
+    group.dgFolder = gui.addFolder(stageName);
+    group.dgcontroller = group.dgFolder.add({ stageName: stageName }, 'stageName')
+                            .onChange((value) => {
+                                setDgFolderName(group.dgFolder, value);
+                            });
     // gui.add({ stageName: stageName }, 'stageName');
     // console.log(mesh.material.color);
     // gui.addColor(mesh.material.color, 'color');
@@ -88,6 +92,11 @@ let addStage = () => {
 
     return group;
 
+};
+
+/* Kludge to set datGUI dom element because datGUI's setter is broken. */
+let setDgFolderName = (dgFolder, name) => {
+    dgFolder.domElement.getElementsByClassName('title')[0].innerText = name;
 };
 
 let getStageName = (stage) => {
