@@ -176,6 +176,11 @@ let destroyControl = () => {
 };
 
 let onDocumentMouseDown = (event) => {
+    // NOTE: do not fire click events if we click on the GUI
+    if (gui.domElement.contains(event.target)) {
+        return;
+    }
+
     let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
     let isectControl;
     if (getControl() === undefined) {
