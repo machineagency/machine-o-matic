@@ -167,7 +167,6 @@ let destroyControl = () => {
 
 let onDocumentMouseDown = (event) => {
     let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
-    console.log(isectGroups);
     let isectControl;
     if (getControl() === undefined) {
         isectControl = [];
@@ -175,13 +174,13 @@ let onDocumentMouseDown = (event) => {
     else {
         isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
     }
-    // Kludge: isectControl length == 3 means we are clicking the controls
+    // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
         destroyControl();
         generateControlForGroup(getObjectGroup(isectGroups[0].object));
         focus(getObjectGroup(isectGroups[0].object));
     }
-    else if (isectControl.length != 3) {
+    else if (isectControl.length < 3) {
         unfocus();
         destroyControl();
     }
