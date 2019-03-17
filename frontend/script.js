@@ -90,6 +90,10 @@ let addStage = () => {
 
 };
 
+let getStageName = (stage) => {
+    return stage.dgController.object.stageName;
+};
+
 let deleteStage = (stage) => {
     unfocus();
     destroyControl();
@@ -152,6 +156,7 @@ let generateControlForGroup = (group) => {
     control.addEventListener('dragging-changed', (event) => {
         // console.log(event)
     });
+    control.setRotationSnap(THREE.Math.degToRad(45));
     scene.add(control);
     control.attach(group);
     return control;
