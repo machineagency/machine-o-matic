@@ -99,7 +99,13 @@ let setDgFolderName = (dgFolder, name) => {
 };
 
 let getStageName = (stage) => {
-    return stage.dgController.object.stageName;
+    // FIXME: consolidate what gets named
+    // return stage.dgController.object.stageName;
+    return stage.dgFolder.name;
+};
+
+let findStageWithName = (name) => {
+    return getGroups().find((stage) => (getStageName(stage) === name));
 };
 
 let deleteStage = (stage) => {
@@ -178,6 +184,14 @@ let destroyControl = () => {
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
     if (gui.domElement.contains(event.target)) {
+        if (event.target.className === "title") {
+            let maybeStage = findStageWithName(event.target.innerHTML);
+            if (maybeStage !== undefined) {
+                destroyControl();
+                generateControlForGroup(maybeStage);
+                focus(maybeStage);
+            }
+        }
         return;
     }
 
@@ -201,6 +215,17 @@ let onDocumentMouseDown = (event) => {
         unfocus();
         destroyControl();
         openFolderForStage(null);
+    }
+};
+
+let onDocumentMouseUp = (event) => {
+    // If we had clicked on a stage folder, close all folders and let the
+    // datGui mouseup handler just open the one stage folder
+    if (gui.domElement.contains(event.target)) {
+        if (event.target.className === "title") {
+            openFolderForStage(null);
+        }
+        return;
     }
 };
 
@@ -275,6 +300,7 @@ let init = () => {
     let stage = addStage();
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
+    document.addEventListener('mouseup', onDocumentMouseUp, false);
     document.addEventListener('keydown', onDocumentKeyDown, false);
 
     camera.lookAt(scene.position);
