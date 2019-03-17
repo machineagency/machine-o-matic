@@ -132,9 +132,6 @@ let getControl = () => {
 
 let initGui = () => {
     gui = new dat.GUI( { width: 350 } );
-    // gui.add( options, 'Geometry', geometries ).onChange( function () {
-    //     addMesh();
-    // } );
     gui.add({ AddStage: () => {
         addStage();
     } }, 'AddStage');
@@ -190,14 +187,29 @@ let onDocumentMouseDown = (event) => {
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
+        let stage = getObjectGroup(isectGroups[0].object);
         destroyControl();
-        generateControlForGroup(getObjectGroup(isectGroups[0].object));
-        focus(getObjectGroup(isectGroups[0].object));
+        generateControlForGroup(stage);
+        focus(stage);
+        openFolderForStage(stage);
     }
     else if (isectControl.length < 3) {
         unfocus();
         destroyControl();
+        openFolderForStage(null);
     }
+};
+
+let openFolderForStage = (stage) => {
+    let groups = getGroups();
+    groups.forEach((group) => {
+        if (group === stage) {
+            group.dgFolder.open();
+        }
+        else {
+            group.dgFolder.close();
+        }
+    });
 };
 
 let onDocumentKeyDown = (event) => {
