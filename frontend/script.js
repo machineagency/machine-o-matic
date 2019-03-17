@@ -48,7 +48,6 @@ const defaultStageNames = [
 ];
 
 const greenColor = 0xbed346;
-const material = new THREE.MeshLambertMaterial({ color: greenColor });
 
 let addStage = () => {
     geometry = geometries[ options.Geometry ];
@@ -59,7 +58,7 @@ let addStage = () => {
     geometry.scale( scaleFactor, scaleFactor, scaleFactor );
     let edges = new THREE.EdgesGeometry(geometry);
     lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
-    mesh = new THREE.Mesh( geometry, material );
+    mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({ color: greenColor }));
     let group = new THREE.Group();
     group.add(lines);
     group.add(mesh);
@@ -80,9 +79,7 @@ let addStage = () => {
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
-    // gui.add({ stageName: stageName }, 'stageName');
-    // console.log(mesh.material.color);
-    // gui.addColor(mesh.material.color, 'color');
+    group.dgFolder.addColor(mesh.material, 'color');
 
     scene.add(group);
     destroyControl();
