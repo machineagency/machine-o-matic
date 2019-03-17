@@ -19,6 +19,16 @@ let unfocus = () => {
 
 let testVar;
 
+let controlMode = "translate";
+
+let swapControlMode = () => {
+    controlMode = (controlMode === "translate") ? "rotate" : "translate";
+    let controls = getControl();
+    if (controls) {
+        controls.mode = controlMode;
+    }
+};
+
 const geometries = [
     new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
 ];
@@ -37,7 +47,8 @@ const defaultStageNames = [
     "kingman", "euclid", "mechano", "rumbler", "descartes"
 ];
 
-const material = new THREE.MeshLambertMaterial({ color: 0xbed346 });
+const greenColor = 0xbed346;
+const material = new THREE.MeshLambertMaterial({ color: greenColor });
 
 let addStage = () => {
     geometry = geometries[ options.Geometry ];
@@ -61,8 +72,13 @@ let addStage = () => {
 
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
     let stageName = defaultStageNames[stageNameIndex];
-    // group.dgController = gui.add({ stageId: stageId }, 'stageId');
     group.dgController = gui.add({ stageName: stageName }, 'stageName');
+
+    // TODO: investigate how to use folders/colors. Leave commented for now.
+    // group.dgFolder = gui.addFolder(stageName);
+    // gui.add({ stageName: stageName }, 'stageName');
+    // console.log(mesh.material.color);
+    // gui.addColor(mesh.material.color, 'color');
 
     scene.add(group);
     destroyControl();
@@ -129,6 +145,7 @@ let _getIntersectsFromClickWithCandidates = (event, candidates) => {
 let generateControlForGroup = (group) => {
     // Add controls to the new mesh group
     let control = new THREE.TransformControls( camera, renderer.domElement );
+    control.mode = controlMode;
     control.addEventListener('change', (event) => {
         render();
     });
@@ -150,6 +167,7 @@ let destroyControl = () => {
 
 let onDocumentMouseDown = (event) => {
     let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
+    console.log(isectGroups);
     let isectControl;
     if (getControl() === undefined) {
         isectControl = [];
@@ -174,6 +192,9 @@ let onDocumentKeyDown = (event) => {
         if (getFocus() !== null) {
             deleteStage(getFocus());
         }
+    }
+    if (event.key === "m") {
+        swapControlMode();
     }
 };
 
