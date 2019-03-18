@@ -256,7 +256,7 @@ let openFolderForStage = (stage) => {
 
 let onDocumentKeyDown = (event) => {
     if (event.key === "Backspace") {
-        if (getFocus() !== null) {
+        if (getFocus() !== null && event.shiftKey) {
             deleteStage(getFocus());
         }
     }
