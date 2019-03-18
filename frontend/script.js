@@ -85,10 +85,11 @@ let addStage = () => {
 
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
     let stageName = defaultStageNames[stageNameIndex];
+    group.stageName = stageName;
     // group.dgcontroller = gui.add({ stageName: stageName }, 'stageName');
 
     group.dgFolder = gui.addFolder(stageName);
-    group.dgcontroller = group.dgFolder.add({ stageName: stageName }, 'stageName')
+    group.dgcontroller = group.dgFolder.add(group, 'stageName')
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
@@ -109,9 +110,11 @@ let setDgFolderName = (dgFolder, name) => {
 };
 
 let getStageName = (stage) => {
-    // FIXME: consolidate what gets named
-    // return stage.dgController.object.stageName;
-    return stage.dgFolder.name;
+    return stage.stageName;
+};
+
+let getStageAxis = (stage) => {
+    return stage.axis;
 };
 
 let findStageWithName = (name) => {
