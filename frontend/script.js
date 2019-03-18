@@ -50,6 +50,7 @@ const defaultStageNames = [
 
 const greenColor = 0xbed346;
 const stagePlatformsInMotion = {};
+const connections = {};
 
 let addStage = () => {
     let group = new THREE.Group();
@@ -95,6 +96,12 @@ let addStage = () => {
                             });
     group.dgFolder.addColor(group.color, 'color');
 
+    group.childStages = [];
+    group.parentStage = group;
+
+    group.axis = "x";
+    group.dgFolder.add(group, 'axis');
+
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
@@ -125,6 +132,12 @@ let deleteStage = (stage) => {
     unfocus();
     destroyControl();
     gui.removeFolder(stage.dgFolder);
+    let deletedStageName = getStageName(stage);
+    Object.keys(connections).forEach((stageNameDotPlace) => {
+        if (stageNameDotPlace.includes(deletedStageName)) {
+            delete connections[stageNameDotPlace];
+        }
+    });
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -368,6 +381,44 @@ let incrementPlatforms = () => {
         }
 
     });
+};
+
+let connectStageToStageAtPlace = (childStage, parentStage, place) => {
+    let parentPosMat = parentStage.matrixWorld;
+    childStage.position.setFromMatrixPosition(parentPosMat);
+    childStage.translateY(platformYDisplacement);
+    parentStage.childStages.push(childStage);
+    childStage.parentStage = parentStage;
+    if (place === 'center') {
+        connections[getStageName(childStage).concat('.center')] = getStageName(parentStage);
+    }
+    if (place === 'left') {
+    }
+    if (place === 'right') {
+    }
+};
+
+let DEMO__connectTwoStages = () => {
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
+};
+
+let generateMomProgram = () => {
+    var programStr = 'tool Pen:\n\taccepts (x,y)\n';
+    programStr = programStr.concat('\nstages:\n');
+    getGroups().forEach((stage) => {
+        let stageName = getStageName(stage);
+        let stageAxis = getStageAxis(stage);
+        let defaultTransfer = 'step -> 0.03048 mm';
+        programStr = programStr.concat(`\tlinear ${stageName} -> A(${stageAxis}):\n\t\t${defaultTransfer}\n`);
+    });
+    programStr = programStr.concat('\nconnections:\n');
+    Object.keys(connections).forEach((stageNameDotPlace) => {
+       let toStageDotPlace = connections[stageNameDotPlace].concat(".platform");
+        programStr = programStr.concat(`\t${stageNameDotPlace} -> ${toStageDotPlace}`);
+    });
+    programStr = programStr.concat('\n');
+    return programStr;
+
 };
 
 let animate = () => {
