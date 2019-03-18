@@ -30,6 +30,8 @@ let swapControlMode = () => {
 };
 
 const platformRaiseTranslateFactor = 8;
+const maxAxisDisplacement = 125;
+const platformYDisplacement = 46.5;
 
 const geometryFactories = {
     stageCase: () => new THREE.BoxBufferGeometry(1000, 100, 200, 2, 2, 2 ),
@@ -47,6 +49,7 @@ const defaultStageNames = [
 ];
 
 const greenColor = 0xbed346;
+const stagePlatformsInMotion = {};
 
 let addStage = () => {
     let group = new THREE.Group();
@@ -321,10 +324,54 @@ let onWindowResize = () => {
     renderer.setSize( window.innerWidth, window.innerHeight );
 };
 
+/**
+ * NOTE: for displacement, we always move along each stage's local X axis
+ */
+
+let getPlatformDisplacementForStage = (stage) => {
+    return stage.children[3].position.x;
+};
+
+let setPlatformDisplacementForStage = (stage, displ) => {
+    stage.children[3].position.x = displ;
+};
+
+
+let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
+    stagePlatformsInMotion[stageName] = targetDisp;
+};
+
+let _moveStagePlatform = (stage, delta) => {
+    if (Math.abs(stage.children[3].position.x + delta) <= maxAxisDisplacement) {
+        let platformLines = stage.children[2];
+        let platformMesh = stage.children[3];
+        platformLines.translateX(delta);
+        platformMesh.translateX(delta);
+    }
+};
+
+
+let incrementPlatforms = () => {
+    Object.keys(stagePlatformsInMotion).forEach((stageName) => {
+        let stage = findStageWithName(stageName);
+        let targetDisp = stagePlatformsInMotion[stageName];
+        let currDisp = getPlatformDisplacementForStage(stage);
+        if (targetDisp === currDisp) {
+            delete stagePlatformsInMotion[stageName];
+        }
+        else {
+            let increment = targetDisp > currDisp ? 1 : -1;
+            _moveStagePlatform(stage, increment);
+        }
+
+    });
+};
+
 let animate = () => {
     requestAnimationFrame( animate );
     render();
     stats.update();
+    incrementPlatforms();
 };
 
 let render = () => {
