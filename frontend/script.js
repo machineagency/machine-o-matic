@@ -29,12 +29,11 @@ let swapControlMode = () => {
     }
 };
 
-const geometries = [
-    new THREE.BoxBufferGeometry( 1000, 100, 200, 2, 2, 2 ),
-];
+const platformRaiseTranslateFactor = 8;
 
-const options = {
-    Geometry: 0
+const geometryFactories = {
+    stageCase: () => new THREE.BoxBufferGeometry(1000, 100, 200, 2, 2, 2 ),
+    stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2 )
 };
 
 const defaultStageNames = [
@@ -50,18 +49,28 @@ const defaultStageNames = [
 const greenColor = 0xbed346;
 
 let addStage = () => {
-    geometry = geometries[ options.Geometry ];
+    let stageCase = geometryFactories.stageCase();
     // scale geometry to a uniform size
 
-    geometry.computeBoundingSphere();
-    let scaleFactor = 160 / geometry.boundingSphere.radius;
-    geometry.scale( scaleFactor, scaleFactor, scaleFactor );
-    let edges = new THREE.EdgesGeometry(geometry);
-    lines = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
-    mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial({ color: greenColor }));
+    stageCase.computeBoundingSphere();
+    let scaleFactor = 160 / stageCase.boundingSphere.radius;
+    stageCase.scale(scaleFactor, scaleFactor, scaleFactor);
+    let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
+    let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
+    let stageCaseMesh = new THREE.Mesh(stageCase, new THREE.MeshLambertMaterial({ color: greenColor }));
+
+    let stagePlatform = geometryFactories.stagePlatform();
+    stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
+    stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
+    let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
+    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
+    let stagePlatformMesh = new THREE.Mesh(stagePlatform, new THREE.MeshLambertMaterial({ color: greenColor }));
+
     let group = new THREE.Group();
-    group.add(lines);
-    group.add(mesh);
+    group.add(stageCaseLines);
+    group.add(stageCaseMesh);
+    group.add(stagePlatformLines);
+    group.add(stagePlatformMesh);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
@@ -73,13 +82,14 @@ let addStage = () => {
     let stageName = defaultStageNames[stageNameIndex];
     // group.dgcontroller = gui.add({ stageName: stageName }, 'stageName');
 
-    // TODO: investigate how to use folders/colors. Leave commented for now.
     group.dgFolder = gui.addFolder(stageName);
     group.dgcontroller = group.dgFolder.add({ stageName: stageName }, 'stageName')
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
-    group.dgFolder.addColor(mesh.material, 'color');
+    group.dgFolder.addColor(stageCaseMesh.material, 'color');
+    // FIXME: how to link these two colors...
+    group.dgFolder.addColor(stagePlatformMesh.material, 'color');
 
     scene.add(group);
     destroyControl();
