@@ -49,6 +49,9 @@ const defaultStageNames = [
 const greenColor = 0xbed346;
 
 let addStage = () => {
+    let group = new THREE.Group();
+    group.color = new THREE.MeshLambertMaterial({ color: greenColor });
+
     let stageCase = geometryFactories.stageCase();
     // scale geometry to a uniform size
 
@@ -57,16 +60,15 @@ let addStage = () => {
     stageCase.scale(scaleFactor, scaleFactor, scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
-    let stageCaseMesh = new THREE.Mesh(stageCase, new THREE.MeshLambertMaterial({ color: greenColor }));
+    let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
 
     let stagePlatform = geometryFactories.stagePlatform();
     stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
-    let stagePlatformMesh = new THREE.Mesh(stagePlatform, new THREE.MeshLambertMaterial({ color: greenColor }));
+    let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
 
-    let group = new THREE.Group();
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
     group.add(stagePlatformLines);
@@ -87,9 +89,7 @@ let addStage = () => {
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
-    group.dgFolder.addColor(stageCaseMesh.material, 'color');
-    // FIXME: how to link these two colors...
-    group.dgFolder.addColor(stagePlatformMesh.material, 'color');
+    group.dgFolder.addColor(group.color, 'color');
 
     scene.add(group);
     destroyControl();
