@@ -50,6 +50,8 @@ const defaultStageNames = [
 
 const greenColor = 0xbed346;
 const stagePlatformsInMotion = {};
+
+/* Maps: parentStage.name -> [[childStage, place], ... ] */
 const connections = {};
 
 let addStage = () => {
@@ -300,6 +302,7 @@ let initScene = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
+    // scene.add(new THREE.GridHelper(2000, 40));
 };
 
 let initRenderer = () => {
@@ -390,7 +393,14 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     parentStage.childStages.push(childStage);
     childStage.parentStage = parentStage;
     if (place === 'center') {
-        connections[getStageName(childStage).concat('.center')] = getStageName(parentStage);
+        // connections[getStageName(childStage).concat('.center')] = getStageName(parentStage);
+        let existingChildren = connections[getStageName(parentStage)];
+        if (existingChildren === undefined) {
+            connections[getStageName(parentStage)] = [[childStage, 'center']];
+        }
+        else {
+            connections[getStageName(parentStage)].concat([childStage, 'center']);
+        }
     }
     if (place === 'left') {
     }
