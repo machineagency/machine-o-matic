@@ -370,16 +370,17 @@ let _moveStagePlatform = (stage, delta) => {
 };
 
 
-let _moveStage = (stage, delta) => {
+let _moveStage = (stage, delta, axis) => {
     if (Math.abs(stage.position.x + delta) <= maxAxisDisplacement) {
-        stage.translateX(delta);
+        // stage.translateX(delta);
+        stage.translateOnAxis(axis, delta);
     }
 };
 
 let calcPrincipalAxis = (stage) => {
     // Assuming stages are instantiated aligned with +X
-    let unitX = new THREE.Vector3(1.0, 0, 0);
-    let principalAxis = stage.localToWorld(unitX);
+    let unitX = new THREE.Vector3(1.0 + stage.position.x, stage.position.y, stage.position.z);
+    let principalAxis = stage.worldToLocal(unitX);
     // Remove FP imprecision
     let eps = 1e-6;
     if (Math.abs(principalAxis.x) < eps) {
@@ -408,7 +409,8 @@ let incrementPlatforms = () => {
             // One level of recursiona
             let childStages = gatherDeepChildStages(stage);
             childStages.forEach((stage) => {
-                _moveStage(stage, increment);
+                let axis = calcPrincipalAxis(stage);
+                _moveStage(stage, increment, axis);
             });
         }
 
