@@ -387,17 +387,25 @@ let incrementPlatforms = () => {
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
-            // One level of recursion
-            let childPlaceTuples = connections[stageName];
-            if (childPlaceTuples !== undefined) {
-                let childStages = childPlaceTuples.map((stagePlacePair) => stagePlacePair[0]);
-                childStages.forEach((stage) => {
-                    _moveStage(stage, increment);
-                });
-            }
+            // One level of recursiona
+            let childStages = gatherDeepChildStages(stage);
+            childStages.forEach((stage) => {
+                _moveStage(stage, increment);
+            });
         }
 
     });
+};
+
+let gatherDeepChildStages = (stage) => {
+    let childPlaceTuples = connections[getStageName(stage)];
+    if (childPlaceTuples === undefined) {
+        return [];
+    }
+    let shallowChildStages = childPlaceTuples.map((stagePlacePair) => stagePlacePair[0]);
+    let deepStages = shallowChildStages.map((stage) => gatherDeepChildStages(stage));
+    let deepStagesFlat = deepStages.flat(1);
+    return shallowChildStages.concat(deepStagesFlat);
 };
 
 let connectStageToStageAtPlace = (childStage, parentStage, place) => {
