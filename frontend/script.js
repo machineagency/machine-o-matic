@@ -34,7 +34,7 @@ const maxAxisDisplacement = 125;
 const platformYDisplacement = 46.5;
 
 const geometryFactories = {
-    stageCase: () => new THREE.BoxBufferGeometry(1000, 100, 200, 2, 2, 2 ),
+    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2 ),
     stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2 )
 };
 
@@ -348,11 +348,11 @@ let onWindowResize = () => {
  */
 
 let getPlatformDisplacementForStage = (stage) => {
-    return stage.children[3].position.x;
+    return stage.children[3].position.z;
 };
 
 let setPlatformDisplacementForStage = (stage, displ) => {
-    stage.children[3].position.x = displ;
+    stage.children[3].position.z = displ;
 };
 
 
@@ -363,36 +363,18 @@ let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
 let _moveStagePlatform = (stage, delta) => {
     let platformLines = stage.children[2];
     let platformMesh = stage.children[3];
-    if (Math.abs(platformMesh.position.x + delta) <= maxAxisDisplacement) {
-        platformLines.translateX(delta);
-        platformMesh.translateX(delta);
+    if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacement) {
+        platformLines.translateZ(delta);
+        platformMesh.translateZ(delta);
     }
 };
 
 
 let _moveStage = (stage, delta, axis) => {
-    if (Math.abs(stage.position.x + delta) <= maxAxisDisplacement) {
+    if (Math.abs(stage.position.z + delta) <= maxAxisDisplacement) {
         // stage.translateX(delta);
         stage.translateOnAxis(axis, delta);
     }
-};
-
-let calcPrincipalAxis = (stage) => {
-    // Assuming stages are instantiated aligned with +X
-    let unitX = new THREE.Vector3(1.0 + stage.position.x, stage.position.y, stage.position.z);
-    let principalAxis = stage.worldToLocal(unitX);
-    // Remove FP imprecision
-    let eps = 1e-6;
-    if (Math.abs(principalAxis.x) < eps) {
-        principalAxis.x = 0;
-    }
-    if (Math.abs(principalAxis.y) < eps) {
-        principalAxis.y = 0;
-    }
-    if (Math.abs(principalAxis.z) < eps) {
-        principalAxis.z = 0;
-    }
-    return principalAxis;
 };
 
 let incrementPlatforms = () => {
@@ -406,10 +388,14 @@ let incrementPlatforms = () => {
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
-            // One level of recursiona
+
+            let baseAxis = new THREE.Vector3();
+            stage.getWorldDirection(baseAxis);
             let childStages = gatherDeepChildStages(stage);
             childStages.forEach((stage) => {
-                let axis = calcPrincipalAxis(stage);
+                let stageOrigin = stage.position;
+                let translatedBaseAxis = new THREE.Vector3().addVectors(baseAxis, stageOrigin);
+                let axis = stage.worldToLocal(translatedBaseAxis);
                 _moveStage(stage, increment, axis);
             });
         }
