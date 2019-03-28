@@ -376,6 +376,24 @@ let _moveStage = (stage, delta) => {
     }
 };
 
+let calcPrincipalAxis = (stage) => {
+    // Assuming stages are instantiated aligned with +X
+    let unitX = new THREE.Vector3(1.0, 0, 0);
+    let principalAxis = stage.localToWorld(unitX);
+    // Remove FP imprecision
+    let eps = 1e-6;
+    if (Math.abs(principalAxis.x) < eps) {
+        principalAxis.x = 0;
+    }
+    if (Math.abs(principalAxis.y) < eps) {
+        principalAxis.y = 0;
+    }
+    if (Math.abs(principalAxis.z) < eps) {
+        principalAxis.z = 0;
+    }
+    return principalAxis;
+};
+
 let incrementPlatforms = () => {
     Object.keys(stagePlatformsInMotion).forEach((stageName) => {
         let stage = findStageWithName(stageName);
