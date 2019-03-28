@@ -361,14 +361,20 @@ let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
 };
 
 let _moveStagePlatform = (stage, delta) => {
-    if (Math.abs(stage.children[3].position.x + delta) <= maxAxisDisplacement) {
-        let platformLines = stage.children[2];
-        let platformMesh = stage.children[3];
+    let platformLines = stage.children[2];
+    let platformMesh = stage.children[3];
+    if (Math.abs(platformMesh.position.x + delta) <= maxAxisDisplacement) {
         platformLines.translateX(delta);
         platformMesh.translateX(delta);
     }
 };
 
+
+let _moveStage = (stage, delta) => {
+    if (Math.abs(stage.position.x + delta) <= maxAxisDisplacement) {
+        stage.translateX(delta);
+    }
+};
 
 let incrementPlatforms = () => {
     Object.keys(stagePlatformsInMotion).forEach((stageName) => {
@@ -381,6 +387,14 @@ let incrementPlatforms = () => {
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
+            // One level of recursion
+            let childPlaceTuples = connections[stageName];
+            if (childPlaceTuples !== undefined) {
+                let childStages = childPlaceTuples.map((stagePlacePair) => stagePlacePair[0]);
+                childStages.forEach((stage) => {
+                    _moveStage(stage, increment);
+                });
+            }
         }
 
     });
@@ -393,7 +407,6 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     parentStage.childStages.push(childStage);
     childStage.parentStage = parentStage;
     if (place === 'center') {
-        // connections[getStageName(childStage).concat('.center')] = getStageName(parentStage);
         let existingChildren = connections[getStageName(parentStage)];
         if (existingChildren === undefined) {
             connections[getStageName(parentStage)] = [[childStage, 'center']];
