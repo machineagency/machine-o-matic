@@ -52,8 +52,15 @@ const defaultStageNames = [
 const greenColor = 0xbed346;
 const stagePlatformsInMotion = {};
 
-/* Maps: parentStage.name -> [[childStage, place], ... ] */
-const connections = {};
+const connections = [];
+
+class Connection {
+    constructor(parentName, childName, place) {
+        this.parentName = parentName;
+        this.childName = childName;
+        this.place = place;
+    }
+}
 
 let addStage = () => {
     let group = new THREE.Group();
@@ -111,6 +118,9 @@ let addStage = () => {
 
 };
 
+let addConnection = () => {
+};
+
 let setDgFolderName = (dgFolder, name) => {
     dgFolder.name = name;
 };
@@ -132,14 +142,15 @@ let deleteStage = (stage) => {
     destroyControl();
     stageGui.removeFolder(stage.dgFolder);
     let deletedStageName = getStageName(stage);
-    Object.keys(connections).forEach((stageName) => {
-        let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
-            getStageName(stagePlacePair[0]);
-        });
-        if (stageFoundAsChild !== undefined) {
-            delete connections[stageName];
-        }
-    });
+    // TODO: recursive deleting of child connections with new ADT
+    // Object.keys(connections).forEach((stageName) => {
+    //     let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
+    //         getStageName(stagePlacePair[0]);
+    //     });
+    //     if (stageFoundAsChild !== undefined) {
+    //         delete connections[stageName];
+    //     }
+    // });
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -405,12 +416,15 @@ let incrementPlatforms = () => {
     });
 };
 
-let gatherDeepChildStages = (stage) => {
-    let childPlaceTuples = connections[getStageName(stage)];
-    if (childPlaceTuples === undefined) {
+let gatherDeepChildStages = (parentStage) => {
+    let parentName = getStageName(parentStage);
+    let shallowChildCxns = connections.filter((cxn) => cxn.parentName === parentName);
+    if (shallowChildCxns === undefined) {
         return [];
     }
-    let shallowChildStages = childPlaceTuples.map((stagePlacePair) => stagePlacePair[0]);
+    let shallowChildNames = [];
+    shallowChildCxns.forEach((cxn) => shallowChildNames.push(cxn.childName));
+    let shallowChildStages = shallowChildNames.map((stageName) => findStageWithName(stageName));
     let deepStages = shallowChildStages.map((stage) => gatherDeepChildStages(stage));
     let deepStagesFlat = deepStages.flat(1);
     return shallowChildStages.concat(deepStagesFlat);
@@ -426,13 +440,16 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     childStage.translateY(platformYDisplacement);
 
     // Add to connections table
-    let existingChildren = connections[getStageName(parentStage)];
-    if (existingChildren === undefined) {
-        connections[getStageName(parentStage)] = [[childStage, place]];
-    }
-    else {
-        connections[getStageName(parentStage)].concat([childStage, place]);
-    }
+    let parentName = getStageName(parentStage);
+    let childName = getStageName(childStage);
+    connections.push(new Connection(parentName, childName, place));
+    // let existingChildren = connections[getStageName(parentStage)];
+    // if (existingChildren === undefined) {
+    //     connections[getStageName(parentStage)] = [[childStage, place]];
+    // }
+    // else {
+    //     connections[getStageName(parentStage)].concat([childStage, place]);
+    // }
 
     // Position child stage appropriately
     let parentDir = new THREE.Vector3();
@@ -468,10 +485,13 @@ let generateMomProgram = () => {
         programStr = programStr.concat(`\tlinear ${stageName} -> A(${stageAxis}):\n\t\t${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
-    Object.keys(connections).forEach((stageNameDotPlace) => {
-       let toStageDotPlace = connections[stageNameDotPlace].concat(".platform");
-        programStr = programStr.concat(`\t${stageNameDotPlace} -> ${toStageDotPlace}`);
+    Object.keys(connections).forEach((cxn) => {
+        programStr = programStr.concat(`\t${cxn.parentName}.${cxn.place} -> ${cxn.childName}.platform`);
     });
+    // Object.keys(connections).forEach((stageNameDotPlace) => {
+    //    let toStageDotPlace = connections[stageNameDotPlace].concat(".platform");
+    //     programstr = programstr.concat(`\t${stagenamedotplace} -> ${tostagedotplace}`);
+    // });
     programStr = programStr.concat('\n');
     return programStr;
 
