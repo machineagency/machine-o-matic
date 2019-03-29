@@ -1,6 +1,7 @@
 'use strict';
 
-let container, stats, gui;
+let container, stats;
+let stageGui, connectionGui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
@@ -89,17 +90,13 @@ let addStage = () => {
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
     let stageName = defaultStageNames[stageNameIndex];
     group.stageName = stageName;
-    // group.dgcontroller = gui.add({ stageName: stageName }, 'stageName');
 
-    group.dgFolder = gui.addFolder(stageName);
+    group.dgFolder = stageGui.addFolder(stageName);
     group.dgcontroller = group.dgFolder.add(group, 'stageName')
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
     group.dgFolder.addColor(group.color, 'color');
-
-    group.childStages = [];
-    group.parentStage = group;
 
     group.axis = "x";
     group.dgFolder.add(group, 'axis');
@@ -164,8 +161,8 @@ let getControl = () => {
 };
 
 let initGui = () => {
-    gui = new dat.GUI( { width: 200 } );
-    gui.add({ AddStage: () => {
+    stageGui = new dat.GUI( { width: 200 } );
+    stageGui.add({ AddStage: () => {
         addStage();
     } }, 'AddStage');
 };
@@ -211,7 +208,7 @@ let destroyControl = () => {
 
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
-    if (gui.domElement.contains(event.target)) {
+    if (stageGui.domElement.contains(event.target)) {
         if (event.target.className === "title") {
             let maybeStage = findStageWithName(event.target.innerHTML);
             if (maybeStage !== undefined) {
@@ -249,7 +246,7 @@ let onDocumentMouseDown = (event) => {
 let onDocumentMouseUp = (event) => {
     // If we had clicked on a stage folder, close all folders and let the
     // datGui mouseup handler just open the one stage folder
-    if (gui.domElement.contains(event.target)) {
+    if (stageGui.domElement.contains(event.target)) {
         if (event.target.className === "title") {
             openFolderForStage(null);
         }
@@ -424,8 +421,6 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     let parentPosMat = parentStage.matrixWorld;
     childStage.position.setFromMatrixPosition(parentPosMat);
     childStage.translateY(platformYDisplacement);
-    parentStage.childStages.push(childStage);
-    childStage.parentStage = parentStage;
 
     // Add to connections table
     let existingChildren = connections[getStageName(parentStage)];
