@@ -417,28 +417,42 @@ let gatherDeepChildStages = (stage) => {
 };
 
 let connectStageToStageAtPlace = (childStage, parentStage, place) => {
+    if (!(place === 'center' || place === 'left' || place === 'right')) {
+        console.log(`Invalid place for connection: ${place}`);
+        return;
+    }
     let parentPosMat = parentStage.matrixWorld;
     childStage.position.setFromMatrixPosition(parentPosMat);
     childStage.translateY(platformYDisplacement);
     parentStage.childStages.push(childStage);
     childStage.parentStage = parentStage;
-    if (place === 'center') {
-        let existingChildren = connections[getStageName(parentStage)];
-        if (existingChildren === undefined) {
-            connections[getStageName(parentStage)] = [[childStage, 'center']];
-        }
-        else {
-            connections[getStageName(parentStage)].concat([childStage, 'center']);
-        }
+
+    // Add to connections table
+    let existingChildren = connections[getStageName(parentStage)];
+    if (existingChildren === undefined) {
+        connections[getStageName(parentStage)] = [[childStage, place]];
     }
+    else {
+        connections[getStageName(parentStage)].concat([childStage, place]);
+    }
+
+    // Position child stage appropriately
+    let parentDir = new THREE.Vector3();
+    parentStage.getWorldDirection(parentDir);
+    let axis = childStage.worldToLocal(parentDir);
     if (place === 'left') {
+        childStage.translateOnAxis(axis, maxAxisDisplacement);
     }
     if (place === 'right') {
+        childStage.translateOnAxis(axis, -maxAxisDisplacement);
+    }
+    if (place === 'center') {
+        childStage.translateOnAxis(axis, 0);
     }
 };
 
 let DEMO__connectTwoStages = () => {
-    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "right");
 };
 
 let DEBUG__connectTwoStages = () => {
