@@ -476,7 +476,12 @@ let DEMO__connectTwoStages = () => {
 
 let DEBUG__connectTwoStages = () => {
     addStage();
-    DEMO__connectTwoStages();
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "left");
+    addStage();
+    connectStageToStageAtPlace(getGroups()[2], getGroups()[1], "right");
+    let firstStage = getGroups()[0];
+    let firstStageName = getStageName(firstStage);
+    setStageNamePlatformToTargetDispl(firstStageName, 100);
 };
 
 let generateMomProgram = () => {
