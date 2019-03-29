@@ -130,11 +130,14 @@ let findStageWithName = (name) => {
 let deleteStage = (stage) => {
     unfocus();
     destroyControl();
-    gui.removeFolder(stage.dgFolder);
+    stageGui.removeFolder(stage.dgFolder);
     let deletedStageName = getStageName(stage);
-    Object.keys(connections).forEach((stageNameDotPlace) => {
-        if (stageNameDotPlace.includes(deletedStageName)) {
-            delete connections[stageNameDotPlace];
+    Object.keys(connections).forEach((stageName) => {
+        let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
+            getStageName(stagePlacePair[0]);
+        });
+        if (stageFoundAsChild !== undefined) {
+            delete connections[stageName];
         }
     });
 
