@@ -175,6 +175,10 @@ let getControl = () => {
 };
 
 let initGui = () => {
+    connectionGui = new dat.GUI( { width: 200 } );
+    connectionGui.add({ AddConnection: () => {
+        addConnection();
+    } }, 'AddConnection');
     stageGui = new dat.GUI( { width: 200 } );
     stageGui.add({ AddStage: () => {
         addStage();
