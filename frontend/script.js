@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 let container, stats, gui;
 let camera, scene, renderer;
@@ -334,6 +334,8 @@ let init = () => {
 
     camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
+
+    DEBUG__connectTwoStages();
 };
 
 let onWindowResize = () => {
@@ -437,6 +439,11 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
 
 let DEMO__connectTwoStages = () => {
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
+};
+
+let DEBUG__connectTwoStages = () => {
+    addStage();
+    DEMO__connectTwoStages();
 };
 
 let generateMomProgram = () => {
