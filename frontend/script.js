@@ -494,10 +494,9 @@ let DEMO__connectTwoStages = () => {
 let DEBUG__connectTwoStages = () => {
     addStage();
     getGroups()[1].axis = 'y';
-    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "left");
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
     let firstStage = getGroups()[0];
     let firstStageName = getStageName(firstStage);
-    setStageNamePlatformToTargetDispl(firstStageName, 100);
 };
 
 let generateMomProgram = () => {
@@ -549,6 +548,7 @@ let DOM__decrement = (axis) => {
         let targetDisp = currDisp - 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
+        updateDomPosition();
     });
 };
 
@@ -560,7 +560,20 @@ let DOM__increment = (axis) => {
         let targetDisp = currDisp + 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
+        updateDomPosition();
     });
+};
+
+let updateDomPosition = () => {
+    var positionString = '';
+    let distinctAxes = getDistinctAxes();
+    distinctAxes.forEach((axis) => {
+        let stagesForAxis = getStagesWithAxis(axis);
+        let axisDispl = getPlatformDisplacementForStage(stagesForAxis[0]);
+        positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+    });
+    let posRowDom = document.querySelector('.position-row');
+    posRowDom.innerText = positionString;
 };
 
 let inflateControlPad = () => {
