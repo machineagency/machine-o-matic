@@ -477,6 +477,11 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     newConnectionFolder.add(newConnection, 'place');
 };
 
+let getDistinctAxes = () => {
+    return getGroups().map((stage) => stage.axis)
+            .filter((axis, idx, ary) => ary.indexOf(axis) === idx);
+};
+
 let DEMO__connectTwoStages = () => {
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "right");
 };
@@ -507,6 +512,41 @@ let generateMomProgram = () => {
     programStr = programStr.concat('\n');
     return programStr;
 
+};
+
+let inflateControlPad = () => {
+    // TODO: inflate from program, not from scene-graph
+    let distinctAxes = getDistinctAxes();
+    let controlPadDom = document.querySelector('#control-pad');
+    distinctAxes.forEach((axisName) => {
+        let controlRowDom = document.createElement('div');
+        controlRowDom.className = 'control-row clearfix';
+
+        let axisNameDom = document.createElement('div');
+        axisNameDom.className = 'axis-name';
+        axisNameDom.innerHTML = axisName;
+
+        // TODO: figure out which arrow to use
+        let firstArrowDom = document.createElement('img');
+        firstArrowDom.className = 'control-arrow float-left';
+        firstArrowDom.src = 'img/arrow_left.png';
+
+        let secondArrowDom = document.createElement('img');
+        secondArrowDom.className = 'control-arrow float-right';
+        secondArrowDom.src = 'img/arrow_right.png';
+
+        controlPadDom.appendChild(controlRowDom);
+        controlRowDom.appendChild(firstArrowDom);
+        controlRowDom.appendChild(axisNameDom);
+        controlRowDom.appendChild(secondArrowDom);
+    });
+};
+
+let clearControlPad = () => {
+    let controlPadDom = document.querySelector('#control-pad');
+    while (controlPadDom.firstChild) {
+        controlPadDom.removeChild(controlPadDom.firstChild);
+    }
 };
 
 let animate = () => {
