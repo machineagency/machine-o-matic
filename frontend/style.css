@@ -17,6 +17,7 @@ button {
     width: 100px;
     padding: 10px 0px 10px 0px;
     outline: none;
+    cursor: pointer;
 }
 
 .button-bar {
@@ -113,6 +114,7 @@ button {
     height: 50px;
     width: 50px;
     display: inline-block;
+    cursor: pointer;
 }
 
 .float-left {
