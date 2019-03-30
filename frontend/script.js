@@ -518,7 +518,7 @@ let inflateControlPad = () => {
     clearControlPad();
     // TODO: inflate from program, not from scene-graph
     let distinctAxes = getDistinctAxes();
-    let controlPadDom = document.querySelector('#control-pad');
+    let controlPadDom = document.querySelector('.control-pad-row-container');
     distinctAxes.forEach((axisName) => {
         let controlRowDom = document.createElement('div');
         controlRowDom.className = 'control-row clearfix';
@@ -544,7 +544,7 @@ let inflateControlPad = () => {
 };
 
 let clearControlPad = () => {
-    let controlPadDom = document.querySelector('#control-pad');
+    let controlPadDom = document.querySelector('.control-pad-row-container');
     while (controlPadDom.firstChild) {
         controlPadDom.removeChild(controlPadDom.firstChild);
     }
