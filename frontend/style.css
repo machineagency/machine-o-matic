@@ -16,6 +16,28 @@ body {
     color: #ffffff;
 }
 
+#control-pad {
+    z-index: 1000;
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    padding: 20px;
+    font-family: Monospace;
+    font-size: 13px;
+    text-align: center;
+    color: #ffffff;
+    height: 200px;
+    width: 200px;
+    background-color: black;
+}
+
+.control-row {
+    background-color: grey;
+    height: 50px;
+    margin-bottom: 5px;
+}
+
+
 a {
     color: #ffffff;
 }
