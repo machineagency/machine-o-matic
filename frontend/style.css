@@ -42,6 +42,39 @@ body {
     display: inline-block;
 }
 
+.float-left {
+    float: left;
+}
+
+.float-right {
+    float: right;
+}
+
+.clearfix {
+    overflow: auto;
+}
+
+/* Make dat.gui have cooler fonts */
+
+.title {
+    font-family: Monospace;
+}
+
+.property-name {
+    font-family: Monospace;
+}
+
+.dg .cr.string input[type=text] {
+    font-family: Monospace;
+}
+
+.function {
+    font-family: Monospace;
+}
+
+.close-button {
+    font-family: Monospace;
+}
 
 a {
     color: #ffffff;
