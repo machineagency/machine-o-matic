@@ -501,8 +501,8 @@ let generateMomProgram = () => {
         programStr = programStr.concat(`\tlinear ${stageName} -> A(${stageAxis}):\n\t\t${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
-    Object.keys(connections).forEach((cxn) => {
-        programStr = programStr.concat(cxn.name);
+    connections.forEach((cxn) => {
+        programStr = programStr.concat(`\t${cxn.name}.platform\n`);
     });
     programStr = programStr.concat('\n');
     return programStr;
