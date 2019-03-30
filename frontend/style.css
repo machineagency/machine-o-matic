@@ -82,6 +82,7 @@ button {
     height: 100%;
     width: 100%;
     margin-bottom: 5px;
+    display: none; /* to be programatically shown */
 }
 
 .position-row {

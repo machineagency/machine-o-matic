@@ -520,7 +520,21 @@ let DOM__generate = () => {
     programContainerDom.innerText = programText;
 };
 
-let DOM__compile = () => {};
+let DOM__compile = () => {
+    // TODO: basic static checking
+    let programIsValid = (progText) => {
+        return !(/^\s*$/.test(progText));
+    };
+    let programContainerDom = document.querySelector('.program-container');
+    if (!programIsValid(programContainerDom.innerText)) {
+        alert("Could not compile .mom program.");
+        return;
+    }
+    let posInstContainerDom = document.querySelector('.pos-inst-container');
+    posInstContainerDom.style.display = 'block';
+    inflateControlPad();
+    // TODO: actually generate software controller via momlang
+};
 
 let inflateControlPad = () => {
     clearControlPad();
