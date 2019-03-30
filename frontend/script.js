@@ -515,6 +515,7 @@ let generateMomProgram = () => {
 };
 
 let inflateControlPad = () => {
+    clearControlPad();
     // TODO: inflate from program, not from scene-graph
     let distinctAxes = getDistinctAxes();
     let controlPadDom = document.querySelector('#control-pad');
