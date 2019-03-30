@@ -5,6 +5,26 @@ body {
     overflow: hidden;
 }
 
+button {
+    background-color: white;
+    border: none;
+    color: black;
+    font-family: Monospace;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 13px;
+    width: 100px;
+    padding: 10px 0px 10px 0px;
+    outline: none;
+}
+
+.button-bar {
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
 #info {
     position: absolute;
     top: 0px;
@@ -28,6 +48,29 @@ body {
     color: #ffffff;
     width: 200px;
     background-color: black;
+}
+
+#program-pad {
+    z-index: 1000;
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    padding: 20px;
+    font-family: Monospace;
+    font-size: 10px;
+    color: #ffffff;
+    width: 250px;
+    height: 200px;
+    background-color: black;
+}
+
+.program-container {
+    outline: none;
+    border: 1px solid white;
+    margin-bottom: 10px;
+    padding-left: 10px;
+    height: 80%;
+    overflow: scroll;
 }
 
 .control-row {

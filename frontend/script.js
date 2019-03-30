@@ -496,17 +496,18 @@ let DEBUG__connectTwoStages = () => {
 };
 
 let generateMomProgram = () => {
-    var programStr = 'tool Pen:\n\taccepts (x,y)\n';
+    let s = '  ';
+    var programStr = `tool Pen:\n${s}accepts (x,y)\n`;
     programStr = programStr.concat('\nstages:\n');
     getGroups().forEach((stage) => {
         let stageName = getStageName(stage);
         let stageAxis = getStageAxis(stage);
         let defaultTransfer = 'step -> 0.03048 mm';
-        programStr = programStr.concat(`\tlinear ${stageName} -> A(${stageAxis}):\n\t\t${defaultTransfer}\n`);
+        programStr = programStr.concat(`${s}linear ${stageName} -> A(${stageAxis}):\n${s}${s}${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
     connections.forEach((cxn) => {
-        programStr = programStr.concat(`\t${cxn.name}.platform\n`);
+        programStr = programStr.concat(`${s}${cxn.name}.platform\n`);
     });
     programStr = programStr.concat('\n');
     return programStr;

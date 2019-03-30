@@ -20,6 +20,27 @@
     </div>
     <div class="control-pad-row-container"></div>
 </div>
+<div id="program-pad">
+    <div class="program-container" contenteditable="true">
+        <pre>
+tool Pen:
+    accepts (x,y)
+
+stages:
+    linear hopper -> A(x):
+      step -> 0.03048 mm
+    linear gravenstein -> A(y):
+      step -> 0.03048 mm
+
+connections:
+    hopper.left -> gravenstein.platform
+        </pre>
+    </div>
+    <div class="button-bar">
+        <button>Generate</button>
+        <button>Compile</button>
+    </div>
+</div>
 
 <script src="node_modules/three/build/three.js"></script>
 <script src="node_modules/three/examples/js/controls/TransformControls.js"></script>
