@@ -146,6 +146,7 @@ button {
 
 .close-button {
     font-family: Monospace;
+    display: none;
 }
 
 a {
