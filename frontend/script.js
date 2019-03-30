@@ -249,6 +249,9 @@ let onDocumentMouseDown = (event) => {
             let childStageName = getStageName(getFocus());
             let parentStageName = getStageName(stage);
             let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
+            if (!(place === 'center' || place === 'right' || place === 'left')) {
+                return;
+            }
             connectStageToStageAtPlace(getFocus(), stage, place);
         }
 
