@@ -59,6 +59,7 @@ class Connection {
         this.parentName = parentName;
         this.childName = childName;
         this.place = place;
+        this.name = `${parentName}.${place} -> ${childName}`;
     }
 }
 
@@ -118,9 +119,6 @@ let addStage = () => {
 
 };
 
-let addConnection = () => {
-};
-
 let setDgFolderName = (dgFolder, name) => {
     dgFolder.name = name;
 };
@@ -176,9 +174,6 @@ let getControl = () => {
 
 let initGui = () => {
     connectionGui = new dat.GUI( { width: 200 } );
-    connectionGui.add({ AddConnection: () => {
-        addConnection();
-    } }, 'AddConnection');
     stageGui = new dat.GUI( { width: 200 } );
     stageGui.add({ AddStage: () => {
         addStage();
@@ -249,6 +244,15 @@ let onDocumentMouseDown = (event) => {
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
         let stage = getObjectGroup(isectGroups[0].object);
+        // If we are holding shift, make a connection
+        if (event.shiftKey) {
+            let childStageName = getStageName(getFocus());
+            let parentStageName = getStageName(stage);
+            let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
+            connectStageToStageAtPlace(getFocus(), stage, place);
+        }
+
+        // Otherwise, just focus the new stage
         destroyControl();
         generateControlForGroup(stage);
         focus(stage);
@@ -446,14 +450,8 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     // Add to connections table
     let parentName = getStageName(parentStage);
     let childName = getStageName(childStage);
-    connections.push(new Connection(parentName, childName, place));
-    // let existingChildren = connections[getStageName(parentStage)];
-    // if (existingChildren === undefined) {
-    //     connections[getStageName(parentStage)] = [[childStage, place]];
-    // }
-    // else {
-    //     connections[getStageName(parentStage)].concat([childStage, place]);
-    // }
+    let newConnection = new Connection(parentName, childName, place);
+    connections.push(newConnection);
 
     // Position child stage appropriately
     let parentDir = new THREE.Vector3();
@@ -468,6 +466,12 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     if (place === 'center') {
         childStage.translateOnAxis(axis, 0);
     }
+
+    // Add to GUI
+    let newConnectionFolder = connectionGui.addFolder(newConnection.name);
+    newConnectionFolder.add(newConnection, 'parentName');
+    newConnectionFolder.add(newConnection, 'childName');
+    newConnectionFolder.add(newConnection, 'place');
 };
 
 let DEMO__connectTwoStages = () => {
@@ -495,12 +499,8 @@ let generateMomProgram = () => {
     });
     programStr = programStr.concat('\nconnections:\n');
     Object.keys(connections).forEach((cxn) => {
-        programStr = programStr.concat(`\t${cxn.parentName}.${cxn.place} -> ${cxn.childName}.platform`);
+        programStr = programStr.concat(cxn.name);
     });
-    // Object.keys(connections).forEach((stageNameDotPlace) => {
-    //    let toStageDotPlace = connections[stageNameDotPlace].concat(".platform");
-    //     programstr = programstr.concat(`\t${stagenamedotplace} -> ${tostagedotplace}`);
-    // });
     programStr = programStr.concat('\n');
     return programStr;
 
