@@ -482,6 +482,11 @@ let getDistinctAxes = () => {
             .filter((axis, idx, ary) => ary.indexOf(axis) === idx);
 };
 
+let getStagesWithAxis = (axis) => {
+    let stages = getGroups();
+    return stages.filter((stage) => (stage.axis === axis));
+};
+
 let DEMO__connectTwoStages = () => {
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "right");
 };
@@ -536,6 +541,28 @@ let DOM__compile = () => {
     // TODO: actually generate software controller via momlang
 };
 
+let DOM__decrement = (axis) => {
+    // TODO: actually use software controller, hardcode axis for now
+    let stagesForAxis = getStagesWithAxis(axis);
+    stagesForAxis.forEach((stage) => {
+        let currDisp = getPlatformDisplacementForStage(stage);
+        let targetDisp = currDisp - 1;
+        let stageName = getStageName(stage);
+        setStageNamePlatformToTargetDispl(stageName, targetDisp);
+    });
+};
+
+let DOM__increment = (axis) => {
+    // TODO: actually use software controller, hardcode axis for now
+    let stagesForAxis = getStagesWithAxis(axis);
+    stagesForAxis.forEach((stage) => {
+        let currDisp = getPlatformDisplacementForStage(stage);
+        let targetDisp = currDisp + 1;
+        let stageName = getStageName(stage);
+        setStageNamePlatformToTargetDispl(stageName, targetDisp);
+    });
+};
+
 let inflateControlPad = () => {
     clearControlPad();
     // TODO: inflate from program, not from scene-graph
@@ -557,7 +584,7 @@ let inflateControlPad = () => {
         firstArrowDom.onmousedown = () => {
             let sendingInterval = 100;
             let interval = setInterval(() => {
-                console.log(`move left: ${axisName}`);
+                DOM__decrement(axisName);
                 document.onmouseup = () => {
                     clearInterval(interval);
                 };
@@ -573,7 +600,7 @@ let inflateControlPad = () => {
         secondArrowDom.onmousedown = () => {
             let sendingInterval = 100;
             let interval = setInterval(() => {
-                console.log(`move right: ${axisName}`);
+                DOM__increment(axisName);
                 document.onmouseup = () => {
                     clearInterval(interval);
                 };
