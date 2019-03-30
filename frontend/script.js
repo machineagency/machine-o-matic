@@ -496,7 +496,7 @@ let DEBUG__connectTwoStages = () => {
 };
 
 let generateMomProgram = () => {
-    let s = '  ';
+    let s = '    ';
     var programStr = `tool Pen:\n${s}accepts (x,y)\n`;
     programStr = programStr.concat('\nstages:\n');
     getGroups().forEach((stage) => {
@@ -513,6 +513,14 @@ let generateMomProgram = () => {
     return programStr;
 
 };
+
+let DOM__generate = () => {
+    let programText = generateMomProgram();
+    let programContainerDom = document.querySelector('.program-container');
+    programContainerDom.innerText = programText;
+};
+
+let DOM__compile = () => {};
 
 let inflateControlPad = () => {
     clearControlPad();

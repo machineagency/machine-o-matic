@@ -21,24 +21,11 @@
     <div class="control-pad-row-container"></div>
 </div>
 <div id="program-pad">
-    <div class="program-container" contenteditable="true">
-        <pre>
-tool Pen:
-    accepts (x,y)
-
-stages:
-    linear hopper -> A(x):
-      step -> 0.03048 mm
-    linear gravenstein -> A(y):
-      step -> 0.03048 mm
-
-connections:
-    hopper.left -> gravenstein.platform
-        </pre>
-    </div>
+    <pre class="program-container" contenteditable="true">
+    </pre>
     <div class="button-bar">
-        <button>Generate</button>
-        <button>Compile</button>
+        <button onclick="DOM__generate()">Generate</button>
+        <button onclick="DOM__compile()">Compile</button>
     </div>
 </div>
 

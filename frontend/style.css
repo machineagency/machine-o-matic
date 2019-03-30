@@ -55,12 +55,11 @@ button {
     position: absolute;
     right: 20px;
     bottom: 20px;
-    padding: 20px;
+    padding: 20px 20px 10px 20px;
     font-family: Monospace;
     font-size: 10px;
     color: #ffffff;
     width: 250px;
-    height: 200px;
     background-color: black;
 }
 
@@ -71,6 +70,7 @@ button {
     padding-left: 10px;
     height: 80%;
     overflow: scroll;
+    height: 200px;
 }
 
 .control-row {
