@@ -1,6 +1,7 @@
-'use strict'
+'use strict';
 
-let container, stats, gui;
+let container, stats;
+let stageGui, connectionGui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
@@ -34,7 +35,7 @@ const maxAxisDisplacement = 125;
 const platformYDisplacement = 46.5;
 
 const geometryFactories = {
-    stageCase: () => new THREE.BoxBufferGeometry(1000, 100, 200, 2, 2, 2 ),
+    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2 ),
     stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2 )
 };
 
@@ -50,7 +51,17 @@ const defaultStageNames = [
 
 const greenColor = 0xbed346;
 const stagePlatformsInMotion = {};
-const connections = {};
+
+const connections = [];
+
+class Connection {
+    constructor(parentName, childName, place) {
+        this.parentName = parentName;
+        this.childName = childName;
+        this.place = place;
+        this.name = `${parentName}.${place} -> ${childName}`;
+    }
+}
 
 let addStage = () => {
     let group = new THREE.Group();
@@ -87,17 +98,13 @@ let addStage = () => {
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
     let stageName = defaultStageNames[stageNameIndex];
     group.stageName = stageName;
-    // group.dgcontroller = gui.add({ stageName: stageName }, 'stageName');
 
-    group.dgFolder = gui.addFolder(stageName);
+    group.dgFolder = stageGui.addFolder(stageName);
     group.dgcontroller = group.dgFolder.add(group, 'stageName')
                             .onChange((value) => {
                                 setDgFolderName(group.dgFolder, value);
                             });
     group.dgFolder.addColor(group.color, 'color');
-
-    group.childStages = [];
-    group.parentStage = group;
 
     group.axis = "x";
     group.dgFolder.add(group, 'axis');
@@ -131,13 +138,17 @@ let findStageWithName = (name) => {
 let deleteStage = (stage) => {
     unfocus();
     destroyControl();
-    gui.removeFolder(stage.dgFolder);
+    stageGui.removeFolder(stage.dgFolder);
     let deletedStageName = getStageName(stage);
-    Object.keys(connections).forEach((stageNameDotPlace) => {
-        if (stageNameDotPlace.includes(deletedStageName)) {
-            delete connections[stageNameDotPlace];
-        }
-    });
+    // TODO: recursive deleting of child connections with new ADT
+    // Object.keys(connections).forEach((stageName) => {
+    //     let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
+    //         getStageName(stagePlacePair[0]);
+    //     });
+    //     if (stageFoundAsChild !== undefined) {
+    //         delete connections[stageName];
+    //     }
+    // });
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -162,8 +173,9 @@ let getControl = () => {
 };
 
 let initGui = () => {
-    gui = new dat.GUI( { width: 200 } );
-    gui.add({ AddStage: () => {
+    connectionGui = new dat.GUI( { width: 200 } );
+    stageGui = new dat.GUI( { width: 200 } );
+    stageGui.add({ AddStage: () => {
         addStage();
     } }, 'AddStage');
 };
@@ -209,7 +221,7 @@ let destroyControl = () => {
 
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
-    if (gui.domElement.contains(event.target)) {
+    if (stageGui.domElement.contains(event.target)) {
         if (event.target.className === "title") {
             let maybeStage = findStageWithName(event.target.innerHTML);
             if (maybeStage !== undefined) {
@@ -232,6 +244,18 @@ let onDocumentMouseDown = (event) => {
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
         let stage = getObjectGroup(isectGroups[0].object);
+        // If we are holding shift, make a connection
+        if (event.shiftKey) {
+            let childStageName = getStageName(getFocus());
+            let parentStageName = getStageName(stage);
+            let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
+            if (!(place === 'center' || place === 'right' || place === 'left')) {
+                return;
+            }
+            connectStageToStageAtPlace(getFocus(), stage, place);
+        }
+
+        // Otherwise, just focus the new stage
         destroyControl();
         generateControlForGroup(stage);
         focus(stage);
@@ -247,7 +271,7 @@ let onDocumentMouseDown = (event) => {
 let onDocumentMouseUp = (event) => {
     // If we had clicked on a stage folder, close all folders and let the
     // datGui mouseup handler just open the one stage folder
-    if (gui.domElement.contains(event.target)) {
+    if (stageGui.domElement.contains(event.target)) {
         if (event.target.className === "title") {
             openFolderForStage(null);
         }
@@ -300,6 +324,7 @@ let initScene = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
+    // scene.add(new THREE.GridHelper(2000, 40));
 };
 
 let initRenderer = () => {
@@ -331,6 +356,8 @@ let init = () => {
 
     camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
+
+    DEBUG__connectTwoStages();
 };
 
 let onWindowResize = () => {
@@ -345,11 +372,11 @@ let onWindowResize = () => {
  */
 
 let getPlatformDisplacementForStage = (stage) => {
-    return stage.children[3].position.x;
+    return stage.children[3].position.z;
 };
 
 let setPlatformDisplacementForStage = (stage, displ) => {
-    stage.children[3].position.x = displ;
+    stage.children[3].position.z = displ;
 };
 
 
@@ -358,14 +385,21 @@ let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
 };
 
 let _moveStagePlatform = (stage, delta) => {
-    if (Math.abs(stage.children[3].position.x + delta) <= maxAxisDisplacement) {
-        let platformLines = stage.children[2];
-        let platformMesh = stage.children[3];
-        platformLines.translateX(delta);
-        platformMesh.translateX(delta);
+    let platformLines = stage.children[2];
+    let platformMesh = stage.children[3];
+    if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacement) {
+        platformLines.translateZ(delta);
+        platformMesh.translateZ(delta);
     }
 };
 
+
+let _moveStage = (stage, delta, axis) => {
+    if (Math.abs(stage.position.z + delta) <= maxAxisDisplacement) {
+        // stage.translateX(delta);
+        stage.translateOnAxis(axis, delta);
+    }
+};
 
 let incrementPlatforms = () => {
     Object.keys(stagePlatformsInMotion).forEach((stageName) => {
@@ -378,28 +412,83 @@ let incrementPlatforms = () => {
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
+
+            let baseAxis = new THREE.Vector3();
+            stage.getWorldDirection(baseAxis);
+            let childStages = gatherDeepChildStages(stage);
+            childStages.forEach((stage) => {
+                let stageOrigin = stage.position;
+                let translatedBaseAxis = new THREE.Vector3().addVectors(baseAxis, stageOrigin);
+                let axis = stage.worldToLocal(translatedBaseAxis);
+                _moveStage(stage, increment, axis);
+            });
         }
 
     });
 };
 
+let gatherDeepChildStages = (parentStage) => {
+    let parentName = getStageName(parentStage);
+    let shallowChildCxns = connections.filter((cxn) => cxn.parentName === parentName);
+    if (shallowChildCxns === undefined) {
+        return [];
+    }
+    let shallowChildNames = [];
+    shallowChildCxns.forEach((cxn) => shallowChildNames.push(cxn.childName));
+    let shallowChildStages = shallowChildNames.map((stageName) => findStageWithName(stageName));
+    let deepStages = shallowChildStages.map((stage) => gatherDeepChildStages(stage));
+    let deepStagesFlat = deepStages.flat(1);
+    return shallowChildStages.concat(deepStagesFlat);
+};
+
 let connectStageToStageAtPlace = (childStage, parentStage, place) => {
+    if (!(place === 'center' || place === 'left' || place === 'right')) {
+        console.log(`Invalid place for connection: ${place}`);
+        return;
+    }
     let parentPosMat = parentStage.matrixWorld;
     childStage.position.setFromMatrixPosition(parentPosMat);
     childStage.translateY(platformYDisplacement);
-    parentStage.childStages.push(childStage);
-    childStage.parentStage = parentStage;
-    if (place === 'center') {
-        connections[getStageName(childStage).concat('.center')] = getStageName(parentStage);
-    }
+
+    // Add to connections table
+    let parentName = getStageName(parentStage);
+    let childName = getStageName(childStage);
+    let newConnection = new Connection(parentName, childName, place);
+    connections.push(newConnection);
+
+    // Position child stage appropriately
+    let parentDir = new THREE.Vector3();
+    parentStage.getWorldDirection(parentDir);
+    let axis = childStage.worldToLocal(parentDir);
     if (place === 'left') {
+        childStage.translateOnAxis(axis, maxAxisDisplacement);
     }
     if (place === 'right') {
+        childStage.translateOnAxis(axis, -maxAxisDisplacement);
     }
+    if (place === 'center') {
+        childStage.translateOnAxis(axis, 0);
+    }
+
+    // Add to GUI
+    let newConnectionFolder = connectionGui.addFolder(newConnection.name);
+    newConnectionFolder.add(newConnection, 'parentName');
+    newConnectionFolder.add(newConnection, 'childName');
+    newConnectionFolder.add(newConnection, 'place');
 };
 
 let DEMO__connectTwoStages = () => {
-    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "right");
+};
+
+let DEBUG__connectTwoStages = () => {
+    addStage();
+    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "left");
+    addStage();
+    connectStageToStageAtPlace(getGroups()[2], getGroups()[1], "right");
+    let firstStage = getGroups()[0];
+    let firstStageName = getStageName(firstStage);
+    setStageNamePlatformToTargetDispl(firstStageName, 100);
 };
 
 let generateMomProgram = () => {
@@ -412,9 +501,8 @@ let generateMomProgram = () => {
         programStr = programStr.concat(`\tlinear ${stageName} -> A(${stageAxis}):\n\t\t${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
-    Object.keys(connections).forEach((stageNameDotPlace) => {
-       let toStageDotPlace = connections[stageNameDotPlace].concat(".platform");
-        programStr = programStr.concat(`\t${stageNameDotPlace} -> ${toStageDotPlace}`);
+    Object.keys(connections).forEach((cxn) => {
+        programStr = programStr.concat(cxn.name);
     });
     programStr = programStr.concat('\n');
     return programStr;
