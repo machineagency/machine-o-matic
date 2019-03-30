@@ -488,9 +488,8 @@ let DEMO__connectTwoStages = () => {
 
 let DEBUG__connectTwoStages = () => {
     addStage();
+    getGroups()[1].axis = 'y';
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "left");
-    addStage();
-    connectStageToStageAtPlace(getGroups()[2], getGroups()[1], "right");
     let firstStage = getGroups()[0];
     let firstStageName = getStageName(firstStage);
     setStageNamePlatformToTargetDispl(firstStageName, 100);
@@ -531,11 +530,15 @@ let inflateControlPad = () => {
         let firstArrowDom = document.createElement('img');
         firstArrowDom.className = 'control-arrow float-left';
         firstArrowDom.src = 'img/arrow_left.png';
+        firstArrowDom.setAttribute('axis', axisName);
         firstArrowDom.onmousedown = () => {
             let sendingInterval = 100;
             let interval = setInterval(() => {
-                console.log('move left');
+                console.log(`move left: ${axisName}`);
                 document.onmouseup = () => {
+                    clearInterval(interval);
+                };
+                document.onclick = () => {
                     clearInterval(interval);
                 };
             }, sendingInterval);
@@ -547,8 +550,11 @@ let inflateControlPad = () => {
         secondArrowDom.onmousedown = () => {
             let sendingInterval = 100;
             let interval = setInterval(() => {
-                console.log('move right');
+                console.log(`move right: ${axisName}`);
                 document.onmouseup = () => {
+                    clearInterval(interval);
+                };
+                document.onclick = () => {
                     clearInterval(interval);
                 };
             }, sendingInterval);
