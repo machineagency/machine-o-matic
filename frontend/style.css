@@ -32,9 +32,14 @@ body {
 }
 
 .control-row {
-    background-color: grey;
-    height: 50px;
+    height: 65px;
     margin-bottom: 5px;
+}
+
+.control-arrow {
+    height: 50px;
+    width: 50px;
+    display: inline-block;
 }
 
 
