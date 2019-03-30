@@ -531,10 +531,28 @@ let inflateControlPad = () => {
         let firstArrowDom = document.createElement('img');
         firstArrowDom.className = 'control-arrow float-left';
         firstArrowDom.src = 'img/arrow_left.png';
+        firstArrowDom.onmousedown = () => {
+            let sendingInterval = 100;
+            let interval = setInterval(() => {
+                console.log('move left');
+                document.onmouseup = () => {
+                    clearInterval(interval);
+                };
+            }, sendingInterval);
+        };
 
         let secondArrowDom = document.createElement('img');
         secondArrowDom.className = 'control-arrow float-right';
         secondArrowDom.src = 'img/arrow_right.png';
+        secondArrowDom.onmousedown = () => {
+            let sendingInterval = 100;
+            let interval = setInterval(() => {
+                console.log('move right');
+                document.onmouseup = () => {
+                    clearInterval(interval);
+                };
+            }, sendingInterval);
+        };
 
         controlPadDom.appendChild(controlRowDom);
         controlRowDom.appendChild(firstArrowDom);
