@@ -65,12 +65,25 @@ class Connection {
     }
 }
 
-let addStage = () => {
+let addLinearStage = () => {
+    _addStage('linear');
+};
+
+let addRotaryStage = () => {
+    _addStage('rotary');
+};
+
+let _addStage = (stageType) => {
     let group = new THREE.Group();
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
-    // let stageCase = geometryFactories.stageCase();
-    let stageCase = geometryFactories.rotaryStageCase();
+    let stageCase;
+    if (stageType === 'linear') {
+        stageCase = geometryFactories.stageCase();
+    }
+    else if (stageType === 'rotary') {
+        stageCase = geometryFactories.rotaryStageCase();
+    }
     // scale geometry to a uniform size
 
     stageCase.computeBoundingSphere();
@@ -80,8 +93,13 @@ let addStage = () => {
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
 
-    // let stagePlatform = geometryFactories.stagePlatform();
-    let stagePlatform = geometryFactories.rotaryStagePlatform();
+    let stagePlatform;
+    if (stageType === 'linear') {
+        stagePlatform = geometryFactories.stagePlatform();
+    }
+    else if (stageType === 'rotary') {
+        stagePlatform = geometryFactories.rotaryStagePlatform();
+    }
     stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
@@ -112,8 +130,8 @@ let addStage = () => {
 
     group.axis = 'y';
     group.dgFolder.add(group, 'axis').listen();
-    group.stageType = 'rotary';
-    group.dgFolder.add(group, 'stageType').listen();
+    group.stageType = stageType;
+    group.dgFolder.add(group, 'stageType');
 
     scene.add(group);
     destroyControl();
@@ -186,9 +204,12 @@ let getControl = () => {
 let initGui = () => {
     connectionGui = new dat.GUI( { width: 200 } );
     stageGui = new dat.GUI( { width: 200 } );
-    stageGui.add({ AddStage: () => {
-        addStage();
-    } }, 'AddStage');
+    stageGui.add({ AddLinearStage: () => {
+        addLinearStage();
+    } }, 'AddLinearStage');
+    stageGui.add({ AddRotaryStage: () => {
+        addRotaryStage();
+    } }, 'AddRotaryStage');
 };
 
 let _getIntersectsFromClickWithCandidates = (event, candidates) => {
@@ -361,7 +382,7 @@ let init = () => {
     initStats();
     initGui();
 
-    let stage = addStage();
+    let stage = addLinearStage();
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
     document.addEventListener('mouseup', onDocumentMouseUp, false);
@@ -561,7 +582,7 @@ let DEMO__connectTwoStages = () => {
 };
 
 let DEBUG__connectTwoStages = () => {
-    addStage();
+    addLinearStage();
     getGroups()[1].axis = 'y';
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
     let secondStage = getGroups()[1];
