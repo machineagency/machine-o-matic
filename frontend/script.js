@@ -35,8 +35,10 @@ const maxAxisDisplacement = 125;
 const platformYDisplacement = 46.5;
 
 const geometryFactories = {
-    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2 ),
-    stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2 )
+    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2),
+    stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2),
+    rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
+    rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10)
 };
 
 const defaultStageNames = [
@@ -67,7 +69,8 @@ let addStage = () => {
     let group = new THREE.Group();
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
-    let stageCase = geometryFactories.stageCase();
+    // let stageCase = geometryFactories.stageCase();
+    let stageCase = geometryFactories.rotaryStageCase();
     // scale geometry to a uniform size
 
     stageCase.computeBoundingSphere();
@@ -77,7 +80,8 @@ let addStage = () => {
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
 
-    let stagePlatform = geometryFactories.stagePlatform();
+    // let stagePlatform = geometryFactories.stagePlatform();
+    let stagePlatform = geometryFactories.rotaryStagePlatform();
     stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
