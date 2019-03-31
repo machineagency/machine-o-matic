@@ -278,6 +278,8 @@ let onDocumentMouseUp = (event) => {
         }
         return;
     }
+    // FIXME: better to do only on rotation, but this is easier
+    redetermineAllStageAxes();
 };
 
 let openFolderForStage = (stage) => {
@@ -467,6 +469,13 @@ let determineStageAxis = (stage) => {
     else {
         return '?';
     }
+};
+
+let redetermineAllStageAxes = () => {
+    let stages = getGroups();
+    stages.forEach((stage) => {
+        stage.axis = determineStageAxis(stage);
+    });
 };
 
 let gatherDeepChildStages = (parentStage) => {
