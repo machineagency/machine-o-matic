@@ -422,6 +422,13 @@ let setPlatformDisplacementForStage = (stage, displ) => {
 
 
 let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
+    // Constrain target disp to be [0, 180)
+    if (targetDisp < 0) {
+        targetDisp = 0;
+    }
+    if (targetDisp >= 180) {
+        targetDisp = 179;
+    }
     stagePlatformsInMotion[stageName] = targetDisp;
 };
 
@@ -454,7 +461,13 @@ let incrementPlatforms = () => {
     Object.keys(stagePlatformsInMotion).forEach((stageName) => {
         let stage = findStageWithName(stageName);
         let targetDisp = stagePlatformsInMotion[stageName];
-        let currDisp = getPlatformDisplacementForStage(stage);
+        let currDisp;
+        if (stage.stageType === 'linear') {
+            currDisp = getPlatformDisplacementForStage(stage);
+        }
+        else if (stage.stageType === 'rotary') {
+            currDisp = getRotaryStageAngle(stage);
+        }
         if (targetDisp === currDisp) {
             delete stagePlatformsInMotion[stageName];
         }
@@ -647,7 +660,7 @@ let DOM__decrement = (axis) => {
     // TODO: actually use software controller, hardcode axis for now
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
-        let currDisp = getPlatformDisplacementForStage(stage);
+        let currDisp = getStageValue(stage);
         let targetDisp = currDisp - 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
@@ -659,12 +672,22 @@ let DOM__increment = (axis) => {
     // TODO: actually use software controller, hardcode axis for now
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
-        let currDisp = getPlatformDisplacementForStage(stage);
+        let currDisp = getStageValue(stage);
         let targetDisp = currDisp + 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
         updateDomPosition();
     });
+};
+
+/* For linear and rotary stages */
+let getStageValue = (stage) => {
+    if (stage.stageType === 'linear') {
+        return getPlatformDisplacementForStage(stage);
+    }
+    else if (stage.stageType === 'rotary') {
+        return getRotaryStageAngle(stage);
+    }
 };
 
 let updateDomPosition = () => {
@@ -689,10 +712,10 @@ let updateDomPosition = () => {
 let getRotaryStageAngle = (stage) => {
     let platformMesh = stage.children[3]
     let worldDir = getStageWorldDirection(platformMesh);
-    let posXDir = new THREE.Vector3(1, 0, 0);
+    let posZDir = new THREE.Vector3(0, 0, 1);
     // Formula: cos(theta) = (a dot b) / |a| * |b|
     // a and b here are already normalized
-    let dotProd = posXDir.dot(worldDir);
+    let dotProd = posZDir.dot(worldDir);
     let angleRad = Math.acos(dotProd);
     let angleDeg = THREE.Math.radToDeg(angleRad);
     return Math.floor(angleDeg);
