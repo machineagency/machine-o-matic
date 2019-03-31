@@ -114,6 +114,11 @@ let addStage = () => {
     destroyControl();
     generateControlForGroup(group);
 
+    // Attempt to center on grid helper's axis
+    group.position.y = 50;
+    group.position.x = -35;
+    group.position.z = 35;
+
     focus(group);
 
     return group;
@@ -327,7 +332,7 @@ let initScene = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
-    // scene.add(new THREE.GridHelper(2000, 40));
+    scene.add(new THREE.GridHelper(2000, 100, 0x444444, 0xe5e6e8));
 };
 
 let initRenderer = () => {
