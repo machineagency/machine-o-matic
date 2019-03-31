@@ -461,13 +461,7 @@ let incrementPlatforms = () => {
     Object.keys(stagePlatformsInMotion).forEach((stageName) => {
         let stage = findStageWithName(stageName);
         let targetDisp = stagePlatformsInMotion[stageName];
-        let currDisp;
-        if (stage.stageType === 'linear') {
-            currDisp = getPlatformDisplacementForStage(stage);
-        }
-        else if (stage.stageType === 'rotary') {
-            currDisp = getRotaryStageAngle(stage);
-        }
+        let currDisp = getStageValue(stage);
         if (targetDisp === currDisp) {
             delete stagePlatformsInMotion[stageName];
         }
