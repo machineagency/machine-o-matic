@@ -112,7 +112,8 @@ let addStage = () => {
 
     group.axis = 'y';
     group.dgFolder.add(group, 'axis').listen();
-    group.stageType = 'linear';
+    group.stageType = 'rotary';
+    group.dgFolder.add(group, 'stageType').listen();
 
     scene.add(group);
     destroyControl();
@@ -369,7 +370,7 @@ let init = () => {
     camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
 
-    DEBUG__connectTwoStages();
+    // DEBUG__connectTwoStages();
 };
 
 let onWindowResize = () => {
@@ -397,18 +398,27 @@ let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
 };
 
 let _moveStagePlatform = (stage, delta) => {
-    let platformLines = stage.children[2];
-    let platformMesh = stage.children[3];
-    if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacement) {
-        platformLines.translateZ(delta);
-        platformMesh.translateZ(delta);
+    if (stage.stageType === 'linear') {
+        let platformLines = stage.children[2];
+        let platformMesh = stage.children[3];
+        if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacement) {
+            platformLines.translateZ(delta);
+            platformMesh.translateZ(delta);
+        }
+    }
+    else if (stage.stageType === 'rotary') {
+        let platformLines = stage.children[2];
+        let platformMesh = stage.children[3];
+        let adjustDeltaDegrees = delta * 3.6;
+        let deltaRad = THREE.Math.degToRad(adjustDeltaDegrees);
+        platformLines.rotateY(deltaRad);
+        platformMesh.rotateY(deltaRad);
     }
 };
 
 
 let _moveStage = (stage, delta, axis) => {
     if (Math.abs(stage.position.z + delta) <= maxAxisDisplacement) {
-        // stage.translateX(delta);
         stage.translateOnAxis(axis, delta);
     }
 };
@@ -567,7 +577,7 @@ let generateMomProgram = () => {
         let stageName = getStageName(stage);
         let stageAxis = getStageAxis(stage);
         let defaultTransfer = 'step -> 0.03048 mm';
-        programStr = programStr.concat(`${s}linear ${stageName} -> A(${stageAxis}):\n${s}${s}${defaultTransfer}\n`);
+        programStr = programStr.concat(`${s}${stage.stageType} ${stageName} -> A(${stageAxis}):\n${s}${s}${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
     connections.forEach((cxn) => {
