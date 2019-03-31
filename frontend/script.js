@@ -86,8 +86,15 @@ let _addStage = (stageType) => {
     }
     // scale geometry to a uniform size
 
+    let stageTypeScale;
+    if (stageType === 'linear') {
+        stageTypeScale = 160;
+    }
+    else if (stageType === 'rotary') {
+        stageTypeScale = 70;
+    }
     stageCase.computeBoundingSphere();
-    let scaleFactor = 160 / stageCase.boundingSphere.radius;
+    let scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
     stageCase.scale(scaleFactor, scaleFactor, scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
