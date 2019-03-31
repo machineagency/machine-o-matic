@@ -413,8 +413,7 @@ let incrementPlatforms = () => {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
 
-            let baseAxis = new THREE.Vector3();
-            stage.getWorldDirection(baseAxis);
+            let baseAxis = getStageWorldDirection(stage);
             let childStages = gatherDeepChildStages(stage);
             childStages.forEach((stage) => {
                 let stageOrigin = stage.position;
@@ -425,6 +424,12 @@ let incrementPlatforms = () => {
         }
 
     });
+};
+
+let getStageWorldDirection = (stage) => {
+    let vector = new THREE.Vector3();
+    stage.getWorldDirection(vector);
+    return vector;
 };
 
 let gatherDeepChildStages = (parentStage) => {
@@ -457,8 +462,7 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     connections.push(newConnection);
 
     // Position child stage appropriately
-    let parentDir = new THREE.Vector3();
-    parentStage.getWorldDirection(parentDir);
+    let parentDir = getStageWorldDirection(parentStage);
     let axis = childStage.worldToLocal(parentDir);
     if (place === 'left') {
         childStage.translateOnAxis(axis, maxAxisDisplacement);
