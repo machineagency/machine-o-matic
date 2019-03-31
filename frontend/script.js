@@ -437,8 +437,7 @@ let _moveStagePlatform = (stage, delta) => {
     else if (stage.stageType === 'rotary') {
         let platformLines = stage.children[2];
         let platformMesh = stage.children[3];
-        let adjustDeltaDegrees = delta * 3.6;
-        let deltaRad = THREE.Math.degToRad(adjustDeltaDegrees);
+        let deltaRad = THREE.Math.degToRad(delta);
         platformLines.rotateY(deltaRad);
         platformMesh.rotateY(deltaRad);
     }
@@ -673,8 +672,15 @@ let updateDomPosition = () => {
     let distinctAxes = getDistinctAxes();
     distinctAxes.forEach((axis) => {
         let stagesForAxis = getStagesWithAxis(axis);
-        let axisDispl = getPlatformDisplacementForStage(stagesForAxis[0]);
-        positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+        let representativeStage = stagesForAxis[0];
+        if (representativeStage.stageType === 'linear') {
+            let axisDispl = getPlatformDisplacementForStage(representativeStage);
+            positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+        }
+        else if (representativeStage.stageType === 'rotary') {
+            let axisDispl = getRotaryStageAngle(representativeStage);
+            positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+        }
     });
     let posRowDom = document.querySelector('.position-row');
     posRowDom.innerText = positionString;
