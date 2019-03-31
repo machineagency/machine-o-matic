@@ -106,8 +106,9 @@ let addStage = () => {
                             });
     group.dgFolder.addColor(group.color, 'color');
 
-    group.axis = "x";
-    group.dgFolder.add(group, 'axis');
+    group.axis = 'y';
+    group.dgFolder.add(group, 'axis').listen();
+    group.stageType = 'linear';
 
     scene.add(group);
     destroyControl();
@@ -429,7 +430,43 @@ let incrementPlatforms = () => {
 let getStageWorldDirection = (stage) => {
     let vector = new THREE.Vector3();
     stage.getWorldDirection(vector);
+    let eps = 1e-6;
+    if (Math.abs(vector.x) < eps) {
+        vector.x = 0.0;
+    }
+    if (Math.abs(vector.y) < eps) {
+        vector.y = 0.0;
+    }
+    if (Math.abs(vector.z) < eps) {
+        vector.z = 0.0;
+    }
     return vector;
+};
+
+/* Three JS world direction -> our system, so y axis is z axis e.g.
+ * Assumes stage's direction is normalized by three js */
+let determineStageAxis = (stage) => {
+    if (stage.stageType === 'rotary') {
+        return 'theta';
+    }
+    else if (stage.stageType === 'linear') {
+        let worldDir = getStageWorldDirection(stage);
+        if (Math.abs(worldDir.x) == 1.0) {
+            return 'x';
+        }
+        if (Math.abs(worldDir.z) == 1.0) {
+            return 'y';
+        }
+        if (Math.abs(worldDir.y) == 1.0) {
+            return 'z';
+        }
+        else {
+            return 'r';
+        }
+    }
+    else {
+        return '?';
+    }
 };
 
 let gatherDeepChildStages = (parentStage) => {
@@ -499,8 +536,9 @@ let DEBUG__connectTwoStages = () => {
     addStage();
     getGroups()[1].axis = 'y';
     connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
-    let firstStage = getGroups()[0];
-    let firstStageName = getStageName(firstStage);
+    let secondStage = getGroups()[1];
+    secondStage.rotateY(THREE.Math.degToRad(90));
+    secondStage.axis = determineStageAxis(secondStage);
 };
 
 let generateMomProgram = () => {
