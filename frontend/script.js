@@ -680,6 +680,18 @@ let updateDomPosition = () => {
     posRowDom.innerText = positionString;
 };
 
+let getRotaryStageAngle = (stage) => {
+    let platformMesh = stage.children[3]
+    let worldDir = getStageWorldDirection(platformMesh);
+    let posXDir = new THREE.Vector3(1, 0, 0);
+    // Formula: cos(theta) = (a dot b) / |a| * |b|
+    // a and b here are already normalized
+    let dotProd = posXDir.dot(worldDir);
+    let angleRad = Math.acos(dotProd);
+    let angleDeg = THREE.Math.radToDeg(angleRad);
+    return Math.floor(angleDeg);
+};
+
 let inflateControlPad = () => {
     clearControlPad();
     // TODO: inflate from program, not from scene-graph
