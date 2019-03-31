@@ -597,7 +597,13 @@ let generateMomProgram = () => {
     getGroups().forEach((stage) => {
         let stageName = getStageName(stage);
         let stageAxis = getStageAxis(stage);
-        let defaultTransfer = 'step -> 0.03048 mm';
+        let defaultTransfer;
+        if (stage.stageType === 'linear') {
+            defaultTransfer = 'step -> 0.03048 mm';
+        }
+        else if (stage.stageType === 'rotary') {
+            defaultTransfer = 'step -> 0.06 deg';
+        }
         programStr = programStr.concat(`${s}${stage.stageType} ${stageName} -> A(${stageAxis}):\n${s}${s}${defaultTransfer}\n`);
     });
     programStr = programStr.concat('\nconnections:\n');
