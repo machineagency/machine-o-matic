@@ -422,12 +422,14 @@ let setPlatformDisplacementForStage = (stage, displ) => {
 
 
 let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
-    // Constrain target disp to be [0, 180)
-    if (targetDisp < 0) {
-        targetDisp = 0;
-    }
-    if (targetDisp >= 180) {
-        targetDisp = 179;
+    let stage = findStageWithName(stageName);
+    if (stage.stageType === 'rotary') {
+        if (targetDisp < 0) {
+            targetDisp = 0;
+        }
+        if (targetDisp >= 180) {
+            targetDisp = 179;
+        }
     }
     stagePlatformsInMotion[stageName] = targetDisp;
 };
