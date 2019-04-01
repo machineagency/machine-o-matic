@@ -225,6 +225,10 @@ let getStageName = (stage) => {
     return stage.stageName;
 };
 
+let getToolName = () => {
+    return tool.toolName;
+}
+
 let getStageAxis = (stage) => {
     return stage.axis;
 };
@@ -352,13 +356,18 @@ let onDocumentMouseDown = (event) => {
         let stage = getObjectGroup(isectGroups[0].object);
         // If we are holding shift, make a connection
         if (event.shiftKey) {
-            let childStageName = getStageName(getFocus());
-            let parentStageName = getStageName(stage);
-            let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
-            if (!(place === 'center' || place === 'right' || place === 'left')) {
-                return;
+            if (getFocus().isTool) {
+                connectToolToStage(getFocus(), stage);
             }
-            connectStageToStageAtPlace(getFocus(), stage, place);
+            else {
+                let childStageName = getStageName(getFocus());
+                let parentStageName = getStageName(stage);
+                let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
+                if (!(place === 'center' || place === 'right' || place === 'left')) {
+                    return;
+                }
+                connectStageToStageAtPlace(getFocus(), stage, place);
+            }
         }
 
         // Otherwise, just focus the new stage
@@ -612,6 +621,20 @@ let gatherDeepChildStages = (parentStage) => {
     let deepStages = shallowChildStages.map((stage) => gatherDeepChildStages(stage));
     let deepStagesFlat = deepStages.flat(1);
     return shallowChildStages.concat(deepStagesFlat);
+};
+
+let connectToolToStage = (tool, stage) => {
+    // Add to connections table
+    let parentName = getToolName();
+    let childName = getStageName(stage);
+    let place = '';
+    let newConnection = new Connection(parentName, childName, place);
+    connections.push(newConnection);
+
+    // Add to GUI
+    let newConnectionFolder = connectionGui.addFolder(newConnection.name);
+    newConnectionFolder.add(newConnection, 'parentName');
+    newConnectionFolder.add(newConnection, 'childName');
 };
 
 let connectStageToStageAtPlace = (childStage, parentStage, place) => {
