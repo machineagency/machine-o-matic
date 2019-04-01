@@ -635,6 +635,9 @@ let connectToolToStage = (tool, stage) => {
     let newConnectionFolder = connectionGui.addFolder(newConnection.name);
     newConnectionFolder.add(newConnection, 'parentName');
     newConnectionFolder.add(newConnection, 'childName');
+
+    let childStagePlatform = stage.children[3];
+    childStagePlatform.add(tool);
 };
 
 let connectStageToStageAtPlace = (childStage, parentStage, place) => {
