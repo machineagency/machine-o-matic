@@ -394,6 +394,7 @@ let onDocumentMouseUp = (event) => {
     }
     // FIXME: better to do only on rotation, but this is easier
     redetermineAllStageAxes();
+    redetermineAccepts();
 };
 
 let openFolderForStage = (stage) => {
@@ -608,6 +609,11 @@ let redetermineAllStageAxes = () => {
         stage.axis = determineStageAxis(stage);
     });
 };
+
+let redetermineAccepts = () => {
+    let axes = getDistinctAxes();
+    tool.accepts = axes;
+}
 
 let gatherDeepChildStages = (parentStage) => {
     let parentName = getStageName(parentStage);
