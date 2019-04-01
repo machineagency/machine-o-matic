@@ -706,7 +706,7 @@ let DEBUG__connectTwoStages = () => {
 
 let generateMomProgram = () => {
     let s = '    ';
-    var programStr = `tool Pen:\n${s}accepts (x,y)\n`;
+    var programStr = `tool ${getToolName(tool)}:\n${s}accepts (${tool.accepts})\n`;
     programStr = programStr.concat('\nstages:\n');
     getGroups().forEach((stage) => {
         let stageName = getStageName(stage);
