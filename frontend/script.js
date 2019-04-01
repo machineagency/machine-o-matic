@@ -5,6 +5,7 @@ let stageGui, connectionGui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
+let tool;
 
 let focusedStage;
 
@@ -38,7 +39,9 @@ const geometryFactories = {
     stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2),
     stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2),
     rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
-    rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10)
+    rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
+    angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
+    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10)
 };
 
 const defaultStageNames = [
@@ -50,6 +53,8 @@ const defaultStageNames = [
     "forty-two", "gravenstein", "october", "hyphybot", "gravitas", "charmer",
     "kingman", "euclid", "mechano", "rumbler", "descartes"
 ];
+
+const defaultToolName = "Tool";
 
 const greenColor = 0xbed346;
 const stagePlatformsInMotion = {};
@@ -71,6 +76,63 @@ let addLinearStage = () => {
 
 let addRotaryStage = () => {
     _addStage('rotary');
+};
+
+let addAngledTool = () => {
+    _addTool('angled');
+};
+
+let addStraightTool = () => {
+    _addTool('straight');
+};
+
+let _addTool = (toolType) => {
+    let group = new THREE.Group();
+    let toolGeom;
+
+    if (toolType === 'angled') {
+        toolGeom = geometryFactories.angledTool();
+    }
+    else if (toolType === 'straight') {
+        toolGeom = geometryFactories.straightTool();
+    }
+
+    group.color = new THREE.MeshLambertMaterial({ color: 0xf90f5c });
+    let toolEdges = new THREE.EdgesGeometry(toolGeom);
+    let toolLines = new THREE.LineSegments(toolEdges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 5 }));
+    let toolMesh = new THREE.Mesh(toolGeom, group.color);
+
+    group.add(toolLines);
+    group.add(toolMesh);
+
+    let toolName = defaultToolName;
+    group.toolName = toolName;
+
+    group.dgFolder = stageGui.addFolder(toolName);
+    group.dgcontroller = group.dgFolder.add(group, 'toolName')
+                            .onChange((value) => {
+                                setDgFolderName(group.dgFolder, value);
+                            });
+    group.dgFolder.addColor(group.color, 'color');
+
+    group.accepts = '(?)';
+    group.dgFolder.add(group, 'accepts').listen();
+
+    scene.add(group);
+    destroyControl();
+    generateControlForGroup(group);
+
+    // Attempt to center on grid helper's axis
+    group.position.y = 50;
+    group.position.x = -35;
+    group.position.z = 35;
+
+    focus(group);
+
+    tool = group;
+    group.isTool = true;
+
+    return group;
 };
 
 let _addStage = (stageType) => {
@@ -195,8 +257,12 @@ let deleteStage = (stage) => {
 
 let getGroups = () => {
     return scene.children.filter((child) => {
-        return child.type === 'Group';
+        return child.type === 'Group' && !child.isTool;
     });
+};
+
+let getTool = () => {
+    return tool;
 };
 
 let getObjectGroup = (obj) => {
