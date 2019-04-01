@@ -338,7 +338,8 @@ let onDocumentMouseDown = (event) => {
         return;
     }
 
-    let isectGroups = _getIntersectsFromClickWithCandidates(event, getGroups());
+    let candidates = getGroups().concat(getTool());
+    let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
     let isectControl;
     if (getControl() === undefined) {
         isectControl = [];
@@ -455,7 +456,7 @@ let init = () => {
     initStats();
     initGui();
 
-    let stage = addLinearStage();
+    addStraightTool();
 
     document.addEventListener('mousedown', onDocumentMouseDown, false);
     document.addEventListener('mouseup', onDocumentMouseUp, false);
