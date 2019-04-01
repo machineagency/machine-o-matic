@@ -18,6 +18,8 @@
   "homepage": "https://github.com/jhaazpr/machine-o-matic#readme",
   "dependencies": {
     "dat.gui": "^0.7.5",
+    "express": "^4.16.4",
+    "python-shell": "^1.0.7",
     "three": "^0.100.0"
   }
 }
