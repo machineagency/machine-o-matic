@@ -40,8 +40,8 @@ app.post('/program', (req, res) => {
 });
 
 app.post('/inst', (req, res) => {
-    let command = req.body.command;
-    shell.send(command);
+    let inst = req.body.inst;
+    shell.send(inst);
     res.status(200).send('Sent command.');
 });
 

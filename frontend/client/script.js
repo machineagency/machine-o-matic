@@ -782,6 +782,13 @@ let API__program = (progText) => {
     req.send(JSON.stringify({ "program" : progText }));
 };
 
+let API__inst = (instText) => {
+    let req = new XMLHttpRequest();
+    req.open('POST', '/inst');
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.send(JSON.stringify({ "inst" : instText }));
+};
+
 /* For linear and rotary stages */
 let getStageValue = (stage) => {
     if (stage.stageType === 'linear') {

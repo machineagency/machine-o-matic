@@ -96,7 +96,7 @@ class Interpreter(cmd.Cmd):
         else:
             relative_coords = self.find_relative_coords(coords)
             # steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
-            steps = MachineSolver.solve_ik(relative_coords[0], relative_coords[1])
+            steps = MachineSolver.solve_ik(*relative_coords)
             print steps
             step_succeeded = self.dipatch_steps(steps)
             if step_succeeded:
