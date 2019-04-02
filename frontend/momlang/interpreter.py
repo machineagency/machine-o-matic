@@ -56,6 +56,9 @@ class Interpreter(cmd.Cmd):
         print "Bye!"
         return True
 
+    def do_EOF(self, arg):
+        return True
+
     # FUNCTIONAL METHODS #
 
     def coords_in_bounds(self, coords):
