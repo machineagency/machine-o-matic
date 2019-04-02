@@ -12,28 +12,25 @@ let port = process.env.PORT || 3000; // set our port
 app.use(bodyParser.json()); // for parsing application/json
 app.use(express.static(__dirname + '/client')); // set the static files location /public/img will be /img for users
 
-//Store all JS and CSS in Scripts folder.
-// app.use(express.static(__dirname + '/css'));
+// open a MoM interpreter ==================================
+//
+// TODO: move this to an API call when the user compiles, sending the mom program
+let shell = new ps.PythonShell('momlang/interpreter.py', {
+    pythonPath : 'python', // use python 2
+    pythonOptions: ['-u'], // don't buffer messages sent from interpreter.py
+    args: [ 'momlang/xy_plotter.mom' ]
+});
+
+shell.on('message', (message) => {
+    console.log(message);
+});
 
 // routes ==================================================
 
-// Example route
-// app.get('/', (req, res) => {
-//     res.sendFile(path.join(__dirname + '/client/index.html'));
-// });
-
-app.get('/inst/:inst', (req, res) => {
-    ps.PythonShell.run('momlang/test.py', { 'pythonPath' : 'python' }, (err, results) => {
-        console.log(req.params.inst);
-        if (err) {
-            console.log(err);
-            res.status(400).send(err);
-        }
-        else {
-            console.log(results);
-            res.status(200).send(results);
-        }
-    });
+app.post('/inst', (req, res) => {
+    let command = req.body.command.concat('\n');
+    shell.send(command);
+    res.status(200).send('Sent command.');
 });
 
 
