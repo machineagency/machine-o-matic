@@ -28,7 +28,7 @@ shell.on('message', (message) => {
 // routes ==================================================
 
 app.post('/inst', (req, res) => {
-    let command = req.body.command.concat('\n');
+    let command = req.body.command;
     shell.send(command);
     res.status(200).send('Sent command.');
 });
