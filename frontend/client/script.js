@@ -775,6 +775,13 @@ let DOM__increment = (axis) => {
     });
 };
 
+let API__program = (progText) => {
+    let req = new XMLHttpRequest();
+    req.open('POST', '/program');
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.send(JSON.stringify({ "program" : progText }));
+};
+
 /* For linear and rotary stages */
 let getStageValue = (stage) => {
     if (stage.stageType === 'linear') {
