@@ -4,7 +4,7 @@
 let express        = require('express');
 let app            = express();
 let bodyParser     = require('body-parser');
-let pythonShell    = require('python-shell');
+let ps             = require('python-shell');
 let path           = require('path');
 
 // configuration ===========================================
@@ -21,6 +21,20 @@ app.use(express.static(__dirname + '/client')); // set the static files location
 // app.get('/', (req, res) => {
 //     res.sendFile(path.join(__dirname + '/client/index.html'));
 // });
+
+app.get('/inst/:inst', (req, res) => {
+    ps.PythonShell.run('momlang/test.py', { 'pythonPath' : 'python' }, (err, results) => {
+        console.log(req.params.inst);
+        if (err) {
+            console.log(err);
+            res.status(400).send(err);
+        }
+        else {
+            console.log(results);
+            res.status(200).send(results);
+        }
+    });
+});
 
 
 // start app ===============================================
