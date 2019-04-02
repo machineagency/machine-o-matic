@@ -832,7 +832,7 @@ let inflateControlPad = () => {
         // TODO: figure out which arrow to use
         let firstArrowDom = document.createElement('img');
         firstArrowDom.className = 'control-arrow float-left';
-        firstArrowDom.src = 'img/arrow_left.png';
+        firstArrowDom.src = '/img/arrow_left.png';
         firstArrowDom.setAttribute('axis', axisName);
         firstArrowDom.onmousedown = () => {
             let sendingInterval = 100;
@@ -849,7 +849,7 @@ let inflateControlPad = () => {
 
         let secondArrowDom = document.createElement('img');
         secondArrowDom.className = 'control-arrow float-right';
-        secondArrowDom.src = 'img/arrow_right.png';
+        secondArrowDom.src = '/img/arrow_right.png';
         secondArrowDom.onmousedown = () => {
             let sendingInterval = 100;
             let interval = setInterval(() => {
