@@ -361,13 +361,13 @@ let onDocumentMouseDown = (event) => {
                 connectToolToStage(getFocus(), stage);
             }
             else {
-                let childStageName = getStageName(getFocus());
-                let parentStageName = getStageName(stage);
+                let parentStageName = getStageName(getFocus());
+                let childStageName = getStageName(stage);
                 let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
                 if (!(place === 'center' || place === 'right' || place === 'left')) {
                     return;
                 }
-                connectStageToStageAtPlace(getFocus(), stage, place);
+                connectParentChildAtPlace(getFocus(), stage, place);
             }
         }
 
@@ -648,7 +648,7 @@ let connectToolToStage = (tool, stage) => {
     childStagePlatform.add(tool);
 };
 
-let connectStageToStageAtPlace = (childStage, parentStage, place) => {
+let connectParentChildAtPlace = (parentStage, childStage, place) => {
     if (!(place === 'center' || place === 'left' || place === 'right')) {
         console.log(`Invalid place for connection: ${place}`);
         return;
@@ -694,13 +694,13 @@ let getStagesWithAxis = (axis) => {
 };
 
 let DEMO__connectTwoStages = () => {
-    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "right");
+    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "right");
 };
 
 let DEBUG__connectTwoStages = () => {
     addLinearStage();
     getGroups()[1].axis = 'y';
-    connectStageToStageAtPlace(getGroups()[1], getGroups()[0], "center");
+    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "center");
     let secondStage = getGroups()[1];
     secondStage.rotateY(THREE.Math.degToRad(90));
     secondStage.axis = determineStageAxis(secondStage);
