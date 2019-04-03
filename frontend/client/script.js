@@ -748,6 +748,13 @@ let DOM__compile = () => {
     }
     let posInstContainerDom = document.querySelector('.pos-inst-container');
     posInstContainerDom.style.display = 'block';
+    document.querySelector('.inst-input').onkeyup = (event) => {
+        if (event.key === 'Enter') {
+            let inst = document.querySelector('.inst-input').value;
+            API__inst(inst);
+            document.querySelector('.inst-input').value = '';
+        }
+    };
     inflateControlPad();
     // TODO: actually generate software controller via momlang
     API__program(programText);
@@ -803,21 +810,25 @@ let getStageValue = (stage) => {
 
 let updateDomPosition = () => {
     var positionString = '';
+    var instString = 'move ';
     let distinctAxes = getDistinctAxes();
     distinctAxes.forEach((axis) => {
         let stagesForAxis = getStagesWithAxis(axis);
         let representativeStage = stagesForAxis[0];
+        let axisDispl;
         if (representativeStage.stageType === 'linear') {
-            let axisDispl = getPlatformDisplacementForStage(representativeStage);
-            positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+            axisDispl = getPlatformDisplacementForStage(representativeStage);
         }
         else if (representativeStage.stageType === 'rotary') {
-            let axisDispl = getRotaryStageAngle(representativeStage);
-            positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+            axisDispl = getRotaryStageAngle(representativeStage);
         }
+        positionString = positionString.concat(` ${axis}: ${axisDispl} `);
+        instString = instString.concat(`${axisDispl} `);
     });
     let posRowDom = document.querySelector('.position-row');
     posRowDom.innerText = positionString;
+    console.log(instString);
+    API__inst(instString);
 };
 
 let getRotaryStageAngle = (stage) => {
