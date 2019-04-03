@@ -6,6 +6,7 @@ let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
+let programText;
 
 let focusedStage;
 
@@ -730,7 +731,7 @@ let generateMomProgram = () => {
 };
 
 let DOM__generate = () => {
-    let programText = generateMomProgram();
+    programText = generateMomProgram();
     let programContainerDom = document.querySelector('.program-container');
     programContainerDom.innerText = programText;
 };
@@ -749,6 +750,7 @@ let DOM__compile = () => {
     posInstContainerDom.style.display = 'block';
     inflateControlPad();
     // TODO: actually generate software controller via momlang
+    API__program(programText);
 };
 
 let DOM__decrement = (axis) => {
@@ -756,7 +758,7 @@ let DOM__decrement = (axis) => {
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
         let currDisp = getStageValue(stage);
-        let targetDisp = currDisp - 1;
+        let targetDisp = currDisp - 2;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
         updateDomPosition();
@@ -768,7 +770,7 @@ let DOM__increment = (axis) => {
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
         let currDisp = getStageValue(stage);
-        let targetDisp = currDisp + 1;
+        let targetDisp = currDisp + 2;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
         updateDomPosition();
@@ -849,7 +851,7 @@ let inflateControlPad = () => {
         firstArrowDom.src = '/img/arrow_left.png';
         firstArrowDom.setAttribute('axis', axisName);
         firstArrowDom.onmousedown = () => {
-            let sendingInterval = 100;
+            let sendingInterval = 500;
             let interval = setInterval(() => {
                 DOM__decrement(axisName);
                 document.onmouseup = () => {
@@ -865,7 +867,7 @@ let inflateControlPad = () => {
         secondArrowDom.className = 'control-arrow float-right';
         secondArrowDom.src = '/img/arrow_right.png';
         secondArrowDom.onmousedown = () => {
-            let sendingInterval = 100;
+            let sendingInterval = 500;
             let interval = setInterval(() => {
                 DOM__increment(axisName);
                 document.onmouseup = () => {
