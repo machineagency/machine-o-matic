@@ -466,7 +466,7 @@ let init = () => {
     initScene();
     initCamera();
     initRenderer();
-    initStats();
+    // initStats();
     initGui();
 
     addStraightTool();
@@ -908,7 +908,7 @@ let clearControlPad = () => {
 let animate = () => {
     requestAnimationFrame( animate );
     render();
-    stats.update();
+    // stats.update();
     incrementPlatforms();
 };
 
