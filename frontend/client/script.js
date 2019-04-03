@@ -654,8 +654,8 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
         return;
     }
     let parentPosMat = parentStage.matrixWorld;
-    childStage.position.setFromMatrixPosition(parentPosMat);
-    childStage.translateY(platformYDisplacement);
+    // childStage.position.setFromMatrixPosition(parentPosMat);
+    // childStage.translateY(platformYDisplacement);
 
     // Add to connections table
     let parentName = getStageName(parentStage);
@@ -667,13 +667,13 @@ let connectStageToStageAtPlace = (childStage, parentStage, place) => {
     let parentDir = getStageWorldDirection(parentStage);
     let axis = childStage.worldToLocal(parentDir);
     if (place === 'left') {
-        childStage.translateOnAxis(axis, maxAxisDisplacement);
+        // childStage.translateOnAxis(axis, maxAxisDisplacement);
     }
     if (place === 'right') {
-        childStage.translateOnAxis(axis, -maxAxisDisplacement);
+        // childStage.translateOnAxis(axis, -maxAxisDisplacement);
     }
     if (place === 'center') {
-        childStage.translateOnAxis(axis, 0);
+        // childStage.translateOnAxis(axis, 0);
     }
 
     // Add to GUI
