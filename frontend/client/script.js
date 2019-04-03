@@ -644,8 +644,8 @@ let connectToolToStage = (tool, stage) => {
     newConnectionFolder.add(newConnection, 'parentName');
     newConnectionFolder.add(newConnection, 'childName');
 
-    let childStagePlatform = stage.children[3];
-    childStagePlatform.add(tool);
+    // let childStagePlatform = stage.children[3];
+    // childStagePlatform.add(tool);
 };
 
 let connectParentChildAtPlace = (parentStage, childStage, place) => {
@@ -766,7 +766,7 @@ let DOM__decrement = (axis) => {
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
         let currDisp = getStageValue(stage);
-        let targetDisp = currDisp - 2;
+        let targetDisp = currDisp - 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
         updateDomPosition();
@@ -778,7 +778,7 @@ let DOM__increment = (axis) => {
     let stagesForAxis = getStagesWithAxis(axis);
     stagesForAxis.forEach((stage) => {
         let currDisp = getStageValue(stage);
-        let targetDisp = currDisp + 2;
+        let targetDisp = currDisp + 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
         updateDomPosition();
