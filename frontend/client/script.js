@@ -428,8 +428,10 @@ let initCamera = () => {
         viewSize, -viewSize, -1000, 10000);
     camera.zoom = 0.35;
     camera.updateProjectionMatrix();
-    camera.position.set(-500, 500, 500); // I don't know why this works
     camera.frustumCulled = false;
+    camera.position.set(-500, 500, 500); // I don't know why this works
+    camera.lookAt(scene.position);
+    camera.position.set(-400, 500, 800); // Pan away to move machine to left
 };
 
 let initScene = () => {
@@ -461,8 +463,8 @@ let initStats = () => {
 let init = () => {
     container = document.getElementById( 'container' );
 
-    initCamera();
     initScene();
+    initCamera();
     initRenderer();
     initStats();
     initGui();
@@ -473,7 +475,6 @@ let init = () => {
     document.addEventListener('mouseup', onDocumentMouseUp, false);
     document.addEventListener('keydown', onDocumentKeyDown, false);
 
-    camera.lookAt(scene.position);
     window.addEventListener( 'resize', onWindowResize, false );
 
     // DEBUG__connectTwoStages();
