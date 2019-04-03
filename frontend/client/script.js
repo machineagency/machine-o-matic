@@ -863,32 +863,14 @@ let inflateControlPad = () => {
         firstArrowDom.src = '/img/arrow_left.png';
         firstArrowDom.setAttribute('axis', axisName);
         firstArrowDom.onmousedown = () => {
-            let sendingInterval = 500;
-            let interval = setInterval(() => {
-                DOM__decrement(axisName);
-                document.onmouseup = () => {
-                    clearInterval(interval);
-                };
-                document.onclick = () => {
-                    clearInterval(interval);
-                };
-            }, sendingInterval);
+            DOM__decrement(axisName);
         };
 
         let secondArrowDom = document.createElement('img');
         secondArrowDom.className = 'control-arrow float-right';
         secondArrowDom.src = '/img/arrow_right.png';
         secondArrowDom.onmousedown = () => {
-            let sendingInterval = 500;
-            let interval = setInterval(() => {
-                DOM__increment(axisName);
-                document.onmouseup = () => {
-                    clearInterval(interval);
-                };
-                document.onclick = () => {
-                    clearInterval(interval);
-                };
-            }, sendingInterval);
+            DOM__increment(axisName);
         };
 
         controlPadDom.appendChild(controlRowDom);
@@ -896,6 +878,24 @@ let inflateControlPad = () => {
         controlRowDom.appendChild(axisNameDom);
         controlRowDom.appendChild(secondArrowDom);
     });
+};
+
+/* Takes a unary funciton applied to an axis passed as argument */
+let onMouseHoldDoAxisFunction = (fn, axisName) => {
+    let sendingInterval = 500;
+    let interval = setInterval(() => {
+        fn(axisName);
+        document.onmouseup = () => {
+            clearInterval(interval);
+        };
+        document.onclick = () => {
+            clearInterval(interval);
+        };
+    }, sendingInterval);
+};
+
+let onClickDoAxisFunction = (fn, axisName) => {
+
 };
 
 let clearControlPad = () => {
