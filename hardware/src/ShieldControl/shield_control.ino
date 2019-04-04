@@ -37,6 +37,8 @@ int string_index_of(String, String *, int);
 AccelStepper& get_phys_motor(String, String *);
 void test_motors(void);
 void zero_motors(void);
+void handle_move(JsonObject&);
+void handle_multiple_moves(void);
 
 // TODO: send from interpreter, don't hardcode
 int MS_FACTOR = 4;
@@ -87,23 +89,35 @@ void loop() {
         JsonObject& steps = root["steps"];
 
         if (strcmp("move", inst) == 0) {
-            MultiStepper steppers;
-            long motor_steps[NUM_STAGES];
-            int step_idx = 0;
+            handle_move(steps);
+        }
 
-            for (auto stage_step : steps) {
-                steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
-                motor_steps[step_idx++] = MS_FACTOR * stage_step.value.as<long>();
-            }
-
-            steppers.moveTo(motor_steps);
-            steppers.runSpeedToPosition(); // Blocks until all are in position
-            zero_motors();
+        if (strcmp("moves", inst) == 0) {
+            handle_multiple_moves();
         }
 
         free(json_str);
 
     }
+}
+
+void handle_move(JsonObject& steps) {
+    MultiStepper steppers;
+    long motor_steps[NUM_STAGES];
+    int step_idx = 0;
+
+    for (auto stage_step : steps) {
+        steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
+        motor_steps[step_idx++] = MS_FACTOR * stage_step.value.as<long>();
+    }
+
+    steppers.moveTo(motor_steps);
+    steppers.runSpeedToPosition(); // Blocks until all are in position
+    zero_motors();
+}
+
+void handle_multiple_moves(void) {
+
 }
 
 int string_index_of(String candidate, String strings[], int num_strings) {
