@@ -18,27 +18,27 @@
 
 
 /* Cartesian example */
-// const int NUM_STAGES = 3;
-// String stage_names[3] = { "x1", "x2", "y" };
-// AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
-// // TODO: un-hardcode mapping
-// // index is stage index, value at index is physical index
-// int stage_to_phys[3] = { 0, 1, 2 };
-
-/* Polar example */
-const int NUM_STAGES = 2;
-String stage_names[2] = { "l", "c"};
+const int NUM_STAGES = 3;
+String stage_names[3] = { "x1", "x2", "y" };
 AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
 // TODO: un-hardcode mapping
 // index is stage index, value at index is physical index
 int stage_to_phys[3] = { 0, 1, 2 };
+
+/* Polar example */
+// const int NUM_STAGES = 2;
+// String stage_names[2] = { "l", "c"};
+// AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
+// // TODO: un-hardcode mapping
+// // index is stage index, value at index is physical index
+// int stage_to_phys[3] = { 0, 1, 2 };
 
 int string_index_of(String, String *, int);
 AccelStepper& get_phys_motor(String, String *);
 void test_motors(void);
 void zero_motors(void);
 void handle_move(JsonObject&);
-void handle_multiple_moves(void);
+void handle_multiple_moves(JsonArray&);
 
 // TODO: send from interpreter, don't hardcode
 int MS_FACTOR = 4;
@@ -86,14 +86,14 @@ void loop() {
 
         const char *inst = root["inst"];
 
-        JsonObject& steps = root["steps"];
-
         if (strcmp("move", inst) == 0) {
+            JsonObject& steps = root["steps"];
             handle_move(steps);
         }
 
         if (strcmp("moves", inst) == 0) {
-            handle_multiple_moves();
+            JsonArray& steps_arr = root["steps"];
+            handle_multiple_moves(steps_arr);
         }
 
         free(json_str);
@@ -116,7 +116,11 @@ void handle_move(JsonObject& steps) {
     zero_motors();
 }
 
-void handle_multiple_moves(void) {
+void handle_multiple_moves(JsonArray& steps) {
+    // Note that steps is a _list_ of steps, unlike handle_move
+    for (JsonObject& step : steps) {
+        handle_move(step);
+    }
 
 }
 

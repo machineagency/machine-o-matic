@@ -157,10 +157,20 @@ class Interpreter(cmd.Cmd):
             for point in points:
                 relative_coords = self.find_relative_coords(point)
                 steps = MachineSolver.solve_ik(*relative_coords)
-                steps_list.append(steps)
+                steps_cleaned = {
+                    stage.replace("_steps", ""): steps[stage] for stage in steps
+                }
+                steps_list.append(steps_cleaned)
                 Interpreter.CURR_COORDS = point
 
             print steps_list
+
+            packet = { "inst" : "moves", "steps" : steps_list }
+            packet_json = json.dumps(packet)
+
+            Interpreter.PORT.write(packet_json + "\n")
+            return True
+
         except Exception as e:
             print e
             return False
