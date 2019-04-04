@@ -563,6 +563,31 @@ let incrementPlatforms = () => {
     });
 };
 
+let getStageSiblings = (stage) => {
+    let stageName = getStageName(stage);
+    let stageToParentConnection = connections.find((cxn) => cxn.childName === stageName);
+    let parentName = stageToParentConnection.parentName;
+    let parentConnections = connections.filter((cxn) => cxn.parentName === parentName);
+    let siblingNamesWithSelf = parentConnections.map((cxn) => cxn.childName);
+    let siblingNames = siblingNamesWithSelf.filter((name) => name !== stageName);
+    let siblings = siblingNames.map((name) => findStageWithName(name));
+    return siblings;
+};
+
+let getPathToToolForStage = (stage) => {
+    let helper = (currStage) => {
+        let currName = getStageName(currStage);
+        let connection = connections.find((cxn) => cxn.childName === currName);
+        let parentName = connection.parentName;
+        if (parentName === getToolName()) {
+            return [currStage, tool];
+        }
+        let parentStage = findStageWithName(parentName);
+        return [currStage].concat(helper(parentStage));
+    };
+    return helper(stage);
+};
+
 let getStageWorldDirection = (stage) => {
     let vector = new THREE.Vector3();
     stage.getWorldDirection(vector);
