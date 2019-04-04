@@ -107,7 +107,8 @@ void handle_move(JsonObject& steps) {
     int step_idx = 0;
 
     for (auto stage_step : steps) {
-        steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
+        // steppers.addStepper(get_phys_motor(stage_step.key, stage_names));
+        steppers.addStepper(phys_motors[step_idx]);
         motor_steps[step_idx++] = MS_FACTOR * stage_step.value.as<long>();
     }
 
