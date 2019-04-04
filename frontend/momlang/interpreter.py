@@ -43,6 +43,9 @@ class Interpreter(cmd.Cmd):
     def do_move(self, arg):
         self.move(Interpreter.parse_move_coords(arg))
 
+    def do_send_file(self, arg):
+        self.send_file(arg)
+
     def do_map(self, arg):
         Interpreter.MOTOR_MAP = self.map_motors()
 
@@ -141,6 +144,25 @@ class Interpreter(cmd.Cmd):
             return True
         except Exception as e:
             # print e
+            return False
+
+    def send_file(self, filename):
+        try:
+            file_obj = open(filename)
+            json_root = json.load(file_obj)
+            points = json_root['points']
+
+            # TODO: error checking
+            steps_list = []
+            for point in points:
+                relative_coords = self.find_relative_coords(point)
+                steps = MachineSolver.solve_ik(*relative_coords)
+                steps_list.append(steps)
+                Interpreter.CURR_COORDS = point
+
+            print steps_list
+        except Exception as e:
+            print e
             return False
 
     @staticmethod
