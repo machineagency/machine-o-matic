@@ -35,11 +35,11 @@ def tool_name(tokens):
     return tokens[1].replace(":", "")
 
 def accepts_tuple(tokens):
-    lst = tokens[1:]
-    lst = map(lambda s: s.replace("(", ""), lst)
-    lst = map(lambda s: s.replace(")", ""), lst)
-    lst = map(lambda s: s.replace(",", ""), lst)
-    return tuple("AXIS_" + letter for letter in lst)
+    tup = tokens[1]
+    tup = tup.replace("(", "")
+    tup = tup.replace(")", "")
+    tup = tup.split(",")
+    return tuple("AXIS_" + letter.strip() for letter in tup)
 
 def stage_name_type_axis(tokens):
     name = tokens[1]
