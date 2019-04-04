@@ -559,7 +559,7 @@ let incrementPlatforms = () => {
                 _moveStage(stage, increment, axis);
             });
         }
-
+        updateDomPosition();
     });
 };
 
@@ -753,12 +753,26 @@ let DOM__compile = () => {
         if (event.key === 'Enter') {
             let inst = document.querySelector('.inst-input').value;
             API__inst(inst);
+            setSimPositionsFromInst(inst);
             document.querySelector('.inst-input').value = '';
         }
     };
     inflateControlPad();
     // TODO: actually generate software controller via momlang
     API__program(programText);
+};
+
+let setSimPositionsFromInst = (inst) => {
+    let targetPositionsStrings = inst.split(' ').slice(1);
+    let targetPositions = targetPositionsStrings.map((s) => parseInt(s));
+    let axes = getDistinctAxes();
+    axes.forEach((axis, idx) => {
+        let stages = getStagesWithAxis(axis);
+        stages.forEach((stage) => {
+            let stageName = getStageName(stage);
+            setStageNamePlatformToTargetDispl(stageName, targetPositions[idx]);
+        });
+    });
 };
 
 let DOM__decrement = (axis) => {
@@ -829,7 +843,6 @@ let updateDomPosition = () => {
     let posRowDom = document.querySelector('.position-row');
     posRowDom.innerText = positionString;
     console.log(instString);
-    API__inst(instString);
 };
 
 let getRotaryStageAngle = (stage) => {
