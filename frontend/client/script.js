@@ -545,21 +545,24 @@ let incrementPlatforms = () => {
         let currDisp = getStageValue(stage);
         if (targetDisp === currDisp) {
             delete stagePlatformsInMotion[stageName];
+            updateDomPosition();
         }
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
             _moveStagePlatform(stage, increment);
+            let siblings = getStageSiblings(stage);
+            siblings.forEach((stage) => _moveStagePlatform(stage, increment));
 
             let baseAxis = getStageWorldDirection(stage);
-            let childStages = gatherDeepChildStages(stage);
-            childStages.forEach((stage) => {
+            let stagePath = getPathToToolForStage(stage);
+            let parentStages = stagePath.slice(1);
+            parentStages.forEach((stage) => {
                 let stageOrigin = stage.position;
                 let translatedBaseAxis = new THREE.Vector3().addVectors(baseAxis, stageOrigin);
                 let axis = stage.worldToLocal(translatedBaseAxis);
                 _moveStage(stage, increment, axis);
             });
         }
-        updateDomPosition();
     });
 };
 
@@ -808,7 +811,6 @@ let DOM__decrement = (axis) => {
         let targetDisp = currDisp - 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
-        updateDomPosition();
     });
 };
 
@@ -820,7 +822,6 @@ let DOM__increment = (axis) => {
         let targetDisp = currDisp + 1;
         let stageName = getStageName(stage);
         setStageNamePlatformToTargetDispl(stageName, targetDisp);
-        updateDomPosition();
     });
 };
 
