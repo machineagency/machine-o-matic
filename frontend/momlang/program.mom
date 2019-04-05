@@ -1,0 +1,16 @@
+tool Tool:
+    accepts (z,y,theta)
+
+stages:
+    linear douglas -> A(z):
+        step -> 0.03048 mm
+    linear cedar -> A(y):
+        step -> 0.03048 mm
+    rotary cascade -> A(theta):
+        step -> 0.06 deg
+
+connections:
+    Tool. -> douglas.platform
+    cascade.right -> cedar.platform
+    cascade.center -> cedar.platform
+

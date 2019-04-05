@@ -1,0 +1,13 @@
+tool Pen:
+    accepts (x, y)
+
+stages:
+    linear l -> A(x):
+        step -> 0.03048 mm
+    rotary c -> A(y):
+        step -> 0.03048 mm
+
+connections:
+    Pen -> l.platform
+    l.center -> c.platform
+

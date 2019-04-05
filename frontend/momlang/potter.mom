@@ -1,0 +1,17 @@
+tool Tool:
+    accepts (y,theta,z)
+
+stages:
+    linear alki -> A(y):
+        step -> 0.03048 mm
+    rotary cedar -> A(theta):
+        step -> 0.06 deg
+    linear jacobian -> A(z):
+        step -> 0.03048 mm
+
+connections:
+    cedar.center -> alki.platform
+    Tool -> jacobian.platform
+    jacobian.right -> alki.left
+    Tool -> cedar.center
+

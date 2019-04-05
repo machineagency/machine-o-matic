@@ -543,7 +543,7 @@ let incrementPlatforms = () => {
         let stage = findStageWithName(stageName);
         let targetDisp = stagePlatformsInMotion[stageName];
         let currDisp = getStageValue(stage);
-        if (targetDisp === currDisp) {
+        if (currDisp >= targetDisp) {
             delete stagePlatformsInMotion[stageName];
             updateDomPosition();
         }

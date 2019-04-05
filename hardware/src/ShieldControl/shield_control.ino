@@ -74,7 +74,7 @@ void loop() {
         char *json_str = (char *) malloc((s.length() + 1) * sizeof(char));
         s.toCharArray(json_str, s.length() + 1);
 
-        StaticJsonBuffer<256> jsonBuffer;
+        StaticJsonBuffer<16384> jsonBuffer;
         JsonObject& root = jsonBuffer.parseObject(json_str);
 
         // Test if parsing succeeds.
