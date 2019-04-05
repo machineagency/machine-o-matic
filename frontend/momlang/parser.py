@@ -36,6 +36,7 @@ def tool_name(tokens):
 
 def accepts_tuple(tokens):
     tup = tokens[1]
+    tup = tup.replace(" ", "")
     tup = tup.replace("(", "")
     tup = tup.replace(")", "")
     tup = tup.split(",")
