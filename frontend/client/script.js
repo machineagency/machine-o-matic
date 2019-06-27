@@ -433,6 +433,10 @@ let openFolderForStage = (stage) => {
 };
 
 let onDocumentKeyDown = (event) => {
+    console.log(event.target.nodeName);
+    if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
+        return;
+    }
     if (event.key === "Backspace") {
         if (getFocus() !== null && event.shiftKey) {
             deleteStage(getFocus());
