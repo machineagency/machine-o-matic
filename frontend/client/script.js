@@ -42,7 +42,8 @@ const geometryFactories = {
     rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
     rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
     angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
-    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10)
+    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
+    connectionHandle: () => new THREE.BoxBufferGeometry(50, 50, 50, 2, 2, 2)
 };
 
 const defaultStageNames = [
@@ -58,6 +59,8 @@ const defaultStageNames = [
 const defaultToolName = "Tool";
 
 const greenColor = 0xbed346;
+const blueColor = 0x12CBC4;
+const yellowColor = 0xFFC312;
 const stagePlatformsInMotion = {};
 
 const connections = [];
@@ -176,10 +179,23 @@ let _addStage = (stageType) => {
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
 
+    let connectionHandle = geometryFactories.connectionHandle();
+    connectionHandle.scale(scaleFactor, scaleFactor, scaleFactor);
+    let handleColor = new THREE.MeshLambertMaterial({
+        color: yellowColor,
+        opacity: 0.75,
+        transparent: true
+    });
+    let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+    // TODO: magic numbers... need to revamp scaling
+    connectionHandleMesh.position.z = 155;
+    connectionHandleMesh.position.y = 15;
+
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
     group.add(stagePlatformLines);
     group.add(stagePlatformMesh);
+    group.add(connectionHandleMesh);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
