@@ -9,6 +9,7 @@ let tool;
 let programText;
 
 let focusedStage;
+let connectionHandlesVisible = false;
 
 let focus = (object) => {
     focusedStage = object;
@@ -190,11 +191,15 @@ let _addStage = (stageType) => {
     });
     let connectionHandleMeshA = new THREE.Mesh(connectionHandleA, handleColor);
     let connectionHandleMeshB = new THREE.Mesh(connectionHandleB, handleColor);
+    connectionHandleMeshA.name = 'connectionHandle';
+    connectionHandleMeshB.name = 'connectionHandle';
     // TODO: magic numbers... need to revamp scaling
     connectionHandleMeshA.position.z = 155;
     connectionHandleMeshA.position.y = 15;
     connectionHandleMeshB.position.z = -155;
     connectionHandleMeshB.position.y = 15;
+    connectionHandleMeshA.visible = connectionHandlesVisible;
+    connectionHandleMeshB.visible = connectionHandlesVisible;
 
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
@@ -433,7 +438,6 @@ let openFolderForStage = (stage) => {
 };
 
 let onDocumentKeyDown = (event) => {
-    console.log(event.target.nodeName);
     if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
         return;
     }
@@ -444,6 +448,9 @@ let onDocumentKeyDown = (event) => {
     }
     if (event.key === "m") {
         swapControlMode();
+    }
+    if (event.key === "s") {
+        toggleConnectionHandles();
     }
 };
 
@@ -683,6 +690,14 @@ let gatherDeepChildStages = (parentStage) => {
     let deepStages = shallowChildStages.map((stage) => gatherDeepChildStages(stage));
     let deepStagesFlat = deepStages.flat(1);
     return shallowChildStages.concat(deepStagesFlat);
+};
+
+let toggleConnectionHandles = () => {
+    let handles = getGroups().map((group) => group.children)
+                      .flat()
+                      .filter((obj) => obj.name === 'connectionHandle');
+    connectionHandlesVisible = !connectionHandlesVisible;
+    handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
 };
 
 let connectToolToStage = (tool, stage) => {
