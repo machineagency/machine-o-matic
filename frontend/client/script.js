@@ -466,7 +466,7 @@ let init = () => {
     initScene();
     initCamera();
     initRenderer();
-    // initStats();
+    initStats();
     initGui();
 
     addStraightTool();
@@ -944,10 +944,20 @@ let clearControlPad = () => {
     }
 };
 
+let cappedFramerateRequestAnimationFrame = (framerate) => {
+    if (framerate === undefined) {
+        requestAnimationFrame(animate);
+    } else {
+        setTimeout(() => {
+            requestAnimationFrame(animate);
+        }, 1000 / framerate);
+    }
+};
+
 let animate = () => {
-    requestAnimationFrame( animate );
+    cappedFramerateRequestAnimationFrame(30);
     render();
-    // stats.update();
+    stats.update();
     incrementPlatforms();
 };
 
