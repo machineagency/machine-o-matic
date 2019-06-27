@@ -43,7 +43,7 @@ const geometryFactories = {
     rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
     angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
     straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
-    connectionHandle: () => new THREE.BoxBufferGeometry(50, 50, 50, 2, 2, 2)
+    connectionHandle: () => new THREE.SphereBufferGeometry(25, 32, 32)
 };
 
 const defaultStageNames = [
@@ -183,8 +183,8 @@ let _addStage = (stageType) => {
     connectionHandle.scale(scaleFactor, scaleFactor, scaleFactor);
     let handleColor = new THREE.MeshLambertMaterial({
         color: yellowColor,
-        opacity: 0.75,
-        transparent: true
+        emissive: yellowColor,
+        emissiveIntensity: 0.25
     });
     let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
     // TODO: magic numbers... need to revamp scaling
