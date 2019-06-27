@@ -370,14 +370,20 @@ let onDocumentMouseDown = (event) => {
         return;
     }
 
-    let candidates = getGroups().concat(getTool());
+    let candidates = getGroups().concat(getTool()).concat(getConnectionHandles());
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
+    console.log(isectGroups);
     let isectControl;
     if (getControl() === undefined) {
         isectControl = [];
     }
     else {
         isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    }
+    // TODO: implement logic for grabbing the intersected handle
+    let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
+    if (possibleHandles.length > 0) {
+        console.log('Handle!');
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
@@ -692,10 +698,14 @@ let gatherDeepChildStages = (parentStage) => {
     return shallowChildStages.concat(deepStagesFlat);
 };
 
+let getConnectionHandles = () => {
+    return getGroups().map((group) => group.children)
+               .flat()
+               .filter((obj) => obj.name === 'connectionHandle');
+};
+
 let toggleConnectionHandles = () => {
-    let handles = getGroups().map((group) => group.children)
-                      .flat()
-                      .filter((obj) => obj.name === 'connectionHandle');
+    let handles = getConnectionHandles();
     connectionHandlesVisible = !connectionHandlesVisible;
     handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
 };
