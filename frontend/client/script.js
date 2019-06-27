@@ -179,23 +179,29 @@ let _addStage = (stageType) => {
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
 
-    let connectionHandle = geometryFactories.connectionHandle();
-    connectionHandle.scale(scaleFactor, scaleFactor, scaleFactor);
+    let connectionHandleA = geometryFactories.connectionHandle();
+    let connectionHandleB = geometryFactories.connectionHandle();
+    connectionHandleA.scale(scaleFactor, scaleFactor, scaleFactor);
+    connectionHandleB.scale(scaleFactor, scaleFactor, scaleFactor);
     let handleColor = new THREE.MeshLambertMaterial({
         color: yellowColor,
         emissive: yellowColor,
         emissiveIntensity: 0.25
     });
-    let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+    let connectionHandleMeshA = new THREE.Mesh(connectionHandleA, handleColor);
+    let connectionHandleMeshB = new THREE.Mesh(connectionHandleB, handleColor);
     // TODO: magic numbers... need to revamp scaling
-    connectionHandleMesh.position.z = 155;
-    connectionHandleMesh.position.y = 15;
+    connectionHandleMeshA.position.z = 155;
+    connectionHandleMeshA.position.y = 15;
+    connectionHandleMeshB.position.z = -155;
+    connectionHandleMeshB.position.y = 15;
 
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
     group.add(stagePlatformLines);
     group.add(stagePlatformMesh);
-    group.add(connectionHandleMesh);
+    group.add(connectionHandleMeshA);
+    group.add(connectionHandleMeshB);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
