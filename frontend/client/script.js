@@ -166,6 +166,8 @@ let _addStage = (stageType) => {
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
+    stageCaseMesh.name = 'stageCase';
+    stageCaseMesh.material.transparent = true;
 
     let stagePlatform;
     if (stageType === 'linear') {
@@ -179,6 +181,8 @@ let _addStage = (stageType) => {
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
+    stagePlatformMesh.name = 'stagePlatform';
+    stagePlatformMesh.material.transparent = true;
 
     let connectionHandleA = geometryFactories.connectionHandle();
     let connectionHandleB = geometryFactories.connectionHandle();
@@ -704,10 +708,21 @@ let getConnectionHandles = () => {
                .filter((obj) => obj.name === 'connectionHandle');
 };
 
+let getStageCaseAndPlatformMeshes = () => {
+    return getGroups().map((group) => group.children)
+               .flat()
+               .filter((obj) => obj.name === 'stageCase'
+                             || obj.name === 'stagePlatform');
+};
+
 let toggleConnectionHandles = () => {
     let handles = getConnectionHandles();
+    let caseAndPlatformMeshes = getStageCaseAndPlatformMeshes();
     connectionHandlesVisible = !connectionHandlesVisible;
     handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
+    caseAndPlatformMeshes.forEach((mesh) => {
+        mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
+    });
 };
 
 let connectToolToStage = (tool, stage) => {
