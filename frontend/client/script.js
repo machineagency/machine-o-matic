@@ -9,6 +9,7 @@ let tool;
 let programText;
 
 let focusedStage;
+let activeSelectionHandle;
 let connectionHandlesVisible = false;
 
 let focus = (object) => {
@@ -184,33 +185,35 @@ let _addStage = (stageType) => {
     stagePlatformMesh.name = 'stagePlatform';
     stagePlatformMesh.material.transparent = true;
 
-    let connectionHandleA = geometryFactories.connectionHandle();
-    let connectionHandleB = geometryFactories.connectionHandle();
-    connectionHandleA.scale(scaleFactor, scaleFactor, scaleFactor);
-    connectionHandleB.scale(scaleFactor, scaleFactor, scaleFactor);
+    let connectionHandleRight = geometryFactories.connectionHandle();
+    let connectionHandleLeft = geometryFactories.connectionHandle();
+    connectionHandleRight.scale(scaleFactor, scaleFactor, scaleFactor);
+    connectionHandleLeft.scale(scaleFactor, scaleFactor, scaleFactor);
     let handleColor = new THREE.MeshLambertMaterial({
         color: yellowColor,
         emissive: yellowColor,
         emissiveIntensity: 0.25
     });
-    let connectionHandleMeshA = new THREE.Mesh(connectionHandleA, handleColor);
-    let connectionHandleMeshB = new THREE.Mesh(connectionHandleB, handleColor);
-    connectionHandleMeshA.name = 'connectionHandle';
-    connectionHandleMeshB.name = 'connectionHandle';
+    let connectionHandleMeshRight = new THREE.Mesh(connectionHandleRight, handleColor);
+    let connectionHandleMeshLeft = new THREE.Mesh(connectionHandleLeft, handleColor);
+    connectionHandleMeshRight.name = 'connectionHandle';
+    connectionHandleMeshLeft.name = 'connectionHandle';
     // TODO: magic numbers... need to revamp scaling
-    connectionHandleMeshA.position.z = 155;
-    connectionHandleMeshA.position.y = 15;
-    connectionHandleMeshB.position.z = -155;
-    connectionHandleMeshB.position.y = 15;
-    connectionHandleMeshA.visible = connectionHandlesVisible;
-    connectionHandleMeshB.visible = connectionHandlesVisible;
+    connectionHandleMeshRight.position.z = 155;
+    connectionHandleMeshRight.position.y = 15;
+    connectionHandleMeshLeft.position.z = -155;
+    connectionHandleMeshLeft.position.y = 15;
+    connectionHandleMeshRight.visible = connectionHandlesVisible;
+    connectionHandleMeshLeft.visible = connectionHandlesVisible;
+    connectionHandleMeshRight.place = 'right';
+    connectionHandleMeshLeft.place = 'left';
 
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
     group.add(stagePlatformLines);
     group.add(stagePlatformMesh);
-    group.add(connectionHandleMeshA);
-    group.add(connectionHandleMeshB);
+    group.add(connectionHandleMeshRight);
+    group.add(connectionHandleMeshLeft);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
@@ -384,10 +387,20 @@ let onDocumentMouseDown = (event) => {
     else {
         isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
     }
-    // TODO: implement logic for grabbing the intersected handle
     let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
     if (possibleHandles.length > 0) {
-        console.log('Handle!');
+        let currHandle = possibleHandles[0];
+        if (activeSelectionHandle === undefined) {
+            activeSelectionHandle = currHandle;
+        } else {
+            let fromStage = findStageWithName(activeSelectionHandle.object.parent.stageName);
+            let fromPlace = activeSelectionHandle.object.place;
+            let toStage = findStageWithName(currHandle.object.parent.stageName);
+            let toPlace = currHandle.object.place;
+            // TODO: incorporate two places
+            connectParentChildAtPlace(fromStage, toStage, toPlace);
+            activeSelectionHandle === undefined;
+        }
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
