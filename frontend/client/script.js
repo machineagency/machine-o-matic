@@ -738,6 +738,30 @@ let toggleConnectionHandles = () => {
     });
 };
 
+let drawArrowFromHandle = (handle) => {
+    let handleOrigin = activeSelectionHandle.point;
+    let mouseVecUnproj = new THREE.Vector3();
+    let mouseVect = new THREE.Vector3();
+    let arrowDir = new THREE.Vector3();
+    let arrowDist = 500; // arbitrary large number serves as maximum
+    let arrow = new THREE.ArrowHelper(arrowDir, handleOrigin, 1,
+                                      blueColor);
+    scene.add(arrow);
+    document.onmousemove = (event) => {
+        // mouseVecUnproj.set(event.pageX, event.pageY, -1);
+        mouseVecUnproj.set(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1,
+            -1
+        );
+        mouseVecUnproj.unproject(camera);
+        mouseVect.copy(mouseVecUnproj);
+        arrowDir.copy(mouseVect).sub(handleOrigin).normalize();
+        arrow.setDirection(arrowDir);
+        arrow.setLength(handleOrigin.distanceTo(mouseVect));
+    };
+};
+
 let connectToolToStage = (tool, stage) => {
     // Add to connections table
     let parentName = getToolName();
