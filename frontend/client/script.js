@@ -392,6 +392,9 @@ let destroyControl = () => {
     }
 };
 
+/**
+ * KEYPRESS LOGIC
+ */
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
     if (stageGui.domElement.contains(event.target)) {
@@ -432,7 +435,7 @@ let onDocumentMouseDown = (event) => {
             let toPlace = currHandle.object.place;
             // TODO: incorporate two places
             connectParentChildAtPlace(fromModule, toStage, toPlace);
-            activeSelectionHandle === undefined;
+            activeSelectionHandle = undefined;
         }
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
