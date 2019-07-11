@@ -422,7 +422,7 @@ let onDocumentMouseDown = (event) => {
                 let parentStageName = getStageName(getFocus());
                 let childStageName = getStageName(stage);
                 let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
-                if (!(place === 'center' || place === 'right' || place === 'left')) {
+                if (!(place === 'platform' || place === 'right' || place === 'left')) {
                     return;
                 }
                 connectParentChildAtPlace(getFocus(), stage, place);
@@ -530,7 +530,7 @@ let init = () => {
     initScene();
     initCamera();
     initRenderer();
-    initStats();
+    //initStats();
     initGui();
 
     addStraightTool();
@@ -788,7 +788,7 @@ let connectToolToStage = (tool, stage) => {
 };
 
 let connectParentChildAtPlace = (parentStage, childStage, place) => {
-    if (!(place === 'center' || place === 'left' || place === 'right')) {
+    if (!(place === 'platform' || place === 'left' || place === 'right')) {
         console.log(`Invalid place for connection: ${place}`);
         return;
     }
@@ -811,7 +811,7 @@ let connectParentChildAtPlace = (parentStage, childStage, place) => {
     if (place === 'right') {
         // childStage.translateOnAxis(axis, -maxAxisDisplacement);
     }
-    if (place === 'center') {
+    if (place === 'platform') {
         // childStage.translateOnAxis(axis, 0);
     }
 
@@ -839,7 +839,7 @@ let DEMO__connectTwoStages = () => {
 let DEBUG__connectTwoStages = () => {
     addLinearStage();
     getGroups()[1].axis = 'y';
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "center");
+    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "platform");
     let secondStage = getGroups()[1];
     secondStage.rotateY(THREE.Math.degToRad(90));
     secondStage.axis = determineStageAxis(secondStage);
@@ -1068,7 +1068,7 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 let animate = () => {
     cappedFramerateRequestAnimationFrame(30);
     render();
-    stats.update();
+    // stats.update();
     incrementPlatforms();
 };
 
