@@ -421,12 +421,17 @@ let onDocumentMouseDown = (event) => {
         if (activeSelectionHandle === undefined) {
             activeSelectionHandle = currHandle;
         } else {
-            let fromStage = findStageWithName(activeSelectionHandle.object.parent.stageName);
+            let fromModule;
+            if (activeSelectionHandle.object.parent.isTool) {
+                fromModule = getTool();
+            } else {
+                fromModule = findStageWithName(activeSelectionHandle.object.parent.stageName);
+            }
             let fromPlace = activeSelectionHandle.object.place;
             let toStage = findStageWithName(currHandle.object.parent.stageName);
             let toPlace = currHandle.object.place;
             // TODO: incorporate two places
-            connectParentChildAtPlace(fromStage, toStage, toPlace);
+            connectParentChildAtPlace(fromModule, toStage, toPlace);
             activeSelectionHandle === undefined;
         }
     }
@@ -824,7 +829,7 @@ let connectParentChildAtPlace = (parentStage, childStage, place) => {
     // childStage.translateY(platformYDisplacement);
 
     // Add to connections table
-    let parentName = getStageName(parentStage);
+    let parentName = getStageName(parentStage) || 'Tool' ;
     let childName = getStageName(childStage);
     let newConnection = new Connection(parentName, childName, place);
     connections.push(newConnection);
