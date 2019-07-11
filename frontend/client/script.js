@@ -187,8 +187,10 @@ let _addStage = (stageType) => {
 
     let connectionHandleRight = geometryFactories.connectionHandle();
     let connectionHandleLeft = geometryFactories.connectionHandle();
+    let connectionHandlePlatform = geometryFactories.connectionHandle();
     connectionHandleRight.scale(scaleFactor, scaleFactor, scaleFactor);
     connectionHandleLeft.scale(scaleFactor, scaleFactor, scaleFactor);
+    connectionHandlePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
     let handleColor = new THREE.MeshLambertMaterial({
         color: yellowColor,
         emissive: yellowColor,
@@ -196,17 +198,23 @@ let _addStage = (stageType) => {
     });
     let connectionHandleMeshRight = new THREE.Mesh(connectionHandleRight, handleColor);
     let connectionHandleMeshLeft = new THREE.Mesh(connectionHandleLeft, handleColor);
+    let connectionHandleMeshPlatform = new THREE.Mesh(connectionHandlePlatform, handleColor);
     connectionHandleMeshRight.name = 'connectionHandle';
     connectionHandleMeshLeft.name = 'connectionHandle';
+    connectionHandleMeshPlatform.name = 'connectionHandle';
     // TODO: magic numbers... need to revamp scaling
     connectionHandleMeshRight.position.z = 155;
     connectionHandleMeshRight.position.y = 15;
     connectionHandleMeshLeft.position.z = -155;
     connectionHandleMeshLeft.position.y = 15;
+    connectionHandleMeshPlatform.position.z = 0;
+    connectionHandleMeshPlatform.position.y = 35;
     connectionHandleMeshRight.visible = connectionHandlesVisible;
     connectionHandleMeshLeft.visible = connectionHandlesVisible;
+    connectionHandleMeshPlatform.visible = connectionHandlesVisible;
     connectionHandleMeshRight.place = 'right';
     connectionHandleMeshLeft.place = 'left';
+    connectionHandleMeshPlatform.place = 'platform';
 
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
@@ -214,6 +222,7 @@ let _addStage = (stageType) => {
     group.add(stagePlatformMesh);
     group.add(connectionHandleMeshRight);
     group.add(connectionHandleMeshLeft);
+    group.add(connectionHandleMeshPlatform);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
@@ -379,7 +388,6 @@ let onDocumentMouseDown = (event) => {
 
     let candidates = getGroups().concat(getTool()).concat(getConnectionHandles());
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
-    console.log(isectGroups);
     let isectControl;
     if (getControl() === undefined) {
         isectControl = [];
