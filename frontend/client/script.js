@@ -107,9 +107,29 @@ let _addTool = (toolType) => {
     let toolEdges = new THREE.EdgesGeometry(toolGeom);
     let toolLines = new THREE.LineSegments(toolEdges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 5 }));
     let toolMesh = new THREE.Mesh(toolGeom, group.color);
+    toolMesh.name = 'tool';
+    toolMesh.material.transparent = true;
+
+    let connectionHandle = geometryFactories.connectionHandle();
+    connectionHandle.computeBoundingSphere();
+    connectionHandle.scale(0.4, 0.4, 0.4);
+
+    // connectionHandleRight.scale(scaleFactor, scaleFactor, scaleFactor);
+    let handleColor = new THREE.MeshLambertMaterial({
+        color: yellowColor,
+        emissive: yellowColor,
+        emissiveIntensity: 0.25
+    });
+    let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+    connectionHandleMesh.name = 'connectionHandle';
+    connectionHandleMesh.position.z = 0;
+    connectionHandleMesh.position.y = -45;
+    connectionHandleMesh.visible = connectionHandlesVisible;
+    connectionHandleMesh.place = 'tool';
 
     group.add(toolLines);
     group.add(toolMesh);
+    group.add(connectionHandleMesh);
 
     let toolName = defaultToolName;
     group.toolName = toolName;
@@ -724,24 +744,31 @@ let gatherDeepChildStages = (parentStage) => {
 };
 
 let getConnectionHandles = () => {
-    return getGroups().map((group) => group.children)
+    let groups = getGroups();
+    let tool = getTool();
+    let groupsAndTool = groups.concat(tool);
+    return groupsAndTool.map((group) => group.children)
                .flat()
                .filter((obj) => obj.name === 'connectionHandle');
 };
 
-let getStageCaseAndPlatformMeshes = () => {
-    return getGroups().map((group) => group.children)
+let getMeshes = () => {
+    let groups = getGroups();
+    let tool = getTool();
+    let groupsAndTool = groups.concat(tool);
+    return groupsAndTool.map((group) => group.children)
                .flat()
                .filter((obj) => obj.name === 'stageCase'
-                             || obj.name === 'stagePlatform');
+                             || obj.name === 'stagePlatform'
+                             || obj.name === 'tool');
 };
 
 let toggleConnectionHandles = () => {
     let handles = getConnectionHandles();
-    let caseAndPlatformMeshes = getStageCaseAndPlatformMeshes();
+    let meshes = getMeshes();
     connectionHandlesVisible = !connectionHandlesVisible;
     handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
-    caseAndPlatformMeshes.forEach((mesh) => {
+    meshes.forEach((mesh) => {
         mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
     });
 };
