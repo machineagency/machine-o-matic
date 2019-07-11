@@ -101,7 +101,7 @@ def axis_from_name(name, stages):
 #     Connection("l", "center", "c", "platform"),
 # ]
 if len(sys.argv) != 2:
-    print "Usage: python interpreter.py [MOM FILE]"
+    print("Usage: python interpreter.py [MOM FILE]")
     exit(1)
 file_to_parse = sys.argv[1]
 ast = MoMParser.parse(file_to_parse)
@@ -196,7 +196,7 @@ def from_cartesian_coord_transform_constraint(stages):
     try:
         return coord_transforms[stage_axes]
     except KeyError:
-        print "Error: no coordinate transform available."
+        print("Error: no coordinate transform available.")
         return noop_constraint
 
 def list_multistage_axes_tuples(stages):
@@ -329,8 +329,8 @@ class MachineSolver():
             s.check()
             model = s.model()
 
-            # print s
-            #print s.model()
+            # print(s)
+            # print(s.model())
 
             stage_steps = tuple(stage.name + "_steps" for stage in ast.stages)
             return {
@@ -338,8 +338,8 @@ class MachineSolver():
                     for stage_step in stage_steps
             }
         except Exception as e:
-            print "Could not solve."
-            print e
+            print("Could not solve.")
+            print(e)
             return {}
 
     @staticmethod
