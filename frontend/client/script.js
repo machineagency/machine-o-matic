@@ -546,6 +546,9 @@ let onDocumentKeyDown = (event) => {
     if (event.key === "s") {
         toggleConnectionHandles();
     }
+    if (event.key === "Escape") {
+        releaseActiveSelectionHandle();
+    }
 };
 
 let initCamera = () => {
