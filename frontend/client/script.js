@@ -69,11 +69,12 @@ const stagePlatformsInMotion = {};
 const connections = [];
 
 class Connection {
-    constructor(parentName, childName, place) {
+    constructor(parentName, parentPlace, childName, childPlace) {
         this.parentName = parentName;
+        this.parentPlace = parentPlace;
         this.childName = childName;
-        this.place = place;
-        this.name = `${parentName}.${place} -> ${childName}`;
+        this.childPlace = childPlace;
+        this.name = `${parentName}.${parentPlace} -> ${childName}.${childPlace}`;
     }
 }
 
@@ -468,8 +469,7 @@ let onDocumentMouseDown = (event) => {
             let fromPlace = activeSelectionHandle.object.place;
             let toStage = findStageWithName(currHandle.object.parent.stageName);
             let toPlace = currHandle.object.place;
-            // TODO: incorporate two places
-            connectParentChildAtPlace(fromModule, toStage, toPlace);
+            connectParentChild(fromModule, fromPlace, toStage, toPlace);
             releaseActiveSelectionHandle();
         }
     }
@@ -488,7 +488,7 @@ let onDocumentMouseDown = (event) => {
                 if (!(place === 'platform' || place === 'right' || place === 'left')) {
                     return;
                 }
-                connectParentChildAtPlace(getFocus(), stage, place);
+                connectParentChild(getFocus(), stage, place);
             }
         }
 
@@ -876,11 +876,7 @@ let connectToolToStage = (tool, stage) => {
     // childStagePlatform.add(tool);
 };
 
-let connectParentChildAtPlace = (parentStage, childStage, place) => {
-    if (!(place === 'platform' || place === 'left' || place === 'right')) {
-        console.log(`Invalid place for connection: ${place}`);
-        return;
-    }
+let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     let parentPosMat = parentStage.matrixWorld;
     // childStage.position.setFromMatrixPosition(parentPosMat);
     // childStage.translateY(platformYDisplacement);
@@ -888,27 +884,28 @@ let connectParentChildAtPlace = (parentStage, childStage, place) => {
     // Add to connections table
     let parentName = getStageName(parentStage) || 'Tool' ;
     let childName = getStageName(childStage);
-    let newConnection = new Connection(parentName, childName, place);
+    let newConnection = new Connection(parentName, parentPlace, childName, childPlace);
     connections.push(newConnection);
 
     // Position child stage appropriately
     let parentDir = getStageWorldDirection(parentStage);
     let axis = childStage.worldToLocal(parentDir);
-    if (place === 'left') {
-        // childStage.translateOnAxis(axis, maxAxisDisplacement);
-    }
-    if (place === 'right') {
-        // childStage.translateOnAxis(axis, -maxAxisDisplacement);
-    }
-    if (place === 'platform') {
-        // childStage.translateOnAxis(axis, 0);
-    }
+    // if (place === 'left') {
+    //     // childStage.translateOnAxis(axis, maxAxisDisplacement);
+    // }
+    // if (place === 'right') {
+    //     // childStage.translateOnAxis(axis, -maxAxisDisplacement);
+    // }
+    // if (place === 'platform') {
+    //     // childStage.translateOnAxis(axis, 0);
+    // }
 
     // Add to GUI
     let newConnectionFolder = connectionGui.addFolder(newConnection.name);
     newConnectionFolder.add(newConnection, 'parentName');
+    newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
-    newConnectionFolder.add(newConnection, 'place');
+    newConnectionFolder.add(newConnection, 'childPlace');
 };
 
 let getDistinctAxes = () => {
@@ -952,7 +949,7 @@ let generateMomProgram = () => {
     });
     programStr = programStr.concat('\nconnections:\n');
     connections.forEach((cxn) => {
-        programStr = programStr.concat(`${s}${cxn.name}.platform\n`);
+        programStr = programStr.concat(`${s}${cxn.name}\n`);
     });
     programStr = programStr.concat('\n');
     return programStr;
