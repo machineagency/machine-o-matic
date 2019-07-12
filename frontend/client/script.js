@@ -9,6 +9,8 @@ let tool;
 let programText;
 
 let focusedStage;
+let activeSelectionHandle;
+let connectionHandlesVisible = false;
 
 let focus = (object) => {
     focusedStage = object;
@@ -42,7 +44,8 @@ const geometryFactories = {
     rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
     rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
     angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
-    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10)
+    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
+    connectionHandle: () => new THREE.SphereBufferGeometry(25, 32, 32)
 };
 
 const defaultStageNames = [
@@ -58,36 +61,48 @@ const defaultStageNames = [
 const defaultToolName = "Tool";
 
 const greenColor = 0xbed346;
+const blueColor = 0x12CBC4;
+const yellowColor = 0xFFC312;
+const whiteColor = 0xEFEFEF;
 const stagePlatformsInMotion = {};
 
 const connections = [];
 
 class Connection {
-    constructor(parentName, childName, place) {
+    constructor(parentName, parentPlace, childName, childPlace) {
         this.parentName = parentName;
+        this.parentPlace = parentPlace;
         this.childName = childName;
-        this.place = place;
-        this.name = `${parentName}.${place} -> ${childName}`;
+        this.childPlace = childPlace;
+        this.name = `${parentName}.${parentPlace} -> ${childName}.${childPlace}`;
     }
 }
 
 let addLinearStage = () => {
-    _addStage('linear');
+    let group = _makeStage('linear');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addRotaryStage = () => {
-    _addStage('rotary');
+    let group = _makeStage('rotary');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addAngledTool = () => {
-    _addTool('angled');
+    let group = _makeTool('angled');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addStraightTool = () => {
-    _addTool('straight');
+    let group = _makeTool('straight');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
-let _addTool = (toolType) => {
+let _makeTool = (toolType) => {
     let group = new THREE.Group();
     let toolGeom;
 
@@ -102,6 +117,8 @@ let _addTool = (toolType) => {
     let toolEdges = new THREE.EdgesGeometry(toolGeom);
     let toolLines = new THREE.LineSegments(toolEdges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 5 }));
     let toolMesh = new THREE.Mesh(toolGeom, group.color);
+    toolMesh.name = 'tool';
+    toolMesh.material.transparent = true;
 
     group.add(toolLines);
     group.add(toolMesh);
@@ -136,7 +153,7 @@ let _addTool = (toolType) => {
     return group;
 };
 
-let _addStage = (stageType) => {
+let _makeStage = (stageType) => {
     let group = new THREE.Group();
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
@@ -157,11 +174,13 @@ let _addStage = (stageType) => {
         stageTypeScale = 70;
     }
     stageCase.computeBoundingSphere();
-    let scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
-    stageCase.scale(scaleFactor, scaleFactor, scaleFactor);
+    group.scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
+    stageCase.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
+    stageCaseMesh.name = 'stageCase';
+    stageCaseMesh.material.transparent = true;
 
     let stagePlatform;
     if (stageType === 'linear') {
@@ -170,11 +189,13 @@ let _addStage = (stageType) => {
     else if (stageType === 'rotary') {
         stagePlatform = geometryFactories.rotaryStagePlatform();
     }
-    stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
+    stagePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
+    stagePlatformMesh.name = 'stagePlatform';
+    stagePlatformMesh.material.transparent = true;
 
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
@@ -203,6 +224,11 @@ let _addStage = (stageType) => {
     group.stageType = stageType;
     group.dgFolder.add(group, 'stageType');
 
+    return group;
+
+};
+
+let _addGroupToScene = (group) => {
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
@@ -214,8 +240,81 @@ let _addStage = (stageType) => {
 
     focus(group);
 
-    return group;
+};
 
+let _addConnectionHandlesToGroup = (group) => {
+    if (group.isTool) {
+        let connectionHandle = geometryFactories.connectionHandle();
+        connectionHandle.computeBoundingSphere();
+        connectionHandle.scale(0.4, 0.4, 0.4);
+
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+        connectionHandleMesh.name = 'connectionHandle';
+        connectionHandleMesh.position.z = 0;
+        connectionHandleMesh.position.y = -45;
+        connectionHandleMesh.visible = connectionHandlesVisible;
+        connectionHandleMesh.place = 'tool';
+
+        group.add(connectionHandleMesh);
+    } else if (group.stageType === 'rotary') {
+        let connectionHandle = geometryFactories.connectionHandle();
+        connectionHandle.computeBoundingSphere();
+        connectionHandle.scale(0.4, 0.4, 0.4);
+
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+        connectionHandleMesh.name = 'connectionHandle';
+        connectionHandleMesh.position.z = 0;
+        connectionHandleMesh.position.y = 40;
+        connectionHandleMesh.visible = connectionHandlesVisible;
+        connectionHandleMesh.place = 'platform';
+
+        group.add(connectionHandleMesh);
+    } else {
+        let connectionHandleRight = geometryFactories.connectionHandle();
+        let connectionHandleLeft = geometryFactories.connectionHandle();
+        let connectionHandlePlatform = geometryFactories.connectionHandle();
+        connectionHandleRight.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        connectionHandleLeft.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        connectionHandlePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMeshRight = new THREE.Mesh(connectionHandleRight, handleColor);
+        let connectionHandleMeshLeft = new THREE.Mesh(connectionHandleLeft, handleColor);
+        let connectionHandleMeshPlatform = new THREE.Mesh(connectionHandlePlatform, handleColor);
+        connectionHandleMeshRight.name = 'connectionHandle';
+        connectionHandleMeshLeft.name = 'connectionHandle';
+        connectionHandleMeshPlatform.name = 'connectionHandle';
+
+        connectionHandleMeshRight.position.z = 155;
+        connectionHandleMeshRight.position.y = 15;
+        connectionHandleMeshLeft.position.z = -155;
+        connectionHandleMeshLeft.position.y = 15;
+        connectionHandleMeshPlatform.position.z = 0;
+        connectionHandleMeshPlatform.position.y = 35;
+        connectionHandleMeshRight.visible = connectionHandlesVisible;
+        connectionHandleMeshLeft.visible = connectionHandlesVisible;
+        connectionHandleMeshPlatform.visible = connectionHandlesVisible;
+        connectionHandleMeshRight.place = 'right';
+        connectionHandleMeshLeft.place = 'left';
+        connectionHandleMeshPlatform.place = 'platform';
+
+        group.add(connectionHandleMeshRight);
+        group.add(connectionHandleMeshLeft);
+        group.add(connectionHandleMeshPlatform);
+    }
 };
 
 let setDgFolderName = (dgFolder, name) => {
@@ -329,6 +428,9 @@ let destroyControl = () => {
     }
 };
 
+/**
+ * KEYPRESS LOGIC
+ */
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
     if (stageGui.domElement.contains(event.target)) {
@@ -343,7 +445,7 @@ let onDocumentMouseDown = (event) => {
         return;
     }
 
-    let candidates = getGroups().concat(getTool());
+    let candidates = getGroups().concat(getTool()).concat(getConnectionHandles());
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
     let isectControl;
     if (getControl() === undefined) {
@@ -351,6 +453,25 @@ let onDocumentMouseDown = (event) => {
     }
     else {
         isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    }
+    let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
+    if (possibleHandles.length > 0) {
+        let currHandle = possibleHandles[0];
+        if (activeSelectionHandle === undefined) {
+            setActiveSelectionHandle(currHandle);
+        } else {
+            let fromModule;
+            if (activeSelectionHandle.object.parent.isTool) {
+                fromModule = getTool();
+            } else {
+                fromModule = findStageWithName(activeSelectionHandle.object.parent.stageName);
+            }
+            let fromPlace = activeSelectionHandle.object.place;
+            let toStage = findStageWithName(currHandle.object.parent.stageName);
+            let toPlace = currHandle.object.place;
+            connectParentChild(fromModule, fromPlace, toStage, toPlace);
+            releaseActiveSelectionHandle();
+        }
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
@@ -364,10 +485,10 @@ let onDocumentMouseDown = (event) => {
                 let parentStageName = getStageName(getFocus());
                 let childStageName = getStageName(stage);
                 let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
-                if (!(place === 'center' || place === 'right' || place === 'left')) {
+                if (!(place === 'platform' || place === 'right' || place === 'left')) {
                     return;
                 }
-                connectParentChildAtPlace(getFocus(), stage, place);
+                connectParentChild(getFocus(), stage, place);
             }
         }
 
@@ -411,6 +532,9 @@ let openFolderForStage = (stage) => {
 };
 
 let onDocumentKeyDown = (event) => {
+    if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
+        return;
+    }
     if (event.key === "Backspace") {
         if (getFocus() !== null && event.shiftKey) {
             deleteStage(getFocus());
@@ -418,6 +542,12 @@ let onDocumentKeyDown = (event) => {
     }
     if (event.key === "m") {
         swapControlMode();
+    }
+    if (event.key === "s") {
+        toggleConnectionHandles();
+    }
+    if (event.key === "Escape") {
+        releaseActiveSelectionHandle();
     }
 };
 
@@ -466,7 +596,7 @@ let init = () => {
     initScene();
     initCamera();
     initRenderer();
-    // initStats();
+    //initStats();
     initGui();
 
     addStraightTool();
@@ -659,6 +789,76 @@ let gatherDeepChildStages = (parentStage) => {
     return shallowChildStages.concat(deepStagesFlat);
 };
 
+let getConnectionHandles = () => {
+    let groups = getGroups();
+    let tool = getTool();
+    let groupsAndTool = groups.concat(tool);
+    return groupsAndTool.map((group) => group.children)
+               .flat()
+               .filter((obj) => obj.name === 'connectionHandle');
+};
+
+let getMeshes = () => {
+    let groups = getGroups();
+    let tool = getTool();
+    let groupsAndTool = groups.concat(tool);
+    return groupsAndTool.map((group) => group.children)
+               .flat()
+               .filter((obj) => obj.name === 'stageCase'
+                             || obj.name === 'stagePlatform'
+                             || obj.name === 'tool');
+};
+
+let toggleConnectionHandles = () => {
+    let handles = getConnectionHandles();
+    let meshes = getMeshes();
+    connectionHandlesVisible = !connectionHandlesVisible;
+    handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
+    meshes.forEach((mesh) => {
+        mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
+    });
+};
+
+let setActiveSelectionHandle = (handle) => {
+    activeSelectionHandle = handle;
+    let handles = getConnectionHandles();
+    handles.forEach((handle) => {
+        handle.material.color = new THREE.Color(whiteColor);
+    });
+};
+
+let releaseActiveSelectionHandle = () => {
+    activeSelectionHandle = undefined;
+    let handles = getConnectionHandles();
+    handles.forEach((handle) => {
+        handle.material.color = new THREE.Color(yellowColor);
+    });
+};
+
+let drawArrowFromHandle = (handle) => {
+    let handleOrigin = activeSelectionHandle.point;
+    let mouseVecUnproj = new THREE.Vector3();
+    let mouseVect = new THREE.Vector3();
+    let arrowDir = new THREE.Vector3();
+    let arrowDist = 500; // arbitrary large number serves as maximum
+    let arrow = new THREE.ArrowHelper(arrowDir, handleOrigin, 1,
+                                      blueColor);
+    scene.add(arrow);
+    document.onmousemove = (event) => {
+        // mouseVecUnproj.set(event.pageX, event.pageY, -1);
+        mouseVecUnproj.set(
+            (event.clientX / window.innerWidth) * 2 - 1,
+            -(event.clientY / window.innerHeight) * 2 + 1,
+            -1
+        );
+        mouseVecUnproj.unproject(camera);
+        mouseVect.copy(mouseVecUnproj);
+        arrowDir.copy(mouseVect).sub(handleOrigin).normalize();
+        arrow.setDirection(arrowDir);
+        arrow.setLength(handleOrigin.distanceTo(mouseVect));
+    };
+};
+
 let connectToolToStage = (tool, stage) => {
     // Add to connections table
     let parentName = getToolName();
@@ -676,9 +876,9 @@ let connectToolToStage = (tool, stage) => {
     // childStagePlatform.add(tool);
 };
 
-let connectParentChildAtPlace = (parentStage, childStage, place) => {
-    if (!(place === 'center' || place === 'left' || place === 'right')) {
-        console.log(`Invalid place for connection: ${place}`);
+let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
+    if (parentStage.id === childStage.id) {
+        alert('Cannot connect a stage to itself.');
         return;
     }
     let parentPosMat = parentStage.matrixWorld;
@@ -686,29 +886,30 @@ let connectParentChildAtPlace = (parentStage, childStage, place) => {
     // childStage.translateY(platformYDisplacement);
 
     // Add to connections table
-    let parentName = getStageName(parentStage);
+    let parentName = getStageName(parentStage) || 'Tool' ;
     let childName = getStageName(childStage);
-    let newConnection = new Connection(parentName, childName, place);
+    let newConnection = new Connection(parentName, parentPlace, childName, childPlace);
     connections.push(newConnection);
 
     // Position child stage appropriately
     let parentDir = getStageWorldDirection(parentStage);
     let axis = childStage.worldToLocal(parentDir);
-    if (place === 'left') {
-        // childStage.translateOnAxis(axis, maxAxisDisplacement);
-    }
-    if (place === 'right') {
-        // childStage.translateOnAxis(axis, -maxAxisDisplacement);
-    }
-    if (place === 'center') {
-        // childStage.translateOnAxis(axis, 0);
-    }
+    // if (place === 'left') {
+    //     // childStage.translateOnAxis(axis, maxAxisDisplacement);
+    // }
+    // if (place === 'right') {
+    //     // childStage.translateOnAxis(axis, -maxAxisDisplacement);
+    // }
+    // if (place === 'platform') {
+    //     // childStage.translateOnAxis(axis, 0);
+    // }
 
     // Add to GUI
     let newConnectionFolder = connectionGui.addFolder(newConnection.name);
     newConnectionFolder.add(newConnection, 'parentName');
+    newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
-    newConnectionFolder.add(newConnection, 'place');
+    newConnectionFolder.add(newConnection, 'childPlace');
 };
 
 let getDistinctAxes = () => {
@@ -728,7 +929,7 @@ let DEMO__connectTwoStages = () => {
 let DEBUG__connectTwoStages = () => {
     addLinearStage();
     getGroups()[1].axis = 'y';
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "center");
+    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "platform");
     let secondStage = getGroups()[1];
     secondStage.rotateY(THREE.Math.degToRad(90));
     secondStage.axis = determineStageAxis(secondStage);
@@ -752,7 +953,7 @@ let generateMomProgram = () => {
     });
     programStr = programStr.concat('\nconnections:\n');
     connections.forEach((cxn) => {
-        programStr = programStr.concat(`${s}${cxn.name}.platform\n`);
+        programStr = programStr.concat(`${s}${cxn.name}\n`);
     });
     programStr = programStr.concat('\n');
     return programStr;
@@ -944,8 +1145,18 @@ let clearControlPad = () => {
     }
 };
 
+let cappedFramerateRequestAnimationFrame = (framerate) => {
+    if (framerate === undefined) {
+        requestAnimationFrame(animate);
+    } else {
+        setTimeout(() => {
+            requestAnimationFrame(animate);
+        }, 1000 / framerate);
+    }
+};
+
 let animate = () => {
-    requestAnimationFrame( animate );
+    cappedFramerateRequestAnimationFrame(30);
     render();
     // stats.update();
     incrementPlatforms();

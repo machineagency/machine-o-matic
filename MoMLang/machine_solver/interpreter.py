@@ -37,7 +37,7 @@ class Interpreter(cmd.Cmd):
         try:
             return tuple(map(int, arg.split()))
         except ValueError:
-            print "Warning: can't understand where to move"
+            print("Warning: can't understand where to move")
             return Interpreter.CURR_COORDS
 
     def do_move(self, arg):
@@ -47,13 +47,13 @@ class Interpreter(cmd.Cmd):
         Interpreter.MOTOR_MAP = self.map_motors()
 
     def do_getmap(self, arg):
-        print Interpreter.MOTOR_MAP
+        print(Interpreter.MOTOR_MAP)
 
     def do_connect(self, arg):
         Interpreter.PORT = Interpreter.make_open_port(arg)
 
     def do_bye(self, arg):
-        print "Bye!"
+        print("Bye!")
         return True
 
     def do_EOF(self, arg):
@@ -86,24 +86,24 @@ class Interpreter(cmd.Cmd):
         """
         Try to move to coords.
         """
-        print "Going to move to {}".format(coords)
+        print("Going to move to {}".format(coords))
         if len(coords) != Interpreter.NUM_AXES:
-            print "{0} has {1} axes, but I need {2}" \
+            print("{0} has {1} axes, but I need {2}") \
                     .format(coords, len(coords), Interpreter.NUM_AXES)
         elif not self.coords_in_bounds(coords):
-            print "{0} is outside my bounds: {1} to {2}" \
+            print("{0} is outside my bounds: {1} to {2}") \
                     .format(coords, Interpreter.MIN_COORDS, Interpreter.MAX_COORDS)
         else:
             relative_coords = self.find_relative_coords(coords)
             # steps = xyPlotterSolver.solve_ik(relative_coords[0], relative_coords[1])
             steps = MachineSolver.solve_ik(relative_coords[0], relative_coords[1])
-            print steps
+            print(steps)
             step_succeeded = self.dipatch_steps(steps)
             if step_succeeded:
-                print "Moved successfully!"
+                print("Moved successfully!")
                 Interpreter.CURR_COORDS = coords
             else:
-                print "Tried to move, but couldn't."
+                print("Tried to move, but couldn't.")
 
     def map_motors(self):
         """
@@ -140,7 +140,7 @@ class Interpreter(cmd.Cmd):
             Interpreter.PORT.write(packet_json + "\n")
             return True
         except Exception as e:
-            # print e
+            # print(e)
             return False
 
     @staticmethod
@@ -149,10 +149,10 @@ class Interpreter(cmd.Cmd):
             ser = serial.Serial()
             ser.port = port
             ser.open()
-            print "Connected to {0}".format(port)
+            print("Connected to {0}".format(port))
             return ser
         except OSError as e:
-            print "Could not connect to port: {0}".format(e)
+            print("Could not connect to port: {0}".format(e))
             return None
 
 Interpreter().cmdloop()
