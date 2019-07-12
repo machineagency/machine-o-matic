@@ -63,6 +63,7 @@ const defaultToolName = "Tool";
 const greenColor = 0xbed346;
 const blueColor = 0x12CBC4;
 const yellowColor = 0xFFC312;
+const whiteColor = 0xEFEFEF;
 const stagePlatformsInMotion = {};
 
 const connections = [];
@@ -456,7 +457,7 @@ let onDocumentMouseDown = (event) => {
     if (possibleHandles.length > 0) {
         let currHandle = possibleHandles[0];
         if (activeSelectionHandle === undefined) {
-            activeSelectionHandle = currHandle;
+            toggleSelectActiveSelectionHandles(currHandle);
         } else {
             let fromModule;
             if (activeSelectionHandle.object.parent.isTool) {
@@ -469,7 +470,7 @@ let onDocumentMouseDown = (event) => {
             let toPlace = currHandle.object.place;
             // TODO: incorporate two places
             connectParentChildAtPlace(fromModule, toStage, toPlace);
-            activeSelectionHandle = undefined;
+            toggleSelectActiveSelectionHandles();
         }
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
@@ -812,6 +813,23 @@ let toggleConnectionHandles = () => {
     handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
     meshes.forEach((mesh) => {
         mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
+    });
+};
+
+let toggleSelectActiveSelectionHandles = (handle) => {
+    if (activeSelectionHandle === undefined) {
+        activeSelectionHandle = handle;
+    } else {
+        activeSelectionHandle = undefined;
+    }
+
+    let handles = getConnectionHandles();
+    handles.forEach((handle) => {
+        if (activeSelectionHandle === undefined) {
+            handle.material.color = new THREE.Color(yellowColor);
+        } else {
+            handle.material.color = new THREE.Color(whiteColor);
+        }
     });
 };
 
