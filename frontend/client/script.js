@@ -554,11 +554,13 @@ let onDocumentMouseUp = (event) => {
 let openFolderForStage = (stage) => {
     let groups = getStages();
     groups.forEach((group) => {
-        if (group === stage) {
-            group.dgFolder.open();
-        }
-        else {
-            group.dgFolder.close();
+        if (group.isStage) {
+            if (group === stage) {
+                group.dgFolder.open();
+            }
+            else {
+                group.dgFolder.close();
+            }
         }
     });
 };
