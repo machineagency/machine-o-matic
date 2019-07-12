@@ -877,6 +877,10 @@ let connectToolToStage = (tool, stage) => {
 };
 
 let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
+    if (parentStage.id === childStage.id) {
+        alert('Cannot connect a stage to itself.');
+        return;
+    }
     let parentPosMat = parentStage.matrixWorld;
     // childStage.position.setFromMatrixPosition(parentPosMat);
     // childStage.translateY(platformYDisplacement);
