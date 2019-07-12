@@ -421,6 +421,7 @@ let _getIntersectsFromClickWithCandidates = (event, candidates) => {
 };
 
 let generateControlForGroup = (group) => {
+    group = getRootConnectionGroup(group);
     // Add controls to the new mesh group
     let control = new THREE.TransformControls( camera, renderer.domElement );
     control.mode = controlMode;
@@ -442,6 +443,21 @@ let destroyControl = () => {
         control.detach();
         scene.remove(control);
     }
+};
+
+let getRootConnectionGroup = (group) => {
+    if (group.parent.type !== 'Group') {
+        return group;
+    }
+    return getRootConnectionGroup(group.parent);
+};
+
+let makeConnectionGroupForModules = (parentMod, childMod) => {
+    let cxnGroup = new THREE.Group();
+    cxnGroup.add(parentMod);
+    cxnGroup.add(childMod);
+    cxnGroup.parent = parentMod.parent; // TODO: is this okay?
+    return cxnGroup;
 };
 
 /**
@@ -926,6 +942,9 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
     newConnectionFolder.add(newConnection, 'childPlace');
+
+    let connectionGroup = makeConnectionGroupForModules(parentStage, childStage);
+    _addGroupToScene(connectionGroup);
 };
 
 let getDistinctAxes = () => {
