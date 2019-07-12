@@ -946,6 +946,7 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     newConnectionFolder.add(newConnection, 'childPlace');
 
     let connectionGroup = makeConnectionGroupForModules(parentStage, childStage);
+    newConnection.connectionGroup = connectionGroup;
     _addGroupToScene(connectionGroup);
 };
 
