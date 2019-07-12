@@ -77,22 +77,30 @@ class Connection {
 }
 
 let addLinearStage = () => {
-    _addStage('linear');
+    let group = _makeStage('linear');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addRotaryStage = () => {
-    _addStage('rotary');
+    let group = _makeStage('rotary');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addAngledTool = () => {
-    _addTool('angled');
+    let group = _makeTool('angled');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
 let addStraightTool = () => {
-    _addTool('straight');
+    let group = _makeTool('straight');
+    _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group);
 };
 
-let _addTool = (toolType) => {
+let _makeTool = (toolType) => {
     let group = new THREE.Group();
     let toolGeom;
 
@@ -110,26 +118,8 @@ let _addTool = (toolType) => {
     toolMesh.name = 'tool';
     toolMesh.material.transparent = true;
 
-    let connectionHandle = geometryFactories.connectionHandle();
-    connectionHandle.computeBoundingSphere();
-    connectionHandle.scale(0.4, 0.4, 0.4);
-
-    // connectionHandleRight.scale(scaleFactor, scaleFactor, scaleFactor);
-    let handleColor = new THREE.MeshLambertMaterial({
-        color: yellowColor,
-        emissive: yellowColor,
-        emissiveIntensity: 0.25
-    });
-    let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
-    connectionHandleMesh.name = 'connectionHandle';
-    connectionHandleMesh.position.z = 0;
-    connectionHandleMesh.position.y = -45;
-    connectionHandleMesh.visible = connectionHandlesVisible;
-    connectionHandleMesh.place = 'tool';
-
     group.add(toolLines);
     group.add(toolMesh);
-    group.add(connectionHandleMesh);
 
     let toolName = defaultToolName;
     group.toolName = toolName;
@@ -161,7 +151,7 @@ let _addTool = (toolType) => {
     return group;
 };
 
-let _addStage = (stageType) => {
+let _makeStage = (stageType) => {
     let group = new THREE.Group();
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
@@ -182,8 +172,8 @@ let _addStage = (stageType) => {
         stageTypeScale = 70;
     }
     stageCase.computeBoundingSphere();
-    let scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
-    stageCase.scale(scaleFactor, scaleFactor, scaleFactor);
+    group.scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
+    stageCase.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
     let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
@@ -197,7 +187,7 @@ let _addStage = (stageType) => {
     else if (stageType === 'rotary') {
         stagePlatform = geometryFactories.rotaryStagePlatform();
     }
-    stagePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
+    stagePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
     let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0x000000, linewidth: 5 } ));
@@ -205,44 +195,10 @@ let _addStage = (stageType) => {
     stagePlatformMesh.name = 'stagePlatform';
     stagePlatformMesh.material.transparent = true;
 
-    let connectionHandleRight = geometryFactories.connectionHandle();
-    let connectionHandleLeft = geometryFactories.connectionHandle();
-    let connectionHandlePlatform = geometryFactories.connectionHandle();
-    connectionHandleRight.scale(scaleFactor, scaleFactor, scaleFactor);
-    connectionHandleLeft.scale(scaleFactor, scaleFactor, scaleFactor);
-    connectionHandlePlatform.scale(scaleFactor, scaleFactor, scaleFactor);
-    let handleColor = new THREE.MeshLambertMaterial({
-        color: yellowColor,
-        emissive: yellowColor,
-        emissiveIntensity: 0.25
-    });
-    let connectionHandleMeshRight = new THREE.Mesh(connectionHandleRight, handleColor);
-    let connectionHandleMeshLeft = new THREE.Mesh(connectionHandleLeft, handleColor);
-    let connectionHandleMeshPlatform = new THREE.Mesh(connectionHandlePlatform, handleColor);
-    connectionHandleMeshRight.name = 'connectionHandle';
-    connectionHandleMeshLeft.name = 'connectionHandle';
-    connectionHandleMeshPlatform.name = 'connectionHandle';
-    // TODO: magic numbers... need to revamp scaling
-    connectionHandleMeshRight.position.z = 155;
-    connectionHandleMeshRight.position.y = 15;
-    connectionHandleMeshLeft.position.z = -155;
-    connectionHandleMeshLeft.position.y = 15;
-    connectionHandleMeshPlatform.position.z = 0;
-    connectionHandleMeshPlatform.position.y = 35;
-    connectionHandleMeshRight.visible = connectionHandlesVisible;
-    connectionHandleMeshLeft.visible = connectionHandlesVisible;
-    connectionHandleMeshPlatform.visible = connectionHandlesVisible;
-    connectionHandleMeshRight.place = 'right';
-    connectionHandleMeshLeft.place = 'left';
-    connectionHandleMeshPlatform.place = 'platform';
-
     group.add(stageCaseLines);
     group.add(stageCaseMesh);
     group.add(stagePlatformLines);
     group.add(stagePlatformMesh);
-    group.add(connectionHandleMeshRight);
-    group.add(connectionHandleMeshLeft);
-    group.add(connectionHandleMeshPlatform);
     scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
@@ -266,6 +222,11 @@ let _addStage = (stageType) => {
     group.stageType = stageType;
     group.dgFolder.add(group, 'stageType');
 
+    return group;
+
+};
+
+let _addGroupToScene = (group) => {
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
@@ -277,8 +238,81 @@ let _addStage = (stageType) => {
 
     focus(group);
 
-    return group;
+};
 
+let _addConnectionHandlesToGroup = (group) => {
+    if (group.isTool) {
+        let connectionHandle = geometryFactories.connectionHandle();
+        connectionHandle.computeBoundingSphere();
+        connectionHandle.scale(0.4, 0.4, 0.4);
+
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+        connectionHandleMesh.name = 'connectionHandle';
+        connectionHandleMesh.position.z = 0;
+        connectionHandleMesh.position.y = -45;
+        connectionHandleMesh.visible = connectionHandlesVisible;
+        connectionHandleMesh.place = 'tool';
+
+        group.add(connectionHandleMesh);
+    } else if (group.stageType === 'rotary') {
+        let connectionHandle = geometryFactories.connectionHandle();
+        connectionHandle.computeBoundingSphere();
+        connectionHandle.scale(0.4, 0.4, 0.4);
+
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMesh = new THREE.Mesh(connectionHandle, handleColor);
+        connectionHandleMesh.name = 'connectionHandle';
+        connectionHandleMesh.position.z = 0;
+        connectionHandleMesh.position.y = 40;
+        connectionHandleMesh.visible = connectionHandlesVisible;
+        connectionHandleMesh.place = 'platform';
+
+        group.add(connectionHandleMesh);
+    } else {
+        let connectionHandleRight = geometryFactories.connectionHandle();
+        let connectionHandleLeft = geometryFactories.connectionHandle();
+        let connectionHandlePlatform = geometryFactories.connectionHandle();
+        connectionHandleRight.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        connectionHandleLeft.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        connectionHandlePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+        let handleColor = new THREE.MeshLambertMaterial({
+            color: yellowColor,
+            emissive: yellowColor,
+            emissiveIntensity: 0.25
+        });
+        let connectionHandleMeshRight = new THREE.Mesh(connectionHandleRight, handleColor);
+        let connectionHandleMeshLeft = new THREE.Mesh(connectionHandleLeft, handleColor);
+        let connectionHandleMeshPlatform = new THREE.Mesh(connectionHandlePlatform, handleColor);
+        connectionHandleMeshRight.name = 'connectionHandle';
+        connectionHandleMeshLeft.name = 'connectionHandle';
+        connectionHandleMeshPlatform.name = 'connectionHandle';
+
+        connectionHandleMeshRight.position.z = 155;
+        connectionHandleMeshRight.position.y = 15;
+        connectionHandleMeshLeft.position.z = -155;
+        connectionHandleMeshLeft.position.y = 15;
+        connectionHandleMeshPlatform.position.z = 0;
+        connectionHandleMeshPlatform.position.y = 35;
+        connectionHandleMeshRight.visible = connectionHandlesVisible;
+        connectionHandleMeshLeft.visible = connectionHandlesVisible;
+        connectionHandleMeshPlatform.visible = connectionHandlesVisible;
+        connectionHandleMeshRight.place = 'right';
+        connectionHandleMeshLeft.place = 'left';
+        connectionHandleMeshPlatform.place = 'platform';
+
+        group.add(connectionHandleMeshRight);
+        group.add(connectionHandleMeshLeft);
+        group.add(connectionHandleMeshPlatform);
+    }
 };
 
 let setDgFolderName = (dgFolder, name) => {
