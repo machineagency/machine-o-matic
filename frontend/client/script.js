@@ -205,7 +205,7 @@ let _makeStage = (stageType) => {
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
-    let groups = getGroups();
+    let groups = getStages();
     let stageId = groups[groups.length - 1].id;
 
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
@@ -223,6 +223,8 @@ let _makeStage = (stageType) => {
     group.dgFolder.add(group, 'axis').listen();
     group.stageType = stageType;
     group.dgFolder.add(group, 'stageType');
+
+    group.isStage = true;
 
     return group;
 
@@ -334,7 +336,7 @@ let getStageAxis = (stage) => {
 };
 
 let findStageWithName = (name) => {
-    return getGroups().find((stage) => (getStageName(stage) === name));
+    return getStages().find((stage) => (getStageName(stage) === name));
 };
 
 let deleteStage = (stage) => {
@@ -359,10 +361,24 @@ let deleteStage = (stage) => {
     });
 };
 
-let getGroups = () => {
+let getStages = () => {
+    let getStagesFromGroup = (group) => {
+        let groupChildrenGroups = group.children.filter((child) => {
+            return child.type === 'Group' && !child.isTool;
+        });
+        if (groupChildrenGroups.length === 0) {
+            return group;
+        }
+        return groupChildrenGroups.map((group) => {
+            return getStagesFromGroup(group);
+        }).flat();
+    };
+
     return scene.children.filter((child) => {
         return child.type === 'Group' && !child.isTool;
-    });
+    }).map((group) => {
+        return getStagesFromGroup(group);
+    }).flat();
 };
 
 let getTool = () => {
@@ -445,7 +461,7 @@ let onDocumentMouseDown = (event) => {
         return;
     }
 
-    let candidates = getGroups().concat(getTool()).concat(getConnectionHandles());
+    let candidates = getStages().concat(getTool()).concat(getConnectionHandles());
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
     let isectControl;
     if (getControl() === undefined) {
@@ -520,7 +536,7 @@ let onDocumentMouseUp = (event) => {
 };
 
 let openFolderForStage = (stage) => {
-    let groups = getGroups();
+    let groups = getStages();
     groups.forEach((group) => {
         if (group === stage) {
             group.dgFolder.open();
@@ -764,7 +780,7 @@ let determineStageAxis = (stage) => {
 };
 
 let redetermineAllStageAxes = () => {
-    let stages = getGroups();
+    let stages = getStages();
     stages.forEach((stage) => {
         stage.axis = determineStageAxis(stage);
     });
@@ -790,7 +806,7 @@ let gatherDeepChildStages = (parentStage) => {
 };
 
 let getConnectionHandles = () => {
-    let groups = getGroups();
+    let groups = getStages();
     let tool = getTool();
     let groupsAndTool = groups.concat(tool);
     return groupsAndTool.map((group) => group.children)
@@ -799,7 +815,7 @@ let getConnectionHandles = () => {
 };
 
 let getMeshes = () => {
-    let groups = getGroups();
+    let groups = getStages();
     let tool = getTool();
     let groupsAndTool = groups.concat(tool);
     return groupsAndTool.map((group) => group.children)
@@ -913,24 +929,24 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
 };
 
 let getDistinctAxes = () => {
-    return getGroups().map((stage) => stage.axis)
+    return getStages().map((stage) => stage.axis)
             .filter((axis, idx, ary) => ary.indexOf(axis) === idx);
 };
 
 let getStagesWithAxis = (axis) => {
-    let stages = getGroups();
+    let stages = getStages();
     return stages.filter((stage) => (stage.axis === axis));
 };
 
 let DEMO__connectTwoStages = () => {
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "right");
+    connectParentChildAtPlace(getStages()[1], getStages()[0], "right");
 };
 
 let DEBUG__connectTwoStages = () => {
     addLinearStage();
-    getGroups()[1].axis = 'y';
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "platform");
-    let secondStage = getGroups()[1];
+    getStages()[1].axis = 'y';
+    connectParentChildAtPlace(getStages()[1], getStages()[0], "platform");
+    let secondStage = getStages()[1];
     secondStage.rotateY(THREE.Math.degToRad(90));
     secondStage.axis = determineStageAxis(secondStage);
 };
@@ -939,7 +955,7 @@ let generateMomProgram = () => {
     let s = '    ';
     var programStr = `tool ${getToolName(tool)}:\n${s}accepts (${tool.accepts})\n`;
     programStr = programStr.concat('\nstages:\n');
-    getGroups().forEach((stage) => {
+    getStages().forEach((stage) => {
         let stageName = getStageName(stage);
         let stageAxis = getStageAxis(stage);
         let defaultTransfer;
