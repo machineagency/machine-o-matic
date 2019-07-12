@@ -457,7 +457,7 @@ let onDocumentMouseDown = (event) => {
     if (possibleHandles.length > 0) {
         let currHandle = possibleHandles[0];
         if (activeSelectionHandle === undefined) {
-            toggleSelectActiveSelectionHandles(currHandle);
+            setActiveSelectionHandle(currHandle);
         } else {
             let fromModule;
             if (activeSelectionHandle.object.parent.isTool) {
@@ -470,7 +470,7 @@ let onDocumentMouseDown = (event) => {
             let toPlace = currHandle.object.place;
             // TODO: incorporate two places
             connectParentChildAtPlace(fromModule, toStage, toPlace);
-            toggleSelectActiveSelectionHandles();
+            releaseActiveSelectionHandle();
         }
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
@@ -816,20 +816,19 @@ let toggleConnectionHandles = () => {
     });
 };
 
-let toggleSelectActiveSelectionHandles = (handle) => {
-    if (activeSelectionHandle === undefined) {
-        activeSelectionHandle = handle;
-    } else {
-        activeSelectionHandle = undefined;
-    }
-
+let setActiveSelectionHandle = (handle) => {
+    activeSelectionHandle = handle;
     let handles = getConnectionHandles();
     handles.forEach((handle) => {
-        if (activeSelectionHandle === undefined) {
-            handle.material.color = new THREE.Color(yellowColor);
-        } else {
-            handle.material.color = new THREE.Color(whiteColor);
-        }
+        handle.material.color = new THREE.Color(whiteColor);
+    });
+};
+
+let releaseActiveSelectionHandle = () => {
+    activeSelectionHandle = undefined;
+    let handles = getConnectionHandles();
+    handles.forEach((handle) => {
+        handle.material.color = new THREE.Color(yellowColor);
     });
 };
 
