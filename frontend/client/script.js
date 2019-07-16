@@ -228,15 +228,16 @@ let _makeStage = (stageType) => {
 
 };
 
-let _addGroupToScene = (group) => {
+let _addGroupToScene = (group, adjustPosition=true) => {
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
 
-    // Attempt to center on grid helper's axis
-    group.position.y = 50;
-    group.position.x = -35;
-    group.position.z = 35;
+    if (adjustPosition) {
+        group.position.y = 50;
+        group.position.x = -35;
+        group.position.z = 35;
+    }
 
     focus(group);
 
@@ -945,7 +946,7 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
 
     let connectionGroup = makeConnectionGroupForModules(parentStage, childStage);
     newConnection.connectionGroup = connectionGroup;
-    _addGroupToScene(connectionGroup);
+    _addGroupToScene(connectionGroup, false);
 };
 
 let getDistinctAxes = () => {
