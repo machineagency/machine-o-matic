@@ -420,12 +420,26 @@ let _getIntersectsFromClickWithCandidates = (event, candidates) => {
 };
 
 let generateControlForGroup = (group) => {
-    group = getRootConnectionGroup(group);
     // Add controls to the new mesh group
+    let lastPosition = new THREE.Vector3();
+    let currPosition = new THREE.Vector3();
     let control = new THREE.TransformControls( camera, renderer.domElement );
+    let offset = new THREE.Vector3();
+    let parentMods = gatherDeepParentStages(group);
     control.mode = controlMode;
     control.addEventListener('change', (event) => {
         render();
+    });
+    control.addEventListener('mouseDown', (event) => {
+        lastPosition.copy(group.position);
+    });
+    control.addEventListener('objectChange', (event) => {
+        currPosition.copy(group.position);
+        offset = currPosition.sub(lastPosition);
+        parentMods.forEach((parentMod) => {
+            parentMod.position.add(offset);
+        });
+        lastPosition.copy(group.position);
     });
     control.addEventListener('dragging-changed', (event) => {
         // console.log(event)
@@ -823,6 +837,23 @@ let gatherDeepChildStages = (parentStage) => {
     return shallowChildStages.concat(deepStagesFlat);
 };
 
+let gatherDeepParentStages = (childStage) => {
+    let childName = getStageName(childStage);
+    let shallowParentCxns = connections.filter((cxn) => cxn.childName === childName);
+    if (shallowParentCxns === undefined) {
+        return [];
+    }
+    if (shallowParentCxns.length === 1 && shallowParentCxns[0].parentPlace === 'tool') {
+        return [getTool()];
+    }
+    let shallowParentNames = [];
+    shallowParentCxns.forEach((cxn) => shallowParentNames.push(cxn.parentName));
+    let shallowParentStages = shallowParentNames.map((stageName) => findStageWithName(stageName));
+    let deepStages = shallowParentStages.map((stage) => gatherDeepParentStages(stage));
+    let deepStagesFlat = deepStages.flat(1);
+    return shallowParentStages.concat(deepStagesFlat);
+};
+
 let getConnectionHandles = () => {
     let groups = getStages();
     let tool = getTool();
@@ -944,10 +975,6 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
     newConnectionFolder.add(newConnection, 'childPlace');
-
-    let connectionGroup = makeConnectionGroupForModules(parentStage, childStage);
-    newConnection.connectionGroup = connectionGroup;
-    _addGroupToScene(connectionGroup, false);
 };
 
 let getDistinctAxes = () => {
