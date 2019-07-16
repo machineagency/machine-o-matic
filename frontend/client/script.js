@@ -365,7 +365,7 @@ let getStages = () => {
         let groupChildrenGroups = group.children.filter((child) => {
             return child.type === 'Group' && !child.isTool;
         });
-        if (groupChildrenGroups.length === 0) {
+        if (group.isStage && groupChildrenGroups.length === 0) {
             return group;
         }
         return groupChildrenGroups.map((group) => {
