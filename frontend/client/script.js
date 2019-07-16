@@ -721,7 +721,7 @@ let incrementPlatforms = () => {
         let stage = findStageWithName(stageName);
         let targetDisp = stagePlatformsInMotion[stageName];
         let currDisp = getStageValue(stage);
-        if (currDisp >= targetDisp) {
+        if (currDisp === targetDisp) {
             delete stagePlatformsInMotion[stageName];
             updateDomPosition();
         }
@@ -747,6 +747,9 @@ let incrementPlatforms = () => {
 let getStageSiblings = (stage) => {
     let stageName = getStageName(stage);
     let stageToParentConnection = connections.find((cxn) => cxn.childName === stageName);
+    if (stageToParentConnection === undefined) {
+        return [];
+    }
     let parentName = stageToParentConnection.parentName;
     let parentConnections = connections.filter((cxn) => cxn.parentName === parentName);
     let siblingNamesWithSelf = parentConnections.map((cxn) => cxn.childName);
@@ -759,6 +762,9 @@ let getPathToToolForStage = (stage) => {
     let helper = (currStage) => {
         let currName = getStageName(currStage);
         let connection = connections.find((cxn) => cxn.childName === currName);
+        if (connection === undefined) {
+            return [];
+        }
         let parentName = connection.parentName;
         if (parentName === getToolName()) {
             return [currStage, tool];
@@ -1046,14 +1052,15 @@ let DOM__compile = () => {
     document.querySelector('.inst-input').onkeyup = (event) => {
         if (event.key === 'Enter') {
             let inst = document.querySelector('.inst-input').value;
-            API__inst(inst);
+            // TODO: uncomment when done testing
+            // API__inst(inst);
             setSimPositionsFromInst(inst);
             document.querySelector('.inst-input').value = '';
         }
     };
     inflateControlPad();
-    // TODO: actually generate software controller via momlang
-    API__program(programText);
+    // TODO: uncomment to generate actual controller
+    // API__program(programText);
 };
 
 let setSimPositionsFromInst = (inst) => {
