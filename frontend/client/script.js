@@ -453,6 +453,7 @@ let getRootConnectionGroup = (group) => {
 
 let makeConnectionGroupForModules = (parentMod, childMod) => {
     let cxnGroup = new THREE.Group();
+    cxnGroup.isConnectionGroup = true;
     cxnGroup.add(parentMod);
     cxnGroup.add(childMod);
     cxnGroup.parent = parentMod.parent; // TODO: is this okay?
