@@ -104,6 +104,7 @@ let addStraightTool = () => {
 
 let _makeTool = (toolType) => {
     let group = new THREE.Group();
+    group.isTool = true;
     let toolGeom;
 
     if (toolType === 'angled') {
@@ -148,13 +149,12 @@ let _makeTool = (toolType) => {
     focus(group);
 
     tool = group;
-    group.isTool = true;
-
     return group;
 };
 
 let _makeStage = (stageType) => {
     let group = new THREE.Group();
+    group.isStage = true;
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
     let stageCase;
@@ -223,8 +223,6 @@ let _makeStage = (stageType) => {
     group.dgFolder.add(group, 'axis').listen();
     group.stageType = stageType;
     group.dgFolder.add(group, 'stageType');
-
-    group.isStage = true;
 
     return group;
 
