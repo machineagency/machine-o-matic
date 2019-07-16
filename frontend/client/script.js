@@ -763,7 +763,7 @@ let getPathToToolForStage = (stage) => {
         let currName = getStageName(currStage);
         let connection = connections.find((cxn) => cxn.childName === currName);
         if (connection === undefined) {
-            return [];
+            return [currStage];
         }
         let parentName = connection.parentName;
         if (parentName === getToolName()) {
