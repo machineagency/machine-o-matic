@@ -711,9 +711,7 @@ let _moveStagePlatform = (stage, delta) => {
 
 
 let _moveStage = (stage, delta, axis) => {
-    if (Math.abs(stage.position.z + delta) <= maxAxisDisplacement) {
-        stage.translateOnAxis(axis, delta);
-    }
+    stage.translateOnAxis(axis, delta);
 };
 
 let incrementPlatforms = () => {
