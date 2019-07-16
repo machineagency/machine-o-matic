@@ -723,7 +723,9 @@ let incrementPlatforms = () => {
         let currDisp = getStageValue(stage);
         if (currDisp === targetDisp) {
             delete stagePlatformsInMotion[stageName];
-            updateDomPosition();
+            if (Object.keys(stagePlatformsInMotion).length === 0) {
+                updateDomPosition();
+            }
         }
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
