@@ -581,6 +581,9 @@ let openFolderForStage = (stage) => {
 
 let onDocumentKeyDown = (event) => {
     if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
+        if (event.key === "Escape") {
+            document.activeElement.blur();
+        }
         return;
     }
     if (event.key === "Backspace") {
