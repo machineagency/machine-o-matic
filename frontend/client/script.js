@@ -66,7 +66,7 @@ const yellowColor = 0xFFC312;
 const whiteColor = 0xEFEFEF;
 const stagePlatformsInMotion = {};
 
-const connections = [];
+let connections = [];
 
 class Connection {
     constructor(parentName, parentPlace, childName, childPlace) {
@@ -104,6 +104,7 @@ let addStraightTool = () => {
 
 let _makeTool = (toolType) => {
     let group = new THREE.Group();
+    group.isTool = true;
     let toolGeom;
 
     if (toolType === 'angled') {
@@ -148,13 +149,12 @@ let _makeTool = (toolType) => {
     focus(group);
 
     tool = group;
-    group.isTool = true;
-
     return group;
 };
 
 let _makeStage = (stageType) => {
     let group = new THREE.Group();
+    group.isStage = true;
     group.color = new THREE.MeshLambertMaterial({ color: greenColor });
 
     let stageCase;
@@ -205,7 +205,7 @@ let _makeStage = (stageType) => {
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
-    let groups = getGroups();
+    let groups = getStages();
     let stageId = groups[groups.length - 1].id;
 
     let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
@@ -228,15 +228,16 @@ let _makeStage = (stageType) => {
 
 };
 
-let _addGroupToScene = (group) => {
+let _addGroupToScene = (group, adjustPosition=true) => {
     scene.add(group);
     destroyControl();
     generateControlForGroup(group);
 
-    // Attempt to center on grid helper's axis
-    group.position.y = 50;
-    group.position.x = -35;
-    group.position.z = 35;
+    if (adjustPosition) {
+        group.position.y = 50;
+        group.position.x = -35;
+        group.position.z = 35;
+    }
 
     focus(group);
 
@@ -334,7 +335,7 @@ let getStageAxis = (stage) => {
 };
 
 let findStageWithName = (name) => {
-    return getGroups().find((stage) => (getStageName(stage) === name));
+    return getStages().find((stage) => (getStageName(stage) === name));
 };
 
 let deleteStage = (stage) => {
@@ -342,15 +343,15 @@ let deleteStage = (stage) => {
     destroyControl();
     stageGui.removeFolder(stage.dgFolder);
     let deletedStageName = getStageName(stage);
-    // TODO: recursive deleting of child connections with new ADT
-    // Object.keys(connections).forEach((stageName) => {
-    //     let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
-    //         getStageName(stagePlacePair[0]);
-    //     });
-    //     if (stageFoundAsChild !== undefined) {
-    //         delete connections[stageName];
-    //     }
-    // });
+    let connectionsAfterDeletions = [];
+    connections.forEach((cxn) => {
+        if (cxn.childName !== deletedStageName && cxn.parentName !== deletedStageName) {
+            connectionsAfterDeletions.push(cxn);
+        } else {
+            connectionGui.removeFolder(cxn.dgFolder);
+        }
+    });
+    connections = connectionsAfterDeletions;
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -359,10 +360,24 @@ let deleteStage = (stage) => {
     });
 };
 
-let getGroups = () => {
+let getStages = () => {
+    let getStagesFromGroup = (group) => {
+        let groupChildrenGroups = group.children.filter((child) => {
+            return child.type === 'Group' && !child.isTool;
+        });
+        if (group.isStage && groupChildrenGroups.length === 0) {
+            return group;
+        }
+        return groupChildrenGroups.map((group) => {
+            return getStagesFromGroup(group);
+        }).flat();
+    };
+
     return scene.children.filter((child) => {
         return child.type === 'Group' && !child.isTool;
-    });
+    }).map((group) => {
+        return getStagesFromGroup(group);
+    }).flat();
 };
 
 let getTool = () => {
@@ -406,10 +421,25 @@ let _getIntersectsFromClickWithCandidates = (event, candidates) => {
 
 let generateControlForGroup = (group) => {
     // Add controls to the new mesh group
+    let lastPosition = new THREE.Vector3();
+    let currPosition = new THREE.Vector3();
     let control = new THREE.TransformControls( camera, renderer.domElement );
+    let offset = new THREE.Vector3();
+    let parentMods = gatherDeepParentStages(group);
     control.mode = controlMode;
     control.addEventListener('change', (event) => {
         render();
+    });
+    control.addEventListener('mouseDown', (event) => {
+        lastPosition.copy(group.position);
+    });
+    control.addEventListener('objectChange', (event) => {
+        currPosition.copy(group.position);
+        offset = currPosition.sub(lastPosition);
+        parentMods.forEach((parentMod) => {
+            parentMod.position.add(offset);
+        });
+        lastPosition.copy(group.position);
     });
     control.addEventListener('dragging-changed', (event) => {
         // console.log(event)
@@ -426,6 +456,22 @@ let destroyControl = () => {
         control.detach();
         scene.remove(control);
     }
+};
+
+let getRootConnectionGroup = (group) => {
+    if (group.parent.type !== 'Group') {
+        return group;
+    }
+    return getRootConnectionGroup(group.parent);
+};
+
+let makeConnectionGroupForModules = (parentMod, childMod) => {
+    let cxnGroup = new THREE.Group();
+    cxnGroup.isConnectionGroup = true;
+    cxnGroup.add(parentMod);
+    cxnGroup.add(childMod);
+    cxnGroup.parent = parentMod.parent; // TODO: is this okay?
+    return cxnGroup;
 };
 
 /**
@@ -445,7 +491,7 @@ let onDocumentMouseDown = (event) => {
         return;
     }
 
-    let candidates = getGroups().concat(getTool()).concat(getConnectionHandles());
+    let candidates = getStages().concat(getTool()).concat(getConnectionHandles());
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
     let isectControl;
     if (getControl() === undefined) {
@@ -520,19 +566,24 @@ let onDocumentMouseUp = (event) => {
 };
 
 let openFolderForStage = (stage) => {
-    let groups = getGroups();
+    let groups = getStages();
     groups.forEach((group) => {
-        if (group === stage) {
-            group.dgFolder.open();
-        }
-        else {
-            group.dgFolder.close();
+        if (group.isStage) {
+            if (group === stage) {
+                group.dgFolder.open();
+            }
+            else {
+                group.dgFolder.close();
+            }
         }
     });
 };
 
 let onDocumentKeyDown = (event) => {
     if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
+        if (event.key === "Escape") {
+            document.activeElement.blur();
+        }
         return;
     }
     if (event.key === "Backspace") {
@@ -663,9 +714,7 @@ let _moveStagePlatform = (stage, delta) => {
 
 
 let _moveStage = (stage, delta, axis) => {
-    if (Math.abs(stage.position.z + delta) <= maxAxisDisplacement) {
-        stage.translateOnAxis(axis, delta);
-    }
+    stage.translateOnAxis(axis, delta);
 };
 
 let incrementPlatforms = () => {
@@ -673,9 +722,11 @@ let incrementPlatforms = () => {
         let stage = findStageWithName(stageName);
         let targetDisp = stagePlatformsInMotion[stageName];
         let currDisp = getStageValue(stage);
-        if (currDisp >= targetDisp) {
+        if (currDisp === targetDisp) {
             delete stagePlatformsInMotion[stageName];
-            updateDomPosition();
+            if (Object.keys(stagePlatformsInMotion).length === 0) {
+                updateDomPosition();
+            }
         }
         else {
             let increment = targetDisp > currDisp ? 1 : -1;
@@ -699,6 +750,9 @@ let incrementPlatforms = () => {
 let getStageSiblings = (stage) => {
     let stageName = getStageName(stage);
     let stageToParentConnection = connections.find((cxn) => cxn.childName === stageName);
+    if (stageToParentConnection === undefined) {
+        return [];
+    }
     let parentName = stageToParentConnection.parentName;
     let parentConnections = connections.filter((cxn) => cxn.parentName === parentName);
     let siblingNamesWithSelf = parentConnections.map((cxn) => cxn.childName);
@@ -711,6 +765,9 @@ let getPathToToolForStage = (stage) => {
     let helper = (currStage) => {
         let currName = getStageName(currStage);
         let connection = connections.find((cxn) => cxn.childName === currName);
+        if (connection === undefined) {
+            return [currStage];
+        }
         let parentName = connection.parentName;
         if (parentName === getToolName()) {
             return [currStage, tool];
@@ -764,7 +821,7 @@ let determineStageAxis = (stage) => {
 };
 
 let redetermineAllStageAxes = () => {
-    let stages = getGroups();
+    let stages = getStages();
     stages.forEach((stage) => {
         stage.axis = determineStageAxis(stage);
     });
@@ -789,8 +846,25 @@ let gatherDeepChildStages = (parentStage) => {
     return shallowChildStages.concat(deepStagesFlat);
 };
 
+let gatherDeepParentStages = (childStage) => {
+    let childName = getStageName(childStage);
+    let shallowParentCxns = connections.filter((cxn) => cxn.childName === childName);
+    if (shallowParentCxns === undefined) {
+        return [];
+    }
+    if (shallowParentCxns.length === 1 && shallowParentCxns[0].parentPlace === 'tool') {
+        return [getTool()];
+    }
+    let shallowParentNames = [];
+    shallowParentCxns.forEach((cxn) => shallowParentNames.push(cxn.parentName));
+    let shallowParentStages = shallowParentNames.map((stageName) => findStageWithName(stageName));
+    let deepStages = shallowParentStages.map((stage) => gatherDeepParentStages(stage));
+    let deepStagesFlat = deepStages.flat(1);
+    return shallowParentStages.concat(deepStagesFlat);
+};
+
 let getConnectionHandles = () => {
-    let groups = getGroups();
+    let groups = getStages();
     let tool = getTool();
     let groupsAndTool = groups.concat(tool);
     return groupsAndTool.map((group) => group.children)
@@ -799,7 +873,7 @@ let getConnectionHandles = () => {
 };
 
 let getMeshes = () => {
-    let groups = getGroups();
+    let groups = getStages();
     let tool = getTool();
     let groupsAndTool = groups.concat(tool);
     return groupsAndTool.map((group) => group.children)
@@ -910,27 +984,28 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
     newConnectionFolder.add(newConnection, 'childPlace');
+    newConnection.dgFolder = newConnectionFolder;
 };
 
 let getDistinctAxes = () => {
-    return getGroups().map((stage) => stage.axis)
+    return getStages().map((stage) => stage.axis)
             .filter((axis, idx, ary) => ary.indexOf(axis) === idx);
 };
 
 let getStagesWithAxis = (axis) => {
-    let stages = getGroups();
+    let stages = getStages();
     return stages.filter((stage) => (stage.axis === axis));
 };
 
 let DEMO__connectTwoStages = () => {
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "right");
+    connectParentChildAtPlace(getStages()[1], getStages()[0], "right");
 };
 
 let DEBUG__connectTwoStages = () => {
     addLinearStage();
-    getGroups()[1].axis = 'y';
-    connectParentChildAtPlace(getGroups()[1], getGroups()[0], "platform");
-    let secondStage = getGroups()[1];
+    getStages()[1].axis = 'y';
+    connectParentChildAtPlace(getStages()[1], getStages()[0], "platform");
+    let secondStage = getStages()[1];
     secondStage.rotateY(THREE.Math.degToRad(90));
     secondStage.axis = determineStageAxis(secondStage);
 };
@@ -939,7 +1014,7 @@ let generateMomProgram = () => {
     let s = '    ';
     var programStr = `tool ${getToolName(tool)}:\n${s}accepts (${tool.accepts})\n`;
     programStr = programStr.concat('\nstages:\n');
-    getGroups().forEach((stage) => {
+    getStages().forEach((stage) => {
         let stageName = getStageName(stage);
         let stageAxis = getStageAxis(stage);
         let defaultTransfer;
@@ -981,14 +1056,15 @@ let DOM__compile = () => {
     document.querySelector('.inst-input').onkeyup = (event) => {
         if (event.key === 'Enter') {
             let inst = document.querySelector('.inst-input').value;
-            API__inst(inst);
+            // TODO: uncomment when done testing
+            // API__inst(inst);
             setSimPositionsFromInst(inst);
             document.querySelector('.inst-input').value = '';
         }
     };
     inflateControlPad();
-    // TODO: actually generate software controller via momlang
-    API__program(programText);
+    // TODO: uncomment to generate actual controller
+    // API__program(programText);
 };
 
 let setSimPositionsFromInst = (inst) => {
