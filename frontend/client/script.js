@@ -7,6 +7,8 @@ let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
 let programText;
+let clock;
+let mixer;
 
 let focusedStage;
 let activeSelectionHandle;
@@ -617,6 +619,7 @@ let initCamera = () => {
 
 let initScene = () => {
     scene = new THREE.Scene();
+    clock = new THREE.Clock();
     scene.background = new THREE.Color(0xf5f6f8);
     topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.00 );
     leftDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 );
@@ -1231,14 +1234,31 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
     }
 };
 
+let testAnimation = () => {
+    let stage = getStages()[0];
+    mixer = new THREE.AnimationMixer(stage);
+
+    let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2,3],
+                        [ -35, 50, 35, 60, 60, 60, -35, 50, 35 ]);
+    let clip = new THREE.AnimationClip('Action', 3, [ positionKF ]);
+    let clipAction = mixer.clipAction(clip);
+    clipAction.play();
+};
+
 let animate = () => {
-    cappedFramerateRequestAnimationFrame(30);
+    cappedFramerateRequestAnimationFrame();
     render();
     // stats.update();
-    incrementPlatforms();
+    // TODO: remove when animation is working, uncomment to go back to the
+    // bad old days
+    // incrementPlatforms();
 };
 
 let render = () => {
+    let deltaSeconds = clock.getDelta();
+    if (mixer !== undefined) {
+        mixer.update(deltaSeconds);
+    }
     renderer.render( scene, camera );
 };
 
