@@ -66,7 +66,7 @@ const yellowColor = 0xFFC312;
 const whiteColor = 0xEFEFEF;
 const stagePlatformsInMotion = {};
 
-const connections = [];
+let connections = [];
 
 class Connection {
     constructor(parentName, parentPlace, childName, childPlace) {
@@ -343,15 +343,15 @@ let deleteStage = (stage) => {
     destroyControl();
     stageGui.removeFolder(stage.dgFolder);
     let deletedStageName = getStageName(stage);
-    // TODO: recursive deleting of child connections with new ADT
-    // Object.keys(connections).forEach((stageName) => {
-    //     let stageFoundAsChild = connections[stageName].find((stagePlacePair) => {
-    //         getStageName(stagePlacePair[0]);
-    //     });
-    //     if (stageFoundAsChild !== undefined) {
-    //         delete connections[stageName];
-    //     }
-    // });
+    let connectionsAfterDeletions = [];
+    connections.forEach((cxn) => {
+        if (cxn.childName !== deletedStageName && cxn.parentName !== deletedStageName) {
+            connectionsAfterDeletions.push(cxn);
+        } else {
+            connectionGui.removeFolder(cxn.dgFolder);
+        }
+    });
+    connections = connectionsAfterDeletions;
 
     scene.remove(stage);
     stage.children.forEach((el) => {
@@ -984,6 +984,7 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     newConnectionFolder.add(newConnection, 'parentPlace');
     newConnectionFolder.add(newConnection, 'childName');
     newConnectionFolder.add(newConnection, 'childPlace');
+    newConnection.dgFolder = newConnectionFolder;
 };
 
 let getDistinctAxes = () => {
