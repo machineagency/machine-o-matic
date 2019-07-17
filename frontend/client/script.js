@@ -1238,10 +1238,11 @@ let testAnimation = () => {
     let stage = getStages()[0];
     mixer = new THREE.AnimationMixer(stage);
 
-    let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2,3],
-                        [ -35, 50, 35, 60, 60, 60, -35, 50, 35 ]);
-    let clip = new THREE.AnimationClip('Action', 3, [ positionKF ]);
+    let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
+                        [ -35, 50, 35, 160, 0, 160 ], THREE.InterpolateSmooth);
+    let clip = new THREE.AnimationClip('Action', 2, [ positionKF ]);
     let clipAction = mixer.clipAction(clip);
+    clipAction.loop = THREE.LoopOnce;
     clipAction.play();
 };
 
