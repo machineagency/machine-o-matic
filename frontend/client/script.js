@@ -1254,6 +1254,7 @@ let testAnimation = () => {
         let mixer = pair[0];
         let clip = pair[1];
         let action = mixer.clipAction(clip);
+        action.loop = THREE.LoopOnce;
         action.play();
     });
 
@@ -1263,7 +1264,8 @@ let testAnimation = () => {
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
     let mixer = new THREE.AnimationMixer(obj);
     mixer.addEventListener('finished', (event) => {
-        obj.position.set(newPos);
+        mixer.stopAllAction();
+        obj.position.set(newPos.x, newPos.y, newPos.z);
     });
     let currPos = obj.position;
     let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
