@@ -1238,10 +1238,33 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
     }
 };
 
-let testAnimation = () => {
+let animateStageToDispl = (stage, displ) => {
+    let stagePlatformMeshes = getStagePlatformMeshes(stage);
+    let targetPos = new THREE.Vector3(0, 0, displ);
+    let mixerClipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
+    let mixerClipB = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[1], targetPos);
+    let mixerClipPairs = [mixerClipA, mixerClipB];
+
+    let mixersOnly = mixerClipPairs.map((pair) => pair[0]);
+    mixersOnly.forEach((mixer) => {
+        mixers.push(mixer);
+    })
+
+    mixerClipPairs.forEach((pair) => {
+        let mixer = pair[0];
+        let clip = pair[1];
+        let action = mixer.clipAction(clip);
+        action.loop = THREE.LoopOnce;
+        action.play();
+    });
+
+    return mixerClipPairs;
+};
+
+let testAnimation = (displ) => {
     let mixerClipPairs = getStages().map((stage) => {
         let stagePlatformMeshes = getStagePlatformMeshes(stage);
-        let targetPos = new THREE.Vector3(0, 0, maxAxisDisplacementPos);
+        let targetPos = new THREE.Vector3(0, 0, displ);
         let clipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
         let clipB = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[1], targetPos);
         return [clipA, clipB];
@@ -1265,12 +1288,16 @@ let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
     let mixer = new THREE.AnimationMixer(obj);
     mixer.addEventListener('finished', (event) => {
         mixer.stopAllAction();
+        let idx = mixers.indexOf(mixer);
+        if (idx !== -1) {
+            mixers.splice(idx, 1);
+        }
         obj.position.set(newPos.x, newPos.y, newPos.z);
     });
     let currPos = obj.position;
     let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
                         [currPos.x, currPos.y, currPos.z,
-                         newPos.x, newPos.y, newPos.z], THREE.InterpolateSmooth);
+                         newPos.x, newPos.y, newPos.z], THREE.InterpolateLinear);
     let clip = new THREE.AnimationClip('Action', 2, [ positionKF ]);
     return [mixer, clip];
 };
