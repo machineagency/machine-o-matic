@@ -8,7 +8,7 @@ let mesh, lines, geometry;
 let tool;
 let programText;
 let clock;
-let mixer;
+let mixers = [];
 
 let focusedStage;
 let activeSelectionHandle;
@@ -37,7 +37,7 @@ let swapControlMode = () => {
 };
 
 const platformRaiseTranslateFactor = 8;
-const maxAxisDisplacement = 125;
+const maxAxisDisplacementPos = 125;
 const platformYDisplacement = 46.5;
 
 const geometryFactories = {
@@ -697,11 +697,15 @@ let setStageNamePlatformToTargetDispl = (stageName, targetDisp) => {
     stagePlatformsInMotion[stageName] = targetDisp;
 };
 
+let getStagePlatformMeshes = (stage) => {
+    return [stage.children[2], stage.children[3]];
+};
+
 let _moveStagePlatform = (stage, delta) => {
     if (stage.stageType === 'linear') {
         let platformLines = stage.children[2];
         let platformMesh = stage.children[3];
-        if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacement) {
+        if (Math.abs(platformMesh.position.z + delta) <= maxAxisDisplacementPos) {
             platformLines.translateZ(delta);
             platformMesh.translateZ(delta);
         }
@@ -972,10 +976,10 @@ let connectParentChild = (parentStage, parentPlace, childStage, childPlace) => {
     let parentDir = getStageWorldDirection(parentStage);
     let axis = childStage.worldToLocal(parentDir);
     // if (place === 'left') {
-    //     // childStage.translateOnAxis(axis, maxAxisDisplacement);
+    //     // childStage.translateOnAxis(axis, maxAxisDisplacementPos);
     // }
     // if (place === 'right') {
-    //     // childStage.translateOnAxis(axis, -maxAxisDisplacement);
+    //     // childStage.translateOnAxis(axis, -maxAxisDisplacementPos);
     // }
     // if (place === 'platform') {
     //     // childStage.translateOnAxis(axis, 0);
@@ -1235,19 +1239,42 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 };
 
 let testAnimation = () => {
-    let stage = getStages()[0];
-    mixer = new THREE.AnimationMixer(stage);
+    let mixerClipPairs = getStages().map((stage) => {
+        let stagePlatformMeshes = getStagePlatformMeshes(stage);
+        let targetPos = new THREE.Vector3(0, 0, maxAxisDisplacementPos);
+        let clipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
+        let clipB = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[1], targetPos);
+        return [clipA, clipB];
+    }).flat();
 
+    let mixersOnly = mixerClipPairs.map((pair) => pair[0]);
+    mixers = mixersOnly;
+
+    mixerClipPairs.forEach((pair) => {
+        let mixer = pair[0];
+        let clip = pair[1];
+        let action = mixer.clipAction(clip);
+        action.play();
+    });
+
+    return mixerClipPairs;
+};
+
+let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
+    let mixer = new THREE.AnimationMixer(obj);
+    mixer.addEventListener('finished', (event) => {
+        obj.position.set(newPos);
+    });
+    let currPos = obj.position;
     let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
-                        [ -35, 50, 35, 160, 0, 160 ], THREE.InterpolateSmooth);
+                        [currPos.x, currPos.y, currPos.z,
+                         newPos.x, newPos.y, newPos.z], THREE.InterpolateSmooth);
     let clip = new THREE.AnimationClip('Action', 2, [ positionKF ]);
-    let clipAction = mixer.clipAction(clip);
-    clipAction.loop = THREE.LoopOnce;
-    clipAction.play();
+    return [mixer, clip];
 };
 
 let animate = () => {
-    cappedFramerateRequestAnimationFrame();
+    cappedFramerateRequestAnimationFrame(30);
     render();
     // stats.update();
     // TODO: remove when animation is working, uncomment to go back to the
@@ -1257,9 +1284,9 @@ let animate = () => {
 
 let render = () => {
     let deltaSeconds = clock.getDelta();
-    if (mixer !== undefined) {
+    mixers.forEach((mixer) => {
         mixer.update(deltaSeconds);
-    }
+    });
     renderer.render( scene, camera );
 };
 
