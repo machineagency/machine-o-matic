@@ -1248,7 +1248,7 @@ let animateStageToDispl = (stage, displ) => {
     let mixersOnly = mixerClipPairs.map((pair) => pair[0]);
     mixersOnly.forEach((mixer) => {
         mixers.push(mixer);
-    })
+    });
 
     mixerClipPairs.forEach((pair) => {
         let mixer = pair[0];
@@ -1259,6 +1259,18 @@ let animateStageToDispl = (stage, displ) => {
     });
 
     return mixerClipPairs;
+};
+
+let animateStageToPosition = (stage, position) => {
+    let mixerClipPair = makeAnimateObjToPositionMixerClipPair(stage, position);
+    let mixer = mixerClipPair[0];
+    let clip = mixerClipPair[1];
+    let action = mixer.clipAction(clip);
+    mixers.push(mixer);
+    action.loop = THREE.LoopOnce;
+    action.play();
+
+    return mixerClipPair;
 };
 
 let testAnimation = (displ) => {
