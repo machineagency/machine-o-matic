@@ -1297,6 +1297,16 @@ let moveStagePlatform = (stage, displ) => {
 };
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
+    // TODO: check if an object is already being animated, if so, take existing
+    // KF into account and add it to the new mixer-action.
+    // Don't have time to currently implement this, so come back to it.
+    // mixers.forEach((mixer) => {
+    //     let mixerObj = mixer.getRoot();
+    //     if (mixerObj === obj) {
+    //         // TODO
+    //     }
+    // });
+
     let mixer = new THREE.AnimationMixer(obj);
     mixer.addEventListener('finished', (event) => {
         mixer.stopAllAction();
