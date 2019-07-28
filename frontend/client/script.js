@@ -1273,27 +1273,20 @@ let animateStageToPosition = (stage, position) => {
     return mixerClipPair;
 };
 
-let testAnimation = (displ) => {
-    let mixerClipPairs = getStages().map((stage) => {
-        let stagePlatformMeshes = getStagePlatformMeshes(stage);
-        let targetPos = new THREE.Vector3(0, 0, displ);
-        let clipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
-        let clipB = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[1], targetPos);
-        return [clipA, clipB];
-    }).flat();
+let animateTranslateStageByDispl = (stage, displ) => {
+    let baseAxis = getStageWorldDirection(stage);
+    let displOnAxis = new THREE.Vector3().copy(baseAxis).multiplyScalar(displ);
+    let translatedPos = new THREE.Vector3().addVectors(displOnAxis,
+                                                       stage.position);
+    return animateStageToPosition(stage, translatedPos);
+};
 
-    let mixersOnly = mixerClipPairs.map((pair) => pair[0]);
-    mixers = mixersOnly;
-
-    mixerClipPairs.forEach((pair) => {
-        let mixer = pair[0];
-        let clip = pair[1];
-        let action = mixer.clipAction(clip);
-        action.loop = THREE.LoopOnce;
-        action.play();
-    });
-
-    return mixerClipPairs;
+let testAnimation = () => {
+    //TODO: make recursive
+    let firstStage = getStages()[0];
+    let firstStageParents = getPathToToolForStage(firstStage);
+    // TODO: do a translate animation vs pure move-to
+    animateStageToDispl(firstStage, 100);
 };
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
