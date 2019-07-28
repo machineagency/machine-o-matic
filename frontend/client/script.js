@@ -1238,7 +1238,7 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
     }
 };
 
-let animateStageToDispl = (stage, displ) => {
+let animateStagePlatformToDispl = (stage, displ) => {
     let stagePlatformMeshes = getStagePlatformMeshes(stage);
     let targetPos = new THREE.Vector3(0, 0, displ);
     let mixerClipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
@@ -1273,20 +1273,27 @@ let animateStageToPosition = (stage, position) => {
     return mixerClipPair;
 };
 
-let animateTranslateStageByDispl = (stage, displ) => {
-    let baseAxis = getStageWorldDirection(stage);
-    let displOnAxis = new THREE.Vector3().copy(baseAxis).multiplyScalar(displ);
+let animateTranslateStageByDisplOnAxis = (stage, displ, axis) => {
+    let displOnAxis = new THREE.Vector3().copy(axis).multiplyScalar(displ);
     let translatedPos = new THREE.Vector3().addVectors(displOnAxis,
                                                        stage.position);
     return animateStageToPosition(stage, translatedPos);
 };
 
-let testAnimation = () => {
-    //TODO: make recursive
-    let firstStage = getStages()[0];
-    let firstStageParents = getPathToToolForStage(firstStage);
-    // TODO: do a translate animation vs pure move-to
-    animateStageToDispl(firstStage, 100);
+let moveStagePlatform = (stage, displ) => {
+    let siblingStages = getStageSiblings(stage);
+    animateStagePlatformToDispl(stage, displ);
+    siblingStages.forEach((stage) => {
+        animateStagePlatformToDispl(stage, displ);
+    });
+
+    let displDelta = displ - getPlatformDisplacementForStage(stage);
+    let stagePath = getPathToToolForStage(stage);
+    let parentStages = stagePath.slice(1);
+    let baseAxis = getStageWorldDirection(stage);
+    parentStages.forEach((stage) => {
+        animateTranslateStageByDisplOnAxis(stage, displDelta, baseAxis);
+    });
 };
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
