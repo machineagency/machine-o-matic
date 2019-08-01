@@ -17,12 +17,12 @@ let initCamera = () => {
     let viewSize = 150;
     camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
-    camera.zoom = 0.35;
+    camera.zoom = 1.0;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
     camera.position.set(-500, 500, 500); // I don't know why this works
     camera.lookAt(scene.position);
-    camera.position.set(-400, 500, 800); // Pan away to move machine to left
+    // camera.position.set(-400, 500, 800); // Pan away to move machine to left
 };
 
 let initScene = () => {
@@ -79,6 +79,27 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
         }, 1000 / framerate);
     }
 };
+
+/* MESH STUFF */
+
+let loadStl = (filepath) => {
+    // TODO: make this return the mesh via promise calls
+    let loadPromise = new Promise()
+    let loader = new THREE.STLLoader();
+    let stlMesh;
+    loader.load(filepath, (stlGeom) => {
+        let meshMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        stlMesh = new THREE.Mesh(stlGeom, meshMaterial);
+        scene.add(stlMesh);
+    }, undefined, (errorMsg) => {
+        console.log(errorMsg);
+    });
+};
+
+/* SCENE RENDERING MAIN FUNCTIONS */
 
 let animate = () => {
     cappedFramerateRequestAnimationFrame(30);
