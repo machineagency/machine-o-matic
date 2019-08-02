@@ -17,7 +17,7 @@ let initCamera = () => {
     let viewSize = 150;
     camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
-    camera.zoom = 1.0;
+    camera.zoom = 1.5;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
     camera.position.set(-500, 500, 500); // I don't know why this works
@@ -83,21 +83,8 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 /* MESH STUFF */
 
 let loadStl = (filepath) => {
-    // TODO: use Geometry instead of BufferGeometry, or figure out another
-    // way to access faces
-    let loader = new THREE.STLLoader();
-    let stlMesh;
-    loader.load(filepath, (stlGeom) => {
-        let meshMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            wireframe: true
-        });
-        stlMesh = new THREE.Mesh(stlGeom, meshMaterial);
-        scene.add(stlMesh);
-    }, undefined, (errorMsg) => {
-        console.log(errorMsg);
-    });
-    return loadPromise;
+    let promise = makeLoadStlPromise(filepath);
+    return addStlFromPromise(promise);
 };
 
 let makeLoadStlPromise = (filepath) => {
@@ -110,6 +97,7 @@ let makeLoadStlPromise = (filepath) => {
                 wireframe: true
             });
             stlMesh = new THREE.Mesh(stlGeom, meshMaterial);
+            stlMesh.isLoadedStl = true;
             resolve(stlMesh);
         }, undefined, (errorMsg) => {
             console.log(errorMsg);
@@ -119,9 +107,26 @@ let makeLoadStlPromise = (filepath) => {
 };
 
 let addStlFromPromise = (promise) => {
-   promise.then((mesh) => {
+   return promise.then((mesh) => {
        scene.add(mesh);
    });
+};
+
+let getStlMeshes = () => {
+    return scene.children.filter((child) => {
+        return child.isLoadedStl;
+    });
+};
+
+let meshToGeometry = (mesh) => {
+    return new THREE.Geometry().fromBufferGeometry(mesh.geometry);
+};
+
+let test = () => {
+    loadStl('assets/pikachu.stl').then(() => {
+        let mesh = getStlMeshes()[0];
+        geometry = meshToGeometry(mesh);
+    });
 };
 
 /* SCENE RENDERING MAIN FUNCTIONS */
