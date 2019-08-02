@@ -37,7 +37,7 @@ let initScene = () => {
     scene.add(topDirectionalLight);
     scene.add(leftDirectionalLight);
     scene.add(rightDirectionalLight);
-    scene.add(new THREE.GridHelper(2000, 50, 0x444444, 0xe5e6e8));
+    scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
 };
 
 let initRenderer = () => {
@@ -83,8 +83,8 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 /* MESH STUFF */
 
 let loadStl = (filepath) => {
-    // TODO: make this return the mesh via promise calls
-    let loadPromise = new Promise()
+    // TODO: use Geometry instead of BufferGeometry, or figure out another
+    // way to access faces
     let loader = new THREE.STLLoader();
     let stlMesh;
     loader.load(filepath, (stlGeom) => {
@@ -97,6 +97,31 @@ let loadStl = (filepath) => {
     }, undefined, (errorMsg) => {
         console.log(errorMsg);
     });
+    return loadPromise;
+};
+
+let makeLoadStlPromise = (filepath) => {
+    let loadPromise = new Promise(resolve => {
+        let loader = new THREE.STLLoader();
+        let stlMesh;
+        return loader.load(filepath, (stlGeom) => {
+            let meshMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: true
+            });
+            stlMesh = new THREE.Mesh(stlGeom, meshMaterial);
+            resolve(stlMesh);
+        }, undefined, (errorMsg) => {
+            console.log(errorMsg);
+        });
+    });
+    return loadPromise;
+};
+
+let addStlFromPromise = (promise) => {
+   promise.then((mesh) => {
+       scene.add(mesh);
+   });
 };
 
 /* SCENE RENDERING MAIN FUNCTIONS */
