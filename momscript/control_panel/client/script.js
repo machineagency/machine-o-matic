@@ -124,7 +124,8 @@ let meshToGeometry = (mesh) => {
 
 let test = () => {
     loadStl('assets/pikachu.stl').then(() => {
-        let mesh = getStlMeshes()[0];
+        // NOTE: we have to assign promise values to global variables
+        mesh = getStlMeshes()[0];
         geometry = meshToGeometry(mesh);
     });
 };
