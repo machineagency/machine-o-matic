@@ -130,6 +130,53 @@ let test = () => {
     });
 };
 
+let sliceTest = (mesh, nonBufferGeometry) => {
+    /* Returns intersection point, or undefined if no intersection */
+    let segmentPlaneIntersect = (v0, v1, plane) => {
+        let v0_dist_to_plane = plane.distanceToPoint(v0);
+        let v1_dist_to_plane = plane.distanceToPoint(v1);
+        if (v0_dist_to_plane * v1_dist_to_plane < 0) {
+            // NOTE: isect = v0 + t * (v1 - v0)
+            let t = v0_dist_to_plane / (v0_dist_to_plane - v1_dist_to_plane);
+            let isect = new THREE.Vector3().copy(v0);
+            let rest = new THREE.Vector3().copy(v1).sub(v0).multiplyScalar(t);
+            return isect.add(rest);
+        }
+    };
+    let isectPoints = [];
+    let xzPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.0);
+    nonBufferGeometry.faces.forEach((face) => {
+        let v0 = mesh.localToWorld(nonBufferGeometry.vertices[face.a]);
+        let v1 = mesh.localToWorld(nonBufferGeometry.vertices[face.b]);
+        let v2 = mesh.localToWorld(nonBufferGeometry.vertices[face.c]);
+        let isect01 = segmentPlaneIntersect(v0, v1, xzPlane);
+        let isect12 = segmentPlaneIntersect(v1, v2, xzPlane);
+        let isect20 = segmentPlaneIntersect(v2, v0, xzPlane);
+        if (isect01 !== undefined) {
+            isectPoints.push(isect01);
+        }
+        if (isect12 !== undefined) {
+            isectPoints.push(isect12);
+        }
+        if (isect20 !== undefined) {
+            isectPoints.push(isect20);
+        }
+    });
+    return isectPoints;
+};
+
+let visualizePoints = (isectPts) => {
+    let pointsMaterial = new THREE.PointsMaterial({
+        size: 5.0,
+        color: 0xEA2027
+    });
+    let pointsGeom = new THREE.Geometry();
+    pointsGeom.vertices = isectPts;
+    let pointsObj = new THREE.Points(pointsGeom, pointsMaterial);
+    scene.add(pointsObj);
+    return pointsObj;
+};
+
 /* SCENE RENDERING MAIN FUNCTIONS */
 
 let animate = () => {
