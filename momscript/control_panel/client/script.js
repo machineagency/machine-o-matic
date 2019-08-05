@@ -277,6 +277,22 @@ let visualizeContours = (contoursPerLayer) => {
 /* MACHINE IMPLEMENTATIONS */
 
 /**
+ * The Machine object represents an AST of a virtual Machine, where the AST
+ * is used to compute forward and inverse kinematics. In addition, when the
+ * Machine object is paired with one or more Tool objects, each Tool uses
+ * the Motors defined in the Machine to generate appropriate physical machine
+ * instructions e.g. GCode. To instantiate a Machine object, pass in an object
+ * using Machine-o-Matic DSL syntax, where each property-value is of the
+ * following form:
+ *
+ * "<QUAL> [Axis(] <IDEN> [)]" : "Motor(<IDEN>) : <STEP>"
+ *
+ * where
+ *
+ * <QUAL> ::=  linear | rotary | volumetric
+ * <STEP> ::= step -> <NUM> (mm | rad | mm3)
+ *            | binary
+ *
  * E.g.
  * {
  *     "linear Axis(x)" : "Motor(x) : step -> 0.123mm",
@@ -286,8 +302,11 @@ let visualizeContours = (contoursPerLayer) => {
  *     "tool PenUpDown : "Motor(p): binary"
  * }
  *
+ * For machines with non-direct drive kinematics e.g. delta bot or CoreXY,
+ * define properties as so: // TODO
  * {
  *     "linear Axis(x) : "Motor(a), Motor(b): <need to think about this>
+ * }
  * */
 
 class Machine {
