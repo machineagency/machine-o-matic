@@ -171,16 +171,50 @@ let sliceTest = (mesh, nonBufferGeometry) => {
         });
         return isectSegments;
     };
-    let calcContoursForLayerSegment = (segments) => {
-        // TODO
+    let calcContoursForLayerSegment = (segments, segIdx) => {
+        let contours = [];
+        // NOTE: define a contour as an ordered list of points
+        let currContour = [];
+        let unvisitedSegments = segments.slice();
+        let currSegment = unvisitedSegments[0];
+        let pointToPush = currSegment[0];
+        let pointForFindingNextSeg = currSegment[1];
+        while (unvisitedSegments.length > 0) {
+            currContour.push(pointToPush);
+            unvisitedSegments.splice(unvisitedSegments.indexOf(currSegment), 1);
+            let foundNextSegment = unvisitedSegments.some((potentialSegment) => {
+                if (potentialSegment[0].approxEqual(pointForFindingNextSeg)) {
+                    currSegment = potentialSegment;
+                    pointToPush = potentialSegment[0];
+                    pointForFindingNextSeg = potentialSegment[1];
+                    return true;
+                }
+                if (potentialSegment[1].approxEqual(pointForFindingNextSeg)) {
+                    currSegment = potentialSegment;
+                    pointToPush = potentialSegment[1];
+                    pointForFindingNextSeg = potentialSegment[0];
+                    return true;
+                }
+            });
+            if (!foundNextSegment) {
+                contours.push(currContour.slice());
+                currContour = [];
+                if (unvisitedSegments.length > 0) {
+                    currSegment = unvisitedSegments[0];
+                    pointToPush = currSegment[0];
+                    pointForFindingNextSeg = currSegment[1];
+                }
+            }
+        }
+        return contours;
     };
     let xzPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.0);
-    return calcSegmentsForPlane(xzPlane);
+    let segments = calcSegmentsForPlane(xzPlane);
+    let layerContours = calcContoursForLayerSegment(segments);
+    return layerContours;
 };
 
-let visualizeSegments = (isectSegments) => {
-    // TODO: temporary
-    let isectPts = isectSegments.flat();
+let visualizePoints = (isectPts) => {
     let pointsMaterial = new THREE.PointsMaterial({
         size: 5.0,
         color: 0xEA2027
