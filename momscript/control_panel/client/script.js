@@ -145,6 +145,8 @@ let test = () => {
     });
 };
 
+/* SLICNG OPERATIONS */
+
 let sliceMesh = (mesh, nonBufferGeometry, layerHeight) => {
     /* Returns intersection point, or undefined if no intersection */
     let segmentPlaneIntersect = (v0, v1, plane) => {
@@ -265,12 +267,64 @@ let visualizeContours = (contoursPerLayer) => {
         let edgeGeometries = geometries.map((geom) => new THREE.EdgesGeometry(geom))
         let lines = edgeGeometries.map((geom) => new THREE.LineSegments(geom, LINE_MATERIAL));
         lines.forEach((line) => {
-            line.translateZ(height * 2);
+            line.translateZ(height);
             scene.add(line);
         });
     });
     return layerHeightShapesPairs;
 };
+
+/* MACHINE IMPLEMENTATIONS */
+
+/**
+ * E.g.
+ * {
+ *     "linear Axis(x)" : "Motor(x) : step -> 0.123mm",
+ *     "linear Axis(y) : "Motor(y) : step -> ???mm",
+ *     "rotary Axis(theta) : "Motor(t) : step -> 2.7rad",
+ *     "volumetric Compressor : "Motor(c) : step -> ???mm3",
+ *     "tool PenUpDown : "Motor(p): binary"
+ * }
+ *
+ * {
+ *     "linear Axis(x) : "Motor(a), Motor(b): <need to think about this>
+ * */
+
+class Machine {
+    constructor(params) {
+        if (params === undefined) {
+            this.tool = undefined;
+            this.axes = [];
+            this.motors = [];
+        }
+        else {
+            this.tool = params.tool;
+            this.axes = params.axes || [];
+            this.motors = params.motors || [];
+        }
+    }
+}
+
+class Tool {
+    // TODO: include actions in the domain specific language
+}
+
+/* The following are generated as parts of the AST */
+
+class Axis {
+    // TODO
+}
+
+class Motor {
+    constructor(params) {
+        this.axis = params.axis || "NO_AXIS";
+    }
+    // TODO
+}
+
+let buildMachineAst = (machine) => {
+    // TODO
+}
 
 /* SCENE RENDERING MAIN FUNCTIONS */
 
