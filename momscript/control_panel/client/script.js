@@ -137,7 +137,7 @@ let test = () => {
     });
 };
 
-let sliceTest = (mesh, nonBufferGeometry) => {
+let sliceMesh = (mesh, nonBufferGeometry, layerHeight) => {
     /* Returns intersection point, or undefined if no intersection */
     let segmentPlaneIntersect = (v0, v1, plane) => {
         let v0_dist_to_plane = plane.distanceToPoint(v0);
@@ -172,6 +172,9 @@ let sliceTest = (mesh, nonBufferGeometry) => {
         return isectSegments;
     };
     let calcContoursForLayerSegment = (segments, segIdx) => {
+        if (segments.length === 0) {
+            return [];
+        }
         let contours = [];
         // NOTE: define a contour as an ordered list of points
         let currContour = [];
@@ -208,10 +211,21 @@ let sliceTest = (mesh, nonBufferGeometry) => {
         }
         return contours;
     };
-    let xzPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.0);
-    let segments = calcSegmentsForPlane(xzPlane);
-    let layerContours = calcContoursForLayerSegment(segments);
-    return layerContours;
+    geometry.computeBoundingBox();
+    let planeHeight = geometry.boundingBox.min.y;
+    let maxHeight = geometry.boundingBox.max.y;
+    let xzPlane, segments, layerContours;
+    let contoursPerLayer = [];
+    while (planeHeight <= maxHeight) {
+        // NOTE: constant should be negative because plane -> origin distance
+        // is downward
+        xzPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -planeHeight);
+        segments = calcSegmentsForPlane(xzPlane);
+        layerContours = calcContoursForLayerSegment(segments);
+        contoursPerLayer.push(layerContours);
+        planeHeight += layerHeight;
+    }
+    return contoursPerLayer;
 };
 
 let visualizePoints = (isectPts) => {
