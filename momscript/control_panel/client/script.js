@@ -9,6 +9,13 @@ let tool;
 let programText;
 let clock;
 let mixers = [];
+let EPSILON = 0.001;
+
+THREE.Vector3.prototype.approxEqual = function(v) {
+    return Math.abs(v.x - this.x) <= EPSILON
+           && Math.abs(v.y - this.y) <= EPSILON
+           && Math.abs(v.z- this.z) <= EPSILON
+};
 
 /* SCENE INITIALIZATION */
 
