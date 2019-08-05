@@ -11,6 +11,17 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
+let MESH_MATERIAL = new THREE.MeshBasicMaterial({
+    color: 0xffffff,
+    wireframe: true
+});
+
+let LINE_MATERIAL = new THREE.LineBasicMaterial({
+    color: 0xffffff
+});
+
+// NOTE: +y is the "up" direction
+
 THREE.Vector3.prototype.approxEqual = function(v) {
     return Math.abs(v.x - this.x) <= EPSILON
            && Math.abs(v.y - this.y) <= EPSILON
@@ -99,11 +110,7 @@ let makeLoadStlPromise = (filepath) => {
         let loader = new THREE.STLLoader();
         let stlMesh;
         return loader.load(filepath, (stlGeom) => {
-            let meshMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                wireframe: true
-            });
-            stlMesh = new THREE.Mesh(stlGeom, meshMaterial);
+            stlMesh = new THREE.Mesh(stlGeom, MESH_MATERIAL);
             stlMesh.isLoadedStl = true;
             resolve(stlMesh);
         }, undefined, (errorMsg) => {
@@ -115,6 +122,7 @@ let makeLoadStlPromise = (filepath) => {
 
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
+       mesh.visible = false;
        scene.add(mesh);
    });
 };
@@ -238,6 +246,30 @@ let visualizePoints = (isectPts) => {
     let pointsObj = new THREE.Points(pointsGeom, pointsMaterial);
     scene.add(pointsObj);
     return pointsObj;
+};
+
+let visualizeContours = (contoursPerLayer) => {
+    let layerHeightShapesPairs = contoursPerLayer.map((contours) => {
+        let sliceHeight = contours[0] && contours[0][0].y;
+        let shapes = contours.map((contour) => {
+            let pts2d = contour.map((vec3) => new THREE.Vector2(vec3.x, vec3.z));
+            let shape = new THREE.Shape(pts2d);
+            return shape;
+        });
+        return [sliceHeight, shapes];
+    });
+    layerHeightShapesPairs.forEach((heightShapePair) => {
+        let height = heightShapePair[0];
+        let shapes = heightShapePair[1];
+        let geometries = shapes.map((shape) => new THREE.ShapeGeometry(shape));
+        let edgeGeometries = geometries.map((geom) => new THREE.EdgesGeometry(geom))
+        let lines = edgeGeometries.map((geom) => new THREE.LineSegments(geom, LINE_MATERIAL));
+        lines.forEach((line) => {
+            line.translateZ(height * 2);
+            scene.add(line);
+        });
+    });
+    return layerHeightShapesPairs;
 };
 
 /* SCENE RENDERING MAIN FUNCTIONS */
