@@ -143,29 +143,37 @@ let sliceTest = (mesh, nonBufferGeometry) => {
             return isect.add(rest);
         }
     };
-    let isectPoints = [];
+    let calcSegmentsForPlane = (plane) => {
+        let isectSegments = [];
+        nonBufferGeometry.faces.forEach((face) => {
+            let v0 = mesh.localToWorld(nonBufferGeometry.vertices[face.a]);
+            let v1 = mesh.localToWorld(nonBufferGeometry.vertices[face.b]);
+            let v2 = mesh.localToWorld(nonBufferGeometry.vertices[face.c]);
+            let isect01 = segmentPlaneIntersect(v0, v1, xzPlane);
+            let isect12 = segmentPlaneIntersect(v1, v2, xzPlane);
+            let isect20 = segmentPlaneIntersect(v2, v0, xzPlane);
+            if (isect01 !== undefined && isect12 !== undefined) {
+                isectSegments.push([isect01, isect12])
+            }
+            if (isect01 !== undefined && isect20 !== undefined) {
+                isectSegments.push([isect01, isect20])
+            }
+            if (isect12 !== undefined && isect20 !== undefined) {
+                isectSegments.push([isect12, isect20])
+            }
+        });
+        return isectSegments;
+    };
+    let calcContoursForLayerSegment = (segments) => {
+        // TODO
+    };
     let xzPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0.0);
-    nonBufferGeometry.faces.forEach((face) => {
-        let v0 = mesh.localToWorld(nonBufferGeometry.vertices[face.a]);
-        let v1 = mesh.localToWorld(nonBufferGeometry.vertices[face.b]);
-        let v2 = mesh.localToWorld(nonBufferGeometry.vertices[face.c]);
-        let isect01 = segmentPlaneIntersect(v0, v1, xzPlane);
-        let isect12 = segmentPlaneIntersect(v1, v2, xzPlane);
-        let isect20 = segmentPlaneIntersect(v2, v0, xzPlane);
-        if (isect01 !== undefined) {
-            isectPoints.push(isect01);
-        }
-        if (isect12 !== undefined) {
-            isectPoints.push(isect12);
-        }
-        if (isect20 !== undefined) {
-            isectPoints.push(isect20);
-        }
-    });
-    return isectPoints;
+    return calcSegmentsForPlane(xzPlane);
 };
 
-let visualizePoints = (isectPts) => {
+let visualizeSegments = (isectSegments) => {
+    // TODO: temporary
+    let isectPts = isectSegments.flat();
     let pointsMaterial = new THREE.PointsMaterial({
         size: 5.0,
         color: 0xEA2027
