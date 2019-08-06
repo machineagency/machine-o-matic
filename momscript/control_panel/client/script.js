@@ -11,7 +11,7 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
-let AxisQualEnum = {
+let DriveQualEnum = {
     LINEAR: 0,
     ROTARY: 1,
     VOLUMETRIC: 2,
@@ -322,17 +322,24 @@ let visualizeContours = (contoursPerLayer) => {
 
 class Machine {
     constructor(kvs) {
+        this.root = {
+            tools: [],
+            drives: [],
+            motors: []
+        };
         this._initFromMomKvs(kvs)
     }
 
     _initFromMomKvs(kvs) {
+        let driveMotorTokenPairs = [];
         Object.keys(kvs).forEach((key) => {
             let driveStatementStr = key;
             let motorStatementStr = kvs[key];
             let driveTokens = this._parseDriveStatement(driveStatementStr);
             let motorTokens = this._parseMotorStatement(motorStatementStr);
-            this.test = [driveTokens, motorTokens];
+            driveMotorTokenPairs.push([driveTokens, motorTokens]);
         });
+        this._buildAstFromDriveMotorPairs(driveMotorTokenPairs);
     }
 
     // TODO: check for syntax errors
@@ -369,6 +376,36 @@ class Machine {
         }
         return [motorIden].concat(tokens[atSymbolIndex + 1]);
     }
+
+    /** DM_PAIRS is an array of the e.g. following:
+     * [['linear', 'axis', 'x'], ['x', 0.123]]
+     */
+    _buildAstFromDriveMotorPairs(dmPairs) {
+        dmPairs.forEach((dmPair) => {
+            let driveTokens = dmPair[0];
+            let motorTokens = dmPair[1];
+            let qual = driveTokens[0];
+            let isAxis = driveTokens[1] === 'Axis';
+            let driveIden;
+            if (isAxis) {
+                driveIden = driveTokens[2];
+            }
+            else {
+                driveIden = driveTokens[1];
+            }
+            let motorIden = motorTokens[0];
+            let motorTransfer;
+            if (motorTokens.length == 2) {
+                motorTransfer = motorTokens[1];
+            }
+            let driveNode = new Drive(qual, isAxis, driveIden);
+            let motorNode = new Motor(motorIden, motorTransfer);
+            driveNode.setMotors([motorNode]);
+            motorNode.setDrives([driveNode]);
+            this.root.drives.push(driveNode);
+            this.root.motors.push(motorNode);
+        });
+    }
 }
 
 class Tool {
@@ -377,19 +414,29 @@ class Tool {
 
 /* The following are generated as parts of the AST */
 
-class Axis {
-    // TODO
+class Drive {
+    constructor(qual, isAxis, name) {
+        this.qual = qual;
+        this.isAxis = isAxis;
+        this.name = name;
+        this.motors = [];
+    }
+
+    setMotors(motors) {
+        this.motors = motors;
+    }
 }
 
 class Motor {
-    constructor(params) {
-        this.axis = params.axis || "NO_AXIS";
+    constructor(name, transfer) {
+        this.name = name;
+        this.transfer = transfer;
+        this.drives = [];
     }
-    // TODO
-}
 
-let buildMachineAst = (machine) => {
-    // TODO
+    setDrives(drives) {
+        this.drives = drives;
+    }
 }
 
 /* SCENE RENDERING MAIN FUNCTIONS */
