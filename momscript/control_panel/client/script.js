@@ -322,12 +322,32 @@ let visualizeContours = (contoursPerLayer) => {
 
 class Machine {
     constructor(kvs) {
-        this.root = {
+        this._root = {
             tools: [],
             drives: [],
             motors: []
         };
+        this._kvs = kvs;
         this._initFromMomKvs(kvs)
+    }
+
+    get tools() {
+        return this._root.tools;
+    }
+
+    get drives() {
+        return this._root.drives;
+    }
+
+    get motors() {
+        return this._root.motors;
+    }
+
+    get description() {
+        let kvStrings = Object.keys(this._kvs).map((key) => {
+            return key.concat(' : ').concat(this._kvs[key]);
+        });
+        return kvStrings.join('\n');
     }
 
     _initFromMomKvs(kvs) {
@@ -402,8 +422,8 @@ class Machine {
             let motorNode = new Motor(motorIden, motorTransfer);
             driveNode.setMotors([motorNode]);
             motorNode.setDrives([driveNode]);
-            this.root.drives.push(driveNode);
-            this.root.motors.push(motorNode);
+            this._root.drives.push(driveNode);
+            this._root.motors.push(motorNode);
         });
     }
 }
