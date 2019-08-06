@@ -11,6 +11,13 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
+let AxisQualEnum = {
+    LINEAR: 0,
+    ROTARY: 1,
+    VOLUMETRIC: 2,
+    BINARY: 3
+};
+
 let MESH_MATERIAL = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     wireframe: true
@@ -290,10 +297,9 @@ let visualizeContours = (contoursPerLayer) => {
  * where
  *
  * <DRIVE_STATEMENT> ::= "<QUAL> [Axis(] <IDEN> [)]"
- * <MOTOR_STATEMENT> ::= "Motor(<IDEN>) @ <STEP>"
- * <QUAL> ::=  linear | rotary | volumetric | tool
+ * <MOTOR_STATEMENT> ::= "Motor(<IDEN>) [@ <STEP>]"
+ * <QUAL> ::=  linear | rotary | volumetric | binary
  * <STEP> ::= step -> <NUM> (mm | rad | mm3)
- *            | binary
  *
  * E.g.
  * {
@@ -301,7 +307,7 @@ let visualizeContours = (contoursPerLayer) => {
  *     "linear Axis(y) : "Motor(y) @ step -> ???mm",
  *     "rotary Axis(theta) : "Motor(t) @ step -> 2.7rad",
  *     "volumetric Compressor : "Motor(c) @ step -> ???mm3",
- *     "tool PenUpDown : "Motor(p) @ binary"
+ *     "binary PenUpDown : "Motor(p)"
  * }
  *
  * ??? are determined at run time by probing the machine and having the
@@ -351,7 +357,7 @@ class Machine {
         let motorIden = tokens[0].replace(')', '').split('(')[1];
         let atSymbolIndex = tokens.indexOf('@');
         if (atSymbolIndex === -1) {
-            console.error(`Parsing error: ${str}`);
+            return [motorIden];
         }
         if (tokens[atSymbolIndex + 1] === 'step') {
             let displToken = tokens[atSymbolIndex + 3];
