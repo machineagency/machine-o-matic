@@ -285,42 +285,83 @@ let visualizeContours = (contoursPerLayer) => {
  * using Machine-o-Matic DSL syntax, where each property-value is of the
  * following form:
  *
- * "<QUAL> [Axis(] <IDEN> [)]" : "Motor(<IDEN>) : <STEP>"
+ * <DRIVE_STATEMENT> : <MOTOR_STATEMENT>
  *
  * where
  *
- * <QUAL> ::=  linear | rotary | volumetric
+ * <DRIVE_STATEMENT> ::= "<QUAL> [Axis(] <IDEN> [)]"
+ * <MOTOR_STATEMENT> ::= "Motor(<IDEN>) @ <STEP>"
+ * <QUAL> ::=  linear | rotary | volumetric | tool
  * <STEP> ::= step -> <NUM> (mm | rad | mm3)
  *            | binary
  *
  * E.g.
  * {
- *     "linear Axis(x)" : "Motor(x) : step -> 0.123mm",
- *     "linear Axis(y) : "Motor(y) : step -> ???mm",
- *     "rotary Axis(theta) : "Motor(t) : step -> 2.7rad",
- *     "volumetric Compressor : "Motor(c) : step -> ???mm3",
- *     "tool PenUpDown : "Motor(p): binary"
+ *     "linear Axis(x)" : "Motor(x) @ step -> 0.123mm",
+ *     "linear Axis(y) : "Motor(y) @ step -> ???mm",
+ *     "rotary Axis(theta) : "Motor(t) @ step -> 2.7rad",
+ *     "volumetric Compressor : "Motor(c) @ step -> ???mm3",
+ *     "tool PenUpDown : "Motor(p) @ binary"
  * }
+ *
+ * ??? are determined at run time by probing the machine and having the
+ * user measure the displacement.
  *
  * For machines with non-direct drive kinematics e.g. delta bot or CoreXY,
  * define properties as so: // TODO
  * {
- *     "linear Axis(x) : "Motor(a), Motor(b): <need to think about this>
+ *     "linear Axis(x) : "Motor(a), Motor(b) @ <need to think about this>
  * }
  * */
 
 class Machine {
-    constructor(params) {
-        if (params === undefined) {
-            this.tool = undefined;
-            this.axes = [];
-            this.motors = [];
+    constructor(kvs) {
+        this._initFromMomKvs(kvs)
+    }
+
+    _initFromMomKvs(kvs) {
+        Object.keys(kvs).forEach((key) => {
+            let driveStatementStr = key;
+            let motorStatementStr = kvs[key];
+            let driveTokens = this._parseDriveStatement(driveStatementStr);
+            let motorTokens = this._parseMotorStatement(motorStatementStr);
+            this.test = [driveTokens, motorTokens];
+        });
+    }
+
+    // TODO: check for syntax errors
+    _parseDriveStatement(str) {
+        let tokens = str.split(' ');
+        if (tokens.length !== 2) {
+            console.error(`Parsing error: ${str}`);
         }
-        else {
-            this.tool = params.tool;
-            this.axes = params.axes || [];
-            this.motors = params.motors || [];
+        let regex = /Axis\([a-z]+\)/;
+        let regexResult = tokens[1].match(regex);
+        if (regexResult) {
+            // Have token of the form "Axis(<IDEN>)"
+            let splitAxisIden = regexResult[0].replace(')', '').split('(');
+            return [tokens[0]].concat(splitAxisIden);
+        } else {
+            return tokens;
         }
+    }
+
+    _parseMotorStatement(str) {
+        let tokens = str.split(' ');
+        let motorIden = tokens[0].replace(')', '').split('(')[1];
+        let atSymbolIndex = tokens.indexOf('@');
+        if (atSymbolIndex === -1) {
+            console.error(`Parsing error: ${str}`);
+        }
+        if (tokens[atSymbolIndex + 1] === 'step') {
+            let displToken = tokens[atSymbolIndex + 3];
+            let regex = /[0-9]+\.[0-9]+/;
+            let regexResult = displToken.match(regex);
+            if (regexResult) {
+                return [motorIden].concat(regexResult[0]);
+            }
+        }
+        return [motorIden].concat(tokens[atSymbolIndex + 1]);
     }
 }
 
