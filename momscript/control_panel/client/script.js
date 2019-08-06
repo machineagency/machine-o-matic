@@ -107,6 +107,10 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 
 /* MESH STUFF */
 
+class ModelMesh {
+    // TODO
+}
+
 let loadStl = (filepath) => {
     let promise = makeLoadStlPromise(filepath);
     return addStlFromPromise(promise);
@@ -153,6 +157,10 @@ let test = () => {
 };
 
 /* SLICNG OPERATIONS */
+
+class Layers {
+    // TODO: some wrapper, provide rendering functions
+}
 
 let sliceMesh = (mesh, nonBufferGeometry, layerHeight) => {
     /* Returns intersection point, or undefined if no intersection */
@@ -350,6 +358,12 @@ class Machine {
         return kvStrings.join('\n');
     }
 
+    renderMachineInGui() {
+        // TODO
+    }
+
+    /* PRIVATE METHODS */
+
     _initFromMomKvs(kvs) {
         let driveMotorTokenPairs = [];
         Object.keys(kvs).forEach((key) => {
@@ -475,5 +489,137 @@ let render = () => {
     renderer.render( scene, camera );
 };
 
-init();
-animate();
+//init();
+// animate();
+
+function main() {
+  const canvas = document.createElement('canvas');
+  const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+  renderer.setScissorTest(true);
+
+  const sceneElements = [];
+  function addScene(elem, fn) {
+    const ctx = document.createElement('canvas').getContext('2d');
+    elem.appendChild(ctx.canvas);
+    sceneElements.push({elem, ctx, fn});
+  }
+
+  function makeScene(elem) {
+    const scene = new THREE.Scene();
+
+    const fov = 45;
+    const aspect = 2;  // the canvas default
+    const near = 0.1;
+    const far = 5;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.set(0, 1, 2);
+    camera.lookAt(0, 0, 0);
+    scene.add(camera);
+
+    const controls = new THREE.TransformControls(camera, elem);
+    controls.noZoom = true;
+    controls.noPan = true;
+
+    {
+      const color = 0xFFFFFF;
+      const intensity = 1;
+      const light = new THREE.DirectionalLight(color, intensity);
+      light.position.set(-1, 2, 4);
+      scene.add(light);
+    }
+
+    return {scene, camera, controls};
+  }
+
+  const sceneInitFunctionsByName = {
+    'box': (elem) => {
+      const {scene, camera, controls} = makeScene(elem);
+      const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
+      const material = new THREE.MeshPhongMaterial({color: 'red'});
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      return (time, rect) => {
+        mesh.rotation.y = time * .1;
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+      };
+    },
+    'pyramid': (elem) => {
+      const {scene, camera, controls} = makeScene(elem);
+      const radius = .8;
+      const widthSegments = 4;
+      const heightSegments = 2;
+      const geometry = new THREE.SphereBufferGeometry(radius, widthSegments, heightSegments);
+      const material = new THREE.MeshPhongMaterial({
+        color: 'blue',
+        flatShading: true,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      scene.add(mesh);
+      return (time, rect) => {
+        mesh.rotation.y = time * .1;
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+      };
+    },
+  };
+
+  document.querySelectorAll('[data-diagram]').forEach((elem) => {
+    const sceneName = elem.dataset.diagram;
+    const sceneInitFunction = sceneInitFunctionsByName[sceneName];
+    const sceneRenderFunction = sceneInitFunction(elem);
+    addScene(elem, sceneRenderFunction);
+  });
+
+  function render(time) {
+    time *= 0.001;
+
+    for (const {elem, fn, ctx} of sceneElements) {
+      // get the viewport relative position opf this element
+      const rect = elem.getBoundingClientRect();
+      const {left, right, top, bottom, width, height} = rect;
+      const rendererCanvas = renderer.domElement;
+
+      const isOffscreen =
+          bottom < 0 ||
+          top > window.innerHeight ||
+          right < 0 ||
+          left > window.innerWidth;
+
+      if (!isOffscreen) {
+        // make sure the renderer's canvas is big enough
+        if (rendererCanvas.width < width || rendererCanvas.height < height) {
+          renderer.setSize(width, height, false);
+        }
+
+        // make sure the canvas for this area is the same size as the area
+        if (ctx.canvas.width !== width || ctx.canvas.height !== height) {
+          ctx.canvas.width = width;
+          ctx.canvas.height = height;
+        }
+
+        renderer.setScissor(0, 0, width, height);
+        renderer.setViewport(0, 0, width, height);
+
+        fn(time, rect);
+
+        // copy the rendered scene to this element's canvas
+        ctx.globalCompositeOperation = 'copy';
+        ctx.drawImage(
+            rendererCanvas,
+            0, rendererCanvas.height - height, width, height,  // src rect
+            0, 0, width, height);                              // dst rect
+      }
+    }
+
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+}
+
+main();
+
+
