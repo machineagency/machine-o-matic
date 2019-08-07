@@ -351,6 +351,11 @@ class Machine {
         return this._root.motors;
     }
 
+    get axes() {
+        return this._root.drives.filter((drive) => drive.isAxis)
+                                .map((axisDrive) => axisDrive.name);
+    }
+
     get description() {
         let kvStrings = Object.keys(this._kvs).map((key) => {
             return key.concat(' : ').concat(this._kvs[key]);
