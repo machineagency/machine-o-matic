@@ -3,6 +3,8 @@
 let container, stats;
 let stageGui, connectionGui;
 let camera, scene, renderer;
+let cameras = [];
+let scenes = [];
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
@@ -134,12 +136,12 @@ let makeLoadStlPromise = (filepath) => {
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
        mesh.visible = false;
-       scene.add(mesh);
+       scenes[0].add(mesh);
    });
 };
 
 let getStlMeshes = () => {
-    return scene.children.filter((child) => {
+    return scenes[0].children.filter((child) => {
         return child.isLoadedStl;
     });
 };
@@ -283,7 +285,7 @@ let visualizeContours = (contoursPerLayer) => {
         let lines = edgeGeometries.map((geom) => new THREE.LineSegments(geom, LINE_MATERIAL));
         lines.forEach((line) => {
             line.translateZ(height);
-            scene.add(line);
+            scenes[0].add(line);
         });
     });
     return layerHeightShapesPairs;
@@ -497,134 +499,161 @@ let render = () => {
 //init();
 // animate();
 
-function main() {
-  const canvas = document.createElement('canvas');
-  const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
-  renderer.setScissorTest(true);
+/* SCENE RENDERING */
 
-  const sceneElements = [];
-  function addScene(elem, fn) {
-    const ctx = document.createElement('canvas').getContext('2d');
-    elem.appendChild(ctx.canvas);
-    sceneElements.push({elem, ctx, fn});
-  }
-
-  function makeScene(elem) {
-    const scene = new THREE.Scene();
-
-    const fov = 45;
-    const aspect = 2;  // the canvas default
-    const near = 0.1;
-    const far = 5;
-    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 1, 2);
-    camera.lookAt(0, 0, 0);
+let makeScene = (domElement) => {
+    let scene = new THREE.Scene();
+    // let aspect = window.innerWidth / window.innerHeight;
+    let aspect = domElement.offsetWidth / domElement.offsetHeight;
+    let viewSize = 150;
+    let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
+        viewSize, -viewSize, -1000, 10000);
+    camera.zoom = 1.5;
+    camera.updateProjectionMatrix();
+    camera.frustumCulled = false;
+    camera.position.set(-500, 500, 500); // I don't know why this works
+    camera.lookAt(scene.position);
     scene.add(camera);
+    scene.background = new THREE.Color(0x000000);
+    scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
+    return { scene, camera, undefined };
+}
 
-    const controls = new THREE.TransformControls(camera, elem);
-    controls.noZoom = true;
-    controls.noPan = true;
+/* NEW SCENE RENDERING */
 
-    {
-      const color = 0xFFFFFF;
-      const intensity = 1;
-      const light = new THREE.DirectionalLight(color, intensity);
-      light.position.set(-1, 2, 4);
-      scene.add(light);
+function main() {
+    const canvas = document.createElement('canvas');
+    const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+    // renderer.setScissorTest(true);
+
+    const sceneElements = [];
+    function addScene(elem, fn) {
+        const ctx = document.createElement('canvas').getContext('2d');
+        elem.appendChild(ctx.canvas);
+        sceneElements.push({elem, ctx, fn});
     }
 
-    return {scene, camera, controls};
-  }
+    function nMakeScene(elem) {
+        const scene = new THREE.Scene();
 
-  const sceneInitFunctionsByName = {
-    'box': (elem) => {
-      const {scene, camera, controls} = makeScene(elem);
-      const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
-      const material = new THREE.MeshPhongMaterial({color: 'red'});
-      const mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-      return (time, rect) => {
-        mesh.rotation.y = time * .1;
-        camera.aspect = rect.width / rect.height;
-        camera.updateProjectionMatrix();
-        renderer.render(scene, camera);
-      };
-    },
-    'pyramid': (elem) => {
-      const {scene, camera, controls} = makeScene(elem);
-      const radius = .8;
-      const widthSegments = 4;
-      const heightSegments = 2;
-      const geometry = new THREE.SphereBufferGeometry(radius, widthSegments, heightSegments);
-      const material = new THREE.MeshPhongMaterial({
-        color: 'blue',
-        flatShading: true,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      scene.add(mesh);
-      return (time, rect) => {
-        mesh.rotation.y = time * .1;
-        camera.aspect = rect.width / rect.height;
-        camera.updateProjectionMatrix();
-        renderer.render(scene, camera);
-      };
-    },
-  };
+        const fov = 45;
+        const aspect = 2;  // the canvas default
+        const near = 0.1;
+        const far = 5;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.set(0, 1, 1);
+        camera.lookAt(0, 0, 0);
+        scene.add(camera);
+        scene.background = new THREE.Color(0x000000);
+        cameras.push(camera);
 
-  document.querySelectorAll('[data-diagram]').forEach((elem) => {
-    const sceneName = elem.dataset.diagram;
-    const sceneInitFunction = sceneInitFunctionsByName[sceneName];
-    const sceneRenderFunction = sceneInitFunction(elem);
-    addScene(elem, sceneRenderFunction);
-  });
+        const controls = new THREE.TransformControls(camera, elem);
+        controls.noZoom = true;
+        controls.noPan = true;
 
-  function render(time) {
-    time *= 0.001;
-
-    for (const {elem, fn, ctx} of sceneElements) {
-      // get the viewport relative position opf this element
-      const rect = elem.getBoundingClientRect();
-      const {left, right, top, bottom, width, height} = rect;
-      const rendererCanvas = renderer.domElement;
-
-      const isOffscreen =
-          bottom < 0 ||
-          top > window.innerHeight ||
-          right < 0 ||
-          left > window.innerWidth;
-
-      if (!isOffscreen) {
-        // make sure the renderer's canvas is big enough
-        if (rendererCanvas.width < width || rendererCanvas.height < height) {
-          renderer.setSize(width, height, false);
+        {
+            const color = 0xFFFFFF;
+            const intensity = 1;
+            const light = new THREE.DirectionalLight(color, intensity);
+            light.position.set(-1, 2, 4);
+            scene.add(light);
         }
 
-        // make sure the canvas for this area is the same size as the area
-        if (ctx.canvas.width !== width || ctx.canvas.height !== height) {
-          ctx.canvas.width = width;
-          ctx.canvas.height = height;
+        return {scene, camera, controls};
+    }
+
+    const sceneInitFunctionsByName = {
+        'box': (elem) => {
+            const {scene, camera, controls} = makeScene(elem);
+            scenes.push(scene);
+            cameras.push(cameras);
+            const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
+            const material = new THREE.MeshPhongMaterial({color: 'red'});
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            return (time, rect) => {
+                mesh.rotation.y = time * .1;
+                camera.aspect = rect.width / rect.height;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+            };
+        },
+        'pyramid': (elem) => {
+            const {scene, camera, controls} = makeScene(elem);
+            scenes.push(scene);
+            cameras.push(cameras);
+            const radius = .8;
+            const widthSegments = 4;
+            const heightSegments = 2;
+            const geometry = new THREE.SphereBufferGeometry(radius, widthSegments, heightSegments);
+            const material = new THREE.MeshPhongMaterial({
+                color: 'blue',
+                flatShading: true,
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+            return (time, rect) => {
+                mesh.rotation.y = time * .1;
+                camera.aspect = rect.width / rect.height;
+                camera.updateProjectionMatrix();
+                renderer.render(scene, camera);
+            };
+        },
+    };
+
+    document.querySelectorAll('[data-diagram]').forEach((elem) => {
+        const sceneName = elem.dataset.diagram;
+        const sceneInitFunction = sceneInitFunctionsByName[sceneName];
+        const sceneRenderFunction = sceneInitFunction(elem);
+        addScene(elem, sceneRenderFunction);
+    });
+
+    function render(time) {
+        time *= 0.001;
+
+        for (const {elem, fn, ctx} of sceneElements) {
+            // get the viewport relative position opf this element
+            const rect = elem.getBoundingClientRect();
+            const {left, right, top, bottom, width, height} = rect;
+            const rendererCanvas = renderer.domElement;
+
+            const isOffscreen =
+                    bottom < 0 ||
+                    top > window.innerHeight ||
+                    right < 0 ||
+                    left > window.innerWidth;
+
+            if (!isOffscreen) {
+                // make sure the renderer's canvas is big enough
+                if (rendererCanvas.width < width || rendererCanvas.height < height) {
+                    renderer.setSize(width, height, false);
+                }
+
+                // make sure the canvas for this area is the same size as the area
+                if (ctx.canvas.width !== width || ctx.canvas.height !== height) {
+                    ctx.canvas.width = width;
+                    ctx.canvas.height = height;
+                }
+
+                renderer.setScissor(0, 0, width, height);
+                renderer.setViewport(0, 0, width, height);
+
+                fn(time, rect);
+
+                // copy the rendered scene to this element's canvas
+                ctx.globalCompositeOperation = 'copy';
+                ctx.drawImage(
+                        rendererCanvas,
+                        0, rendererCanvas.height - height, width, height,  // src rect
+                        0, 0, width, height);                              // dst rect
+            }
         }
 
-        renderer.setScissor(0, 0, width, height);
-        renderer.setViewport(0, 0, width, height);
-
-        fn(time, rect);
-
-        // copy the rendered scene to this element's canvas
-        ctx.globalCompositeOperation = 'copy';
-        ctx.drawImage(
-            rendererCanvas,
-            0, rendererCanvas.height - height, width, height,  // src rect
-            0, 0, width, height);                              // dst rect
-      }
+        requestAnimationFrame(render);
     }
 
     requestAnimationFrame(render);
-  }
-
-  requestAnimationFrame(render);
 }
 
 main();
-
 
