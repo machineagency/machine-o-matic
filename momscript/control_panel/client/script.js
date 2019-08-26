@@ -41,34 +41,6 @@ THREE.Vector3.prototype.approxEqual = function(v) {
 
 /* SCENE INITIALIZATION */
 
-let initCamera = () => {
-    let aspect = window.innerWidth / window.innerHeight;
-    let viewSize = 150;
-    camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
-        viewSize, -viewSize, -1000, 10000);
-    camera.zoom = 1.5;
-    camera.updateProjectionMatrix();
-    camera.frustumCulled = false;
-    camera.position.set(-500, 500, 500); // I don't know why this works
-    camera.lookAt(scene.position);
-    // camera.position.set(-400, 500, 800); // Pan away to move machine to left
-};
-
-let initScene = () => {
-    scene = new THREE.Scene();
-    clock = new THREE.Clock();
-    scene.background = new THREE.Color(0x000000);
-    topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.00 );
-    leftDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 );
-    rightDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.50 );
-    leftDirectionalLight.position.set(-1.0, 0.0, 0.0);
-    rightDirectionalLight.position.set(0.0, 0.0, 1.0);
-    scene.add(topDirectionalLight);
-    scene.add(leftDirectionalLight);
-    scene.add(rightDirectionalLight);
-    scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
-};
-
 let initRenderer = () => {
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -86,7 +58,7 @@ let init = () => {
 
     initScene();
     initCamera();
-    initRenderer();
+    //initRenderer();
     //initStats();
 
     window.addEventListener( 'resize', onWindowResize, false );
@@ -504,12 +476,11 @@ let render = () => {
 
 let makeScene = (domElement) => {
     let scene = new THREE.Scene();
-    // let aspect = window.innerWidth / window.innerHeight;
     let aspect = domElement.offsetWidth / domElement.offsetHeight;
-    let viewSize = 150;
+    let viewSize = 50;
     let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
-    camera.zoom = 2.5;
+    camera.zoom = 1;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
     camera.position.set(-500, 500, 500); // I don't know why this works
@@ -581,8 +552,11 @@ function main() {
         for (const {elem, fn, ctx} of sceneElements) {
             // get the viewport relative position opf this element
             const rect = elem.getBoundingClientRect();
-            const {left, right, top, bottom, width, height} = rect;
+            let {left, right, top, bottom, width, height} = rect;
             const rendererCanvas = renderer.domElement;
+
+            width *= window.devicePixelRatio;
+            height *= window.devicePixelRatio;
 
             const isOffscreen =
                     bottom < 0 ||
@@ -593,6 +567,7 @@ function main() {
             if (!isOffscreen) {
                 // make sure the renderer's canvas is big enough
                 if (rendererCanvas.width < width || rendererCanvas.height < height) {
+                    // renderer.setPixelRatio(window.devicePixelRatio);
                     renderer.setSize(width, height, false);
                 }
 
