@@ -2,9 +2,11 @@
 
 let container, stats;
 let stageGui, connectionGui;
-let camera, scene, renderer;
-let cameras = [];
+let renderer;
 let scenes = [];
+let cameras = [];
+let activeSceneCameraIndex = 0;
+
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
@@ -136,12 +138,12 @@ let makeLoadStlPromise = (filepath) => {
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
        mesh.visible = false;
-       scenes[0].add(mesh);
+       scenes[activeSceneCameraIndex].add(mesh);
    });
 };
 
 let getStlMeshes = () => {
-    return scenes[0].children.filter((child) => {
+    return scenes[activeSceneCameraIndex].children.filter((child) => {
         return child.isLoadedStl;
     });
 };
@@ -285,7 +287,7 @@ let visualizeContours = (contoursPerLayer) => {
         let lines = edgeGeometries.map((geom) => new THREE.LineSegments(geom, LINE_MATERIAL));
         lines.forEach((line) => {
             line.translateZ(height);
-            scenes[0].add(line);
+            scenes[activeSceneCameraIndex].add(line);
         });
     });
     return layerHeightShapesPairs;
