@@ -3,22 +3,39 @@ canvas {
     height: 100%;
     display: block;
 }
+
+body {
+    background-color: #000000;
+}
+
 *[data-diagram] {
     display: inline-block;
     width: 10em;
     height: 6em;
+    border: 1px solid #ffffff;
 }
+
 .left {
     float: left;
     margin-right: .25em;
 }
+
 .right {
     float: right;
     margin-left: .25em;
 }
-p {
-    margin: 1em auto;
-    max-width: 500px;
+
+.main-container {
+    position: relative;
+    height: max-content;
+    width: 100%;
+    overflow: auto;
+}
+
+.pane-container {
+    margin: 1em;
+    max-width: max-content;
     font-size: xx-large;
+    overflow: auto;
 }
 
