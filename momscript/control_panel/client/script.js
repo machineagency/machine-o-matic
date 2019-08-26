@@ -137,7 +137,6 @@ let makeLoadStlPromise = (filepath) => {
 
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
-       mesh.visible = false;
        scenes[activeSceneCameraIndex].add(mesh);
    });
 };
@@ -152,7 +151,7 @@ let meshToGeometry = (mesh) => {
     return new THREE.Geometry().fromBufferGeometry(mesh.geometry);
 };
 
-let test = () => {
+let initStl = () => {
     loadStl('assets/pikachu.stl').then(() => {
         // NOTE: we have to assign promise values to global variables
         mesh = getStlMeshes()[0];
@@ -510,7 +509,7 @@ let makeScene = (domElement) => {
     let viewSize = 150;
     let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
-    camera.zoom = 1.5;
+    camera.zoom = 2.5;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
     camera.position.set(-500, 500, 500); // I don't know why this works
@@ -526,7 +525,7 @@ let makeScene = (domElement) => {
 function main() {
     const canvas = document.createElement('canvas');
     const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
-    // renderer.setScissorTest(true);
+    renderer.setScissorTest(true);
 
     const sceneElements = [];
     function addScene(elem, fn) {
@@ -535,72 +534,38 @@ function main() {
         sceneElements.push({elem, ctx, fn});
     }
 
-    function nMakeScene(elem) {
-        const scene = new THREE.Scene();
-
-        const fov = 45;
-        const aspect = 2;  // the canvas default
-        const near = 0.1;
-        const far = 5;
-        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-        camera.position.set(0, 1, 1);
-        camera.lookAt(0, 0, 0);
-        scene.add(camera);
-        scene.background = new THREE.Color(0x000000);
-        cameras.push(camera);
-
-        const controls = new THREE.TransformControls(camera, elem);
-        controls.noZoom = true;
-        controls.noPan = true;
-
-        {
-            const color = 0xFFFFFF;
-            const intensity = 1;
-            const light = new THREE.DirectionalLight(color, intensity);
-            light.position.set(-1, 2, 4);
-            scene.add(light);
-        }
-
-        return {scene, camera, controls};
-    }
-
     const sceneInitFunctionsByName = {
-        'box': (elem) => {
+        'mesh': (elem) => {
             const {scene, camera, controls} = makeScene(elem);
             scenes.push(scene);
-            cameras.push(cameras);
-            const geometry = new THREE.BoxBufferGeometry(1, 1, 1);
-            const material = new THREE.MeshPhongMaterial({color: 'red'});
-            const mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-            return (time, rect) => {
-                mesh.rotation.y = time * .1;
-                camera.aspect = rect.width / rect.height;
-                camera.updateProjectionMatrix();
-                renderer.render(scene, camera);
-            };
-        },
-        'pyramid': (elem) => {
-            const {scene, camera, controls} = makeScene(elem);
-            scenes.push(scene);
-            cameras.push(cameras);
-            const radius = .8;
-            const widthSegments = 4;
-            const heightSegments = 2;
-            const geometry = new THREE.SphereBufferGeometry(radius, widthSegments, heightSegments);
-            const material = new THREE.MeshPhongMaterial({
-                color: 'blue',
-                flatShading: true,
+            cameras.push(camera);
+
+            activeSceneCameraIndex = parseInt(elem.id);
+
+            loadStl('assets/pikachu.stl').then(() => {
+                mesh = getStlMeshes()[0];
+                geometry = meshToGeometry(mesh);
             });
-            const mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
-            return (time, rect) => {
-                mesh.rotation.y = time * .1;
-                camera.aspect = rect.width / rect.height;
-                camera.updateProjectionMatrix();
+
+            return () => {
                 renderer.render(scene, camera);
             };
         },
+
+        'slices': (elem) => {
+            const {scene, camera, controls} = makeScene(elem);
+            scenes.push(scene);
+            cameras.push(camera);
+
+            activeSceneCameraIndex = parseInt(elem.id);
+
+            let contours = sliceMesh(mesh, geometry, (activeSceneCameraIndex + 0.1) * 5);
+            visualizeContours(contours);
+
+            return () => {
+                renderer.render(scene, camera);
+            };
+        }
     };
 
     document.querySelectorAll('[data-diagram]').forEach((elem) => {
