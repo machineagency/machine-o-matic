@@ -516,6 +516,11 @@ function main() {
             loadStl('assets/pikachu.stl').then(() => {
                 mesh = getStlMeshes()[0];
                 geometry = meshToGeometry(mesh);
+                let slicePane = document.getElementById('1');
+                let sceneName = slicePane.dataset.diagram;
+                let sceneInitFunction = sceneInitFunctionsByName[sceneName];
+                let sceneRenderFunction = sceneInitFunction(slicePane);
+                addScene(slicePane, sceneRenderFunction);
             });
 
             return () => {
@@ -539,12 +544,11 @@ function main() {
         }
     };
 
-    document.querySelectorAll('[data-diagram]').forEach((elem) => {
-        const sceneName = elem.dataset.diagram;
-        const sceneInitFunction = sceneInitFunctionsByName[sceneName];
-        const sceneRenderFunction = sceneInitFunction(elem);
-        addScene(elem, sceneRenderFunction);
-    });
+    let meshPane = document.getElementById('0');
+    let sceneName = meshPane.dataset.diagram;
+    let sceneInitFunction = sceneInitFunctionsByName[sceneName];
+    let sceneRenderFunction = sceneInitFunction(meshPane);
+    addScene(meshPane, sceneRenderFunction);
 
     function render(time) {
         time *= 0.001;
