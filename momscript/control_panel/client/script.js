@@ -1,13 +1,10 @@
 'use strict';
 
-let container, stats;
-let stageGui, connectionGui;
-// let renderer;
+let renderer;
 let scenes = [];
 let cameras = [];
 let activeSceneCameraIndex = 0;
 
-let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
 let programText;
@@ -15,19 +12,19 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
-let DriveQualEnum = {
+const DriveQualEnum = {
     LINEAR: 0,
     ROTARY: 1,
     VOLUMETRIC: 2,
     BINARY: 3
 };
 
-let MESH_MATERIAL = new THREE.MeshBasicMaterial({
+const MESH_MATERIAL = new THREE.MeshBasicMaterial({
     color: 0xffffff,
     wireframe: true
 });
 
-let LINE_MATERIAL = new THREE.LineBasicMaterial({
+const LINE_MATERIAL = new THREE.LineBasicMaterial({
     color: 0xffffff
 });
 
@@ -419,16 +416,13 @@ let animate = () => {
     // stats.update();
 };
 
-// let render = () => {
-//     let deltaSeconds = clock.getDelta();
-//     mixers.forEach((mixer) => {
-//         mixer.update(deltaSeconds);
-//     });
-//     renderer.render( scene, camera );
-// };
-
-//init();
-// animate();
+let renderWithAnimate = () => {
+    let deltaSeconds = clock.getDelta();
+    mixers.forEach((mixer) => {
+        mixer.update(deltaSeconds);
+    });
+    renderer.render(scene, camera);
+};
 
 let makeScene = (domElement) => {
     let scene = new THREE.Scene();
@@ -449,20 +443,12 @@ let makeScene = (domElement) => {
 
 /* NEW SCENE RENDERING */
 
-let paneLoadMesh = () => {
-    let meshPane = document.getElementById('0');
-    let sceneName = meshPane.dataset.diagram;
+let inflatePane = (paneNumber) => {
+    let paneDom = document.getElementById(paneNumber);
+    let sceneName = paneDom.dataset.diagram;
     let sceneInitFunction = sceneInitFunctionsByName[sceneName];
-    let sceneRenderFunction = sceneInitFunction(meshPane);
-    addScene(meshPane, sceneRenderFunction);
-};
-
-let paneLoadSlice = () => {
-    let slicePane = document.getElementById('1');
-    let sceneName = slicePane.dataset.diagram;
-    let sceneInitFunction = sceneInitFunctionsByName[sceneName];
-    let sceneRenderFunction = sceneInitFunction(slicePane);
-    addScene(slicePane, sceneRenderFunction);
+    let sceneRenderFunction = sceneInitFunction(paneDom);
+    addScene(paneDom, sceneRenderFunction);
 };
 
 let addScene = (elem, fn) => {
@@ -517,10 +503,6 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
     }
 };
 
-const canvas = document.createElement('canvas');
-const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
-renderer.setScissorTest(true);
-
 let render = (time) => {
     time *= 0.001;
 
@@ -569,5 +551,12 @@ let render = (time) => {
     requestAnimationFrame(render);
 };
 
-requestAnimationFrame(render);
+let main = () => {
+    const canvas = document.createElement('canvas');
+    renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+    renderer.setScissorTest(true);
+    requestAnimationFrame(render);
+};
+
+main();
 
