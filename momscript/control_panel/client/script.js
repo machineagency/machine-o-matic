@@ -3,7 +3,9 @@
 let renderer;
 let scenes = [];
 let cameras = [];
-let activeSceneCameraIndex = 0;
+const sceneElements = [];
+let pagePaneIndexCounter = 0;
+let activePaneIndex = 0;
 
 let mesh, lines, geometry;
 let tool;
@@ -64,12 +66,12 @@ let makeLoadStlPromise = (filepath) => {
 
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
-       scenes[activeSceneCameraIndex].add(mesh);
+       scenes[activePaneIndex].add(mesh);
    });
 };
 
 let getStlMeshes = () => {
-    return scenes[activeSceneCameraIndex].children.filter((child) => {
+    return scenes[activePaneIndex].children.filter((child) => {
         return child.isLoadedStl;
     });
 };
@@ -213,7 +215,7 @@ let visualizeContours = (contoursPerLayer) => {
         let lines = edgeGeometries.map((geom) => new THREE.LineSegments(geom, LINE_MATERIAL));
         lines.forEach((line) => {
             line.translateZ(height);
-            scenes[activeSceneCameraIndex].add(line);
+            scenes[activePaneIndex].add(line);
         });
     });
     return layerHeightShapesPairs;
@@ -443,29 +445,50 @@ let makeScene = (domElement) => {
 
 /* NEW SCENE RENDERING */
 
-let inflatePane = (paneNumber) => {
-    let paneDom = document.getElementById(paneNumber);
-    let sceneName = paneDom.dataset.diagram;
-    let sceneInitFunction = sceneInitFunctionsByName[sceneName];
-    let sceneRenderFunction = sceneInitFunction(paneDom);
-    addScene(paneDom, sceneRenderFunction);
-};
-
 let addScene = (elem, fn) => {
     const ctx = document.createElement('canvas').getContext('2d');
     elem.appendChild(ctx.canvas);
     sceneElements.push({elem, ctx, fn});
 };
 
-const sceneElements = [];
+/**
+ * Adds a pane DOM element and inflates it using the inflate function
+ * corresponding to PANE_TYPE. PANE_TYPE should correspond with a key
+ * in PANE_INFLATE_FUNCTIONS_BY_NAME. */
+let addPaneDomWithType = (paneType) => {
+    let panesContainerDom = document.querySelector('.panes-container');
+    let paneContainerDom = document.createElement('div');
+    paneContainerDom.className = 'pane-container';
+    let diagramDom = document.createElement('div');
+    diagramDom.setAttribute('data-diagram', paneType);
+    diagramDom.className = 'left';
+    diagramDom.id = pagePaneIndexCounter;
+    pagePaneIndexCounter += 1;
 
-const sceneInitFunctionsByName = {
+    paneContainerDom.appendChild(diagramDom);
+    panesContainerDom.appendChild(paneContainerDom);
+
+    let sceneInitFunction = paneInflateFunctionsByName[paneType];
+    if (sceneInitFunction === undefined) {
+        console.error(`Can't find inflate function for pane type: ${paneType}.`);
+    } else {
+        let sceneRenderFunction = sceneInitFunction(diagramDom);
+        addScene(diagramDom, sceneRenderFunction);
+    }
+    return paneContainerDom;
+};
+
+/**
+ * PANE INFLATE FUNCTIONS
+ * Add implementations here about how particular panes should be
+ * implemented. */
+const paneInflateFunctionsByName = {
     'mesh': (elem) => {
         const {scene, camera, controls} = makeScene(elem);
         scenes.push(scene);
         cameras.push(camera);
 
-        activeSceneCameraIndex = parseInt(elem.id);
+        activePaneIndex = parseInt(elem.id);
 
         loadStl('assets/pikachu.stl').then(() => {
             mesh = getStlMeshes()[0];
@@ -482,9 +505,9 @@ const sceneInitFunctionsByName = {
         scenes.push(scene);
         cameras.push(camera);
 
-        activeSceneCameraIndex = parseInt(elem.id);
+        activePaneIndex = parseInt(elem.id);
 
-        let contours = sliceMesh(mesh, geometry, (activeSceneCameraIndex + 0.1) * 5);
+        let contours = sliceMesh(mesh, geometry, (activePaneIndex + 0.1) * 5);
         visualizeContours(contours);
 
         return () => {
