@@ -2,7 +2,7 @@
 
 let container, stats;
 let stageGui, connectionGui;
-let renderer;
+// let renderer;
 let scenes = [];
 let cameras = [];
 let activeSceneCameraIndex = 0;
@@ -37,48 +37,6 @@ THREE.Vector3.prototype.approxEqual = function(v) {
     return Math.abs(v.x - this.x) <= EPSILON
            && Math.abs(v.y - this.y) <= EPSILON
            && Math.abs(v.z- this.z) <= EPSILON
-};
-
-/* SCENE INITIALIZATION */
-
-let initRenderer = () => {
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    container.appendChild( renderer.domElement );
-};
-
-let initStats = () => {
-    stats = new Stats();
-    container.appendChild( stats.dom );
-};
-
-let init = () => {
-    container = document.getElementById( 'container' );
-
-    initScene();
-    initCamera();
-    //initRenderer();
-    //initStats();
-
-    window.addEventListener( 'resize', onWindowResize, false );
-};
-
-let onWindowResize = () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-};
-
-let cappedFramerateRequestAnimationFrame = (framerate) => {
-    if (framerate === undefined) {
-        requestAnimationFrame(animate);
-    } else {
-        setTimeout(() => {
-            requestAnimationFrame(animate);
-        }, 1000 / framerate);
-    }
 };
 
 /* MESH STUFF */
@@ -461,18 +419,16 @@ let animate = () => {
     // stats.update();
 };
 
-let render = () => {
-    let deltaSeconds = clock.getDelta();
-    mixers.forEach((mixer) => {
-        mixer.update(deltaSeconds);
-    });
-    renderer.render( scene, camera );
-};
+// let render = () => {
+//     let deltaSeconds = clock.getDelta();
+//     mixers.forEach((mixer) => {
+//         mixer.update(deltaSeconds);
+//     });
+//     renderer.render( scene, camera );
+// };
 
 //init();
 // animate();
-
-/* SCENE RENDERING */
 
 let makeScene = (domElement) => {
     let scene = new THREE.Scene();
@@ -493,113 +449,125 @@ let makeScene = (domElement) => {
 
 /* NEW SCENE RENDERING */
 
-function main() {
-    const canvas = document.createElement('canvas');
-    const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
-    renderer.setScissorTest(true);
-
-    const sceneElements = [];
-    function addScene(elem, fn) {
-        const ctx = document.createElement('canvas').getContext('2d');
-        elem.appendChild(ctx.canvas);
-        sceneElements.push({elem, ctx, fn});
-    }
-
-    const sceneInitFunctionsByName = {
-        'mesh': (elem) => {
-            const {scene, camera, controls} = makeScene(elem);
-            scenes.push(scene);
-            cameras.push(camera);
-
-            activeSceneCameraIndex = parseInt(elem.id);
-
-            loadStl('assets/pikachu.stl').then(() => {
-                mesh = getStlMeshes()[0];
-                geometry = meshToGeometry(mesh);
-                let slicePane = document.getElementById('1');
-                let sceneName = slicePane.dataset.diagram;
-                let sceneInitFunction = sceneInitFunctionsByName[sceneName];
-                let sceneRenderFunction = sceneInitFunction(slicePane);
-                addScene(slicePane, sceneRenderFunction);
-            });
-
-            return () => {
-                renderer.render(scene, camera);
-            };
-        },
-
-        'slices': (elem) => {
-            const {scene, camera, controls} = makeScene(elem);
-            scenes.push(scene);
-            cameras.push(camera);
-
-            activeSceneCameraIndex = parseInt(elem.id);
-
-            let contours = sliceMesh(mesh, geometry, (activeSceneCameraIndex + 0.1) * 5);
-            visualizeContours(contours);
-
-            return () => {
-                renderer.render(scene, camera);
-            };
-        }
-    };
-
+let paneLoadMesh = () => {
     let meshPane = document.getElementById('0');
     let sceneName = meshPane.dataset.diagram;
     let sceneInitFunction = sceneInitFunctionsByName[sceneName];
     let sceneRenderFunction = sceneInitFunction(meshPane);
     addScene(meshPane, sceneRenderFunction);
+};
 
-    function render(time) {
-        time *= 0.001;
+let paneLoadSlice = () => {
+    let slicePane = document.getElementById('1');
+    let sceneName = slicePane.dataset.diagram;
+    let sceneInitFunction = sceneInitFunctionsByName[sceneName];
+    let sceneRenderFunction = sceneInitFunction(slicePane);
+    addScene(slicePane, sceneRenderFunction);
+};
 
-        for (const {elem, fn, ctx} of sceneElements) {
-            // get the viewport relative position opf this element
-            const rect = elem.getBoundingClientRect();
-            let {left, right, top, bottom, width, height} = rect;
-            const rendererCanvas = renderer.domElement;
+let addScene = (elem, fn) => {
+    const ctx = document.createElement('canvas').getContext('2d');
+    elem.appendChild(ctx.canvas);
+    sceneElements.push({elem, ctx, fn});
+};
 
-            width *= window.devicePixelRatio;
-            height *= window.devicePixelRatio;
+const sceneElements = [];
 
-            const isOffscreen =
-                    bottom < 0 ||
-                    top > window.innerHeight ||
-                    right < 0 ||
-                    left > window.innerWidth;
+const sceneInitFunctionsByName = {
+    'mesh': (elem) => {
+        const {scene, camera, controls} = makeScene(elem);
+        scenes.push(scene);
+        cameras.push(camera);
 
-            if (!isOffscreen) {
-                // make sure the renderer's canvas is big enough
-                if (rendererCanvas.width < width || rendererCanvas.height < height) {
-                    // renderer.setPixelRatio(window.devicePixelRatio);
-                    renderer.setSize(width, height, false);
-                }
+        activeSceneCameraIndex = parseInt(elem.id);
 
-                // make sure the canvas for this area is the same size as the area
-                if (ctx.canvas.width !== width || ctx.canvas.height !== height) {
-                    ctx.canvas.width = width;
-                    ctx.canvas.height = height;
-                }
+        loadStl('assets/pikachu.stl').then(() => {
+            mesh = getStlMeshes()[0];
+            geometry = meshToGeometry(mesh);
+        });
 
-                renderer.setScissor(0, 0, width, height);
-                renderer.setViewport(0, 0, width, height);
+        return () => {
+            renderer.render(scene, camera);
+        };
+    },
 
-                fn(time, rect);
+    'slices': (elem) => {
+        const {scene, camera, controls} = makeScene(elem);
+        scenes.push(scene);
+        cameras.push(camera);
 
-                // copy the rendered scene to this element's canvas
-                ctx.globalCompositeOperation = 'copy';
-                ctx.drawImage(
-                        rendererCanvas,
-                        0, rendererCanvas.height - height, width, height,  // src rect
-                        0, 0, width, height);                              // dst rect
+        activeSceneCameraIndex = parseInt(elem.id);
+
+        let contours = sliceMesh(mesh, geometry, (activeSceneCameraIndex + 0.1) * 5);
+        visualizeContours(contours);
+
+        return () => {
+            renderer.render(scene, camera);
+        };
+    }
+};
+
+let cappedFramerateRequestAnimationFrame = (framerate) => {
+    if (framerate === undefined) {
+        requestAnimationFrame(animate);
+    } else {
+        setTimeout(() => {
+            requestAnimationFrame(animate);
+        }, 1000 / framerate);
+    }
+};
+
+const canvas = document.createElement('canvas');
+const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+renderer.setScissorTest(true);
+
+let render = (time) => {
+    time *= 0.001;
+
+    for (const {elem, fn, ctx} of sceneElements) {
+        // get the viewport relative position opf this element
+        const rect = elem.getBoundingClientRect();
+        let {left, right, top, bottom, width, height} = rect;
+        width *= window.devicePixelRatio;
+        height *= window.devicePixelRatio;
+
+        const rendererCanvas = renderer.domElement;
+
+        const isOffscreen =
+                bottom < 0 ||
+                top > window.innerHeight ||
+                right < 0 ||
+                left > window.innerWidth;
+
+        if (!isOffscreen) {
+            // make sure the renderer's canvas is big enough
+            if (rendererCanvas.width < width || rendererCanvas.height < height) {
+                // renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(width, height, false);
             }
-        }
 
-        requestAnimationFrame(render);
+            // make sure the canvas for this area is the same size as the area
+            if (ctx.canvas.width !== width || ctx.canvas.height !== height) {
+                ctx.canvas.width = width;
+                ctx.canvas.height = height;
+            }
+
+            renderer.setScissor(0, 0, width, height);
+            renderer.setViewport(0, 0, width, height);
+
+            fn(time, rect);
+
+            // copy the rendered scene to this element's canvas
+            ctx.globalCompositeOperation = 'copy';
+            ctx.drawImage(
+                    rendererCanvas,
+                    0, rendererCanvas.height - height, width, height,  // src rect
+                    0, 0, width, height);                              // dst rect
+        }
     }
 
     requestAnimationFrame(render);
-}
+};
 
-main();
+requestAnimationFrame(render);
 
