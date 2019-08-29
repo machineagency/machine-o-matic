@@ -14,14 +14,12 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
-const exampleProgramText = `
-let mesh = loadStl('./assets/pikachu.stl');
+const exampleProgramText = `let mesh = loadStl('./assets/pikachu.stl');
 let slicer = new Slicer({
     layerHeight: 0.2,
     infill: 'empty'
 });
 let layers = slicer.slice(mesh);
-
 `;
 
 const DriveQualEnum = {
@@ -420,6 +418,21 @@ class Motor {
     }
 }
 
+/* PROGRAM TEXT UTILITIES */
+
+let programTextToDivs = (programText) => {
+    let programTextElem = document.querySelector('.program-container');
+    let programTextLines = programText.split('\n');
+    let divs = programTextLines.map((line) => {
+        let div = document.createElement('div');
+        div.innerHTML = line;
+        div.className = 'code-line';
+        return div;
+    });
+    programTextElem.innerHTML = '';
+    divs.forEach((div) => programTextElem.appendChild(div));
+};
+
 /* SCENE RENDERING MAIN FUNCTIONS */
 
 let animate = () => {
@@ -586,7 +599,7 @@ let render = (time) => {
 
 let main = () => {
     let programTextElem = document.querySelector('.program-container');
-    programTextElem.innerHTML = exampleProgramText;
+    programTextToDivs(exampleProgramText);
     programTextElem.spellcheck = false;
     programTextElem.focus();
     programTextElem.blur();
