@@ -25,11 +25,14 @@ body {
     margin-left: .25em;
 }
 
-.main-container {
-    position: relative;
+.panes-container {
+    position: absolute;
+    top: 0px;
+    right: 0px;
     height: max-content;
-    width: 100%;
     overflow: auto;
+    display: inline-block;
+    width: 50%;
 }
 
 .pane-container {
@@ -37,5 +40,19 @@ body {
     max-width: max-content;
     font-size: xx-large;
     overflow: auto;
+}
+
+.program-container {
+    outline: none;
+    border-right: 1px solid white;
+    margin-bottom: 10px;
+    overflow: scroll;
+    height: 100%;
+    width: 480px;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #ffffff;
 }
 
