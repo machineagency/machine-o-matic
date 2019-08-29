@@ -21,6 +21,7 @@ let slicer = new Slicer({
     infill: 'empty'
 });
 let layers = slicer.slice(mesh);
+
 `;
 
 const DriveQualEnum = {
