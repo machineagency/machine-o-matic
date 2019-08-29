@@ -585,7 +585,12 @@ let render = (time) => {
 };
 
 let main = () => {
-    document.querySelector('.program-container').innerHTML = exampleProgramText;
+    let programTextElem = document.querySelector('.program-container');
+    programTextElem.innerHTML = exampleProgramText;
+    programTextElem.spellcheck = false;
+    programTextElem.focus();
+    programTextElem.blur();
+
     const canvas = document.createElement('canvas');
     renderer = new THREE.WebGLRenderer({canvas, alpha: true});
     renderer.setScissorTest(true);
