@@ -14,6 +14,15 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
+const exampleProgramText = `
+let mesh = loadStl('./assets/pikachu.stl');
+let slicer = new Slicer({
+    layerHeight: 0.2,
+    infill: 'empty'
+});
+let layers = slicer.slice(mesh);
+`;
+
 const DriveQualEnum = {
     LINEAR: 0,
     ROTARY: 1,
@@ -575,6 +584,7 @@ let render = (time) => {
 };
 
 let main = () => {
+    document.querySelector('.program-container').innerHTML = exampleProgramText;
     const canvas = document.createElement('canvas');
     renderer = new THREE.WebGLRenderer({canvas, alpha: true});
     renderer.setScissorTest(true);
