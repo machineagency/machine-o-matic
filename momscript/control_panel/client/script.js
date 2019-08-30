@@ -452,6 +452,12 @@ let programTextToDivs = (programText) => {
     divs.forEach((div) => programTextElem.appendChild(div));
 };
 
+let reduceDivsToProgramText = () => {
+    let divArr = Array.from(document.querySelectorAll('.code-line'));
+    return divArr.reduce((text, div) => text.concat(`${div.innerText}\n`), '');
+};
+
+// TODO: alsongisde other evaluation
 let scanProgramAndGeneratePanes = (programText) => {
 
 };
