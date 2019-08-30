@@ -14,17 +14,29 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
-const exampleProgramText = `let mesh = loadStl('./assets/pikachu.stl');
-let slicer = new Slicer({
-    layerHeight: 0.2,
-    infill: 'empty'
-});
-let layers = slicer.slice(mesh);
-let plotter = new Machine({
-    'linear Axis(x)' : 'Motor(x1),
-        Motor(x2) @ step -> 0.03048 mm',
-    'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
-    'binary ToolUpDown' : 'Motor(t)'
+const exampleProgramText = `addPaneDomWithType('blank');
+loadStl('assets/pikachu.stl')
+.then(() => {
+    mesh = getStlMeshes()[0];
+    geometry = meshToGeometry(mesh);
+    return [mesh, geometry];
+})
+.then((meshGeomPair) => {
+    let mesh = meshGeomPair[0];
+    let geometry = meshGeomPair[1];
+    let slicer = new Slicer({
+        layerHeight: 0.2,
+        infill: 'empty'
+    });
+    addPaneDomWithType('blank');
+    let layers = slicer.slice(mesh, geometry);
+    slicer.visualizeContours(layers);
+    // let plotter = new Machine({
+    //     'linear Axis(x)' : 'Motor(x1),
+    //         Motor(x2) @ step -> 0.03048 mm',
+    //     'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
+    //     'binary ToolUpDown' : 'Motor(t)'
+    // });
 });
 `;
 
@@ -135,7 +147,7 @@ class Slicer {
         return this.infill;
     }
 
-    sliceMesh(mesh, nonBufferGeometry) {
+    slice(mesh, nonBufferGeometry) {
         /* Returns intersection point, or undefined if no intersection */
         let segmentPlaneIntersect = (v0, v1, plane) => {
             let v0_dist_to_plane = plane.distanceToPoint(v0);
@@ -703,6 +715,17 @@ let addPaneDomWithType = (paneType) => {
  * Add implementations here about how particular panes should be
  * implemented. */
 const paneInflateFunctionsByName = {
+    'blank': (elem) => {
+        const {scene, camera, controls} = makeScene(elem);
+        scenes.push(scene);
+        cameras.push(camera);
+
+        activePaneIndex = parseInt(elem.id);
+
+        return () => {
+            renderer.render(scene, camera);
+        };
+    },
     'mesh': (elem) => {
         const {scene, camera, controls} = makeScene(elem);
         scenes.push(scene);
@@ -731,7 +754,7 @@ const paneInflateFunctionsByName = {
             layerHeight: 1.0,
             infill: 'empty'
         });
-        let contours = slicer.sliceMesh(mesh, geometry);
+        let contours = slicer.slice(mesh, geometry);
         slicer.visualizeContours(contours);
 
         return () => {
