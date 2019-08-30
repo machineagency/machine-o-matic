@@ -795,7 +795,7 @@ let main = () => {
     programTextElem.blur();
 
     const canvas = document.createElement('canvas');
-    renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+    renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
     renderer.setScissorTest(true);
     requestAnimationFrame(render);
 };
