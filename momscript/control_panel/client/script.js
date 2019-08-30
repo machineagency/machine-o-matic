@@ -20,7 +20,23 @@ let slicer = new Slicer({
     infill: 'empty'
 });
 let layers = slicer.slice(mesh);
+let plotter = new Machine({
+    'linear Axis(x)' : 'Motor(x1),
+        Motor(x2) @ step -> 0.03048 mm',
+    'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
+    'binary ToolUpDown' : 'Motor(t)'
+});
 `;
+
+const defaultStageNames = [
+    "sheep", "spinny", "rocket", "ike", "stagezilla", "unicorn", "mustache",
+    "plant", "rutabaga", "turnip", "queen", "cedar", "douglas", "quaternion",
+    "thevenin", "norton", "ada", "hopper", "derby", "moose", "cliff", "sonoma",
+    "hessian", "jacobian", "emerald", "alki", "quilcene", "cascade", "saturn",
+    "asteroid", "apricot", "monad", "asymptote", "martingale", "batman",
+    "forty-two", "gravenstein", "october", "hyphybot", "gravitas", "charmer",
+    "kingman", "euclid", "mechano", "rumbler", "descartes"
+];
 
 const DriveQualEnum = {
     LINEAR: 0,
@@ -37,6 +53,9 @@ const MESH_MATERIAL = new THREE.MeshBasicMaterial({
 const LINE_MATERIAL = new THREE.LineBasicMaterial({
     color: 0xffffff
 });
+
+const greenColor = 0xbed346;
+const platformRaiseTranslateFactor = 8;
 
 // NOTE: +y is the "up" direction
 
@@ -433,6 +452,132 @@ let programTextToDivs = (programText) => {
     divs.forEach((div) => programTextElem.appendChild(div));
 };
 
+let scanProgramAndGeneratePanes = (programText) => {
+
+};
+
+// TODO: something to partially or completely evaluate the program text
+// such that the program text IS the program being executed, with handles
+// for the visual panes
+
+/* MACHINE FRONTEND */
+
+let addLinearStageToScene = (scene) => {
+    let group = _makeStageInScene('linear', scene);
+    // _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group, scene);
+};
+
+let _addGroupToScene = (group, scene, adjustPosition=true) => {
+    scene.add(group);
+    // destroyControl();
+    // generateControlForGroup(group);
+
+    if (adjustPosition) {
+        group.position.y = 50;
+        group.position.x = -35;
+        group.position.z = 35;
+    }
+
+    // focus(group);
+
+};
+
+const geometryFactories = {
+    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2),
+    stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2),
+    rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
+    rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
+    angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
+    straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
+    connectionHandle: () => new THREE.SphereBufferGeometry(25, 32, 32)
+};
+
+let _makeStageInScene = (stageType, scene) => {
+    let group = new THREE.Group();
+    group.isStage = true;
+    group.color = new THREE.MeshLambertMaterial({ color: greenColor });
+
+    let stageCase;
+    if (stageType === 'linear') {
+        stageCase = geometryFactories.stageCase();
+    }
+    else if (stageType === 'rotary') {
+        stageCase = geometryFactories.rotaryStageCase();
+    }
+    // scale geometry to a uniform size
+
+    let stageTypeScale;
+    if (stageType === 'linear') {
+        stageTypeScale = 160;
+    }
+    else if (stageType === 'rotary') {
+        stageTypeScale = 70;
+    }
+    stageCase.computeBoundingSphere();
+    group.scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
+    stageCase.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+    let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
+    let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
+    stageCaseMesh.name = 'stageCase';
+    stageCaseMesh.material.transparent = true;
+
+    let stagePlatform;
+    if (stageType === 'linear') {
+        stagePlatform = geometryFactories.stagePlatform();
+    }
+    else if (stageType === 'rotary') {
+        stagePlatform = geometryFactories.rotaryStagePlatform();
+    }
+    stagePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
+    stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
+    let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
+    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
+    stagePlatformMesh.name = 'stagePlatform';
+    stagePlatformMesh.material.transparent = true;
+
+    group.add(stageCaseLines);
+    group.add(stageCaseMesh);
+    group.add(stagePlatformLines);
+    group.add(stagePlatformMesh);
+    // scene.add(group);
+
+    // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
+    // May have to change this in the future
+    let groups = getStages(scene);
+    // let stageId = groups[groups.length - 1].id;
+
+    let stageNameIndex = Math.floor(Math.random() * defaultStageNames.length);
+    let stageName = defaultStageNames[stageNameIndex];
+    group.stageName = stageName;
+    group.axis = 'y';
+
+    return group;
+
+}
+
+let getStages = (scene) => {
+    let getStagesFromGroup = (group) => {
+        let groupChildrenGroups = group.children.filter((child) => {
+            return child.type === 'Group' && !child.isTool;
+        });
+        if (group.isStage && groupChildrenGroups.length === 0) {
+            return group;
+        }
+        return groupChildrenGroups.map((group) => {
+            return getStagesFromGroup(group);
+        }).flat();
+    };
+
+    return scene.children.filter((child) => {
+        return child.type === 'Group' && !child.isTool;
+    }).map((group) => {
+        return getStagesFromGroup(group);
+    }).flat();
+};
+
 /* SCENE RENDERING MAIN FUNCTIONS */
 
 let animate = () => {
@@ -532,6 +677,20 @@ const paneInflateFunctionsByName = {
 
         let contours = sliceMesh(mesh, geometry, (activePaneIndex + 0.1) * 5);
         visualizeContours(contours);
+
+        return () => {
+            renderer.render(scene, camera);
+        };
+    },
+
+    'machine': (elem) => {
+        const {scene, camera, controls} = makeScene(elem);
+        scenes.push(scene);
+        cameras.push(camera);
+
+        activePaneIndex = parseInt(elem.id);
+
+        addLinearStageToScene(scene);
 
         return () => {
             renderer.render(scene, camera);
