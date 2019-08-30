@@ -472,6 +472,7 @@ let addLinearStage = (scene, camera) => {
     let group = _makeStageInScene('linear', scene);
     // _addConnectionHandlesToGroup(group);
     _addGroupToScene(group, scene, camera);
+    return group;
 };
 
 let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
@@ -648,8 +649,6 @@ let makeScene = (domElement) => {
     return { scene, camera, undefined };
 }
 
-/* NEW SCENE RENDERING */
-
 let addScene = (elem, fn) => {
     const ctx = document.createElement('canvas').getContext('2d');
     elem.appendChild(ctx.canvas);
@@ -727,8 +726,17 @@ const paneInflateFunctionsByName = {
 
         activePaneIndex = parseInt(elem.id);
 
-        addLinearStage(scene, camera);
+        // TODO: make these calls from the Machine AST
+        let stageX1 = addLinearStage(scene, camera);
+        stageX1.position.x = -160;
+        let stageX2 = addLinearStage(scene, camera);
+        stageX2.position.x = 85;
+        let stageY = addLinearStage(scene, camera);
+        stageY.rotateY(Math.PI / 2);
+        stageY.position.y = 100;
 
+        camera.zoom = 0.25;
+        camera.updateProjectionMatrix();
         return () => {
             renderer.render(scene, camera);
         };
