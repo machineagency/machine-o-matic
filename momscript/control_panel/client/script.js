@@ -462,16 +462,16 @@ let scanProgramAndGeneratePanes = (programText) => {
 
 /* MACHINE FRONTEND */
 
-let addLinearStageToScene = (scene) => {
+let addLinearStage = (scene, camera) => {
     let group = _makeStageInScene('linear', scene);
     // _addConnectionHandlesToGroup(group);
-    _addGroupToScene(group, scene);
+    _addGroupToScene(group, scene, camera);
 };
 
-let _addGroupToScene = (group, scene, adjustPosition=true) => {
+let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
     scene.add(group);
     // destroyControl();
-    // generateControlForGroup(group);
+    // generateControlForGroup(group, scene, camera);
 
     if (adjustPosition) {
         group.position.y = 50;
@@ -557,6 +557,37 @@ let _makeStageInScene = (stageType, scene) => {
     return group;
 
 }
+
+let generateControlForGroup = (group, scene, camera) => {
+    // Add controls to the new mesh group
+    let lastPosition = new THREE.Vector3();
+    let currPosition = new THREE.Vector3();
+    let control = new THREE.TransformControls( camera, renderer.domElement );
+    let offset = new THREE.Vector3();
+    // let parentMods = gatherDeepParentStages(group);
+    control.mode = controlMode;
+    control.addEventListener('change', (event) => {
+        render();
+    });
+    control.addEventListener('mouseDown', (event) => {
+        lastPosition.copy(group.position);
+    });
+    control.addEventListener('objectChange', (event) => {
+        currPosition.copy(group.position);
+        offset = currPosition.sub(lastPosition);
+        parentMods.forEach((parentMod) => {
+            parentMod.position.add(offset);
+        });
+        lastPosition.copy(group.position);
+    });
+    control.addEventListener('dragging-changed', (event) => {
+        // console.log(event)
+    });
+    control.setRotationSnap(THREE.Math.degToRad(45));
+    scene.add(control);
+    control.attach(group);
+    return control;
+};
 
 let getStages = (scene) => {
     let getStagesFromGroup = (group) => {
@@ -690,7 +721,7 @@ const paneInflateFunctionsByName = {
 
         activePaneIndex = parseInt(elem.id);
 
-        addLinearStageToScene(scene);
+        addLinearStage(scene, camera);
 
         return () => {
             renderer.render(scene, camera);
