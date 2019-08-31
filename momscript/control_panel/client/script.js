@@ -15,13 +15,8 @@ let mixers = [];
 let EPSILON = 0.001;
 
 const exampleProgramText = `'use strict';
-loadStl('assets/pikachu.stl')
-.then(() => {
-    mesh = getStlMeshes()[0];
-    geometry = meshToGeometry(mesh);
-    return [mesh, geometry];
-})
-.then((meshGeomPair) => {
+loadStl('assets/pikachu.stl').then((meshGeomPair) => {
+    console.log(meshGeomPair);
     let mesh = meshGeomPair[0];
     let geometry = meshGeomPair[1];
     let slicer = new Slicer({
@@ -106,6 +101,8 @@ let makeLoadStlPromise = (filepath) => {
 let addStlFromPromise = (promise) => {
    return promise.then((mesh) => {
        scenes[activePaneIndex].add(mesh);
+       let geometry = meshToGeometry(mesh);
+       return [mesh, geometry];
    });
 };
 
@@ -221,9 +218,9 @@ class Slicer {
             }
             return contours;
         };
-        geometry.computeBoundingBox();
-        let planeHeight = geometry.boundingBox.min.y;
-        let maxHeight = geometry.boundingBox.max.y;
+        nonBufferGeometry.computeBoundingBox();
+        let planeHeight = nonBufferGeometry.boundingBox.min.y;
+        let maxHeight = nonBufferGeometry.boundingBox.max.y;
         let xzPlane, segments, layerContours;
         let contoursPerLayer = [];
         while (planeHeight <= maxHeight) {
