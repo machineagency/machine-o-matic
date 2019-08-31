@@ -1,0 +1,108 @@
+@font-face {
+    font-family: Inconsolata;
+    src: url(assets/inconsolata.otf);
+}
+
+@font-face {
+    font-family: Inconsolata;
+    src: url(assets/inconsolata_bold.ttf);
+    font-weight: bold;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+body {
+    background-color: #000000;
+}
+
+button {
+    background-color: white;
+    border: none;
+    color: black;
+    font-family: 'Inconsolata', Monospace;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    letter-spacing: 3px;
+    width: 100px;
+    padding: 10px 0px 10px 0px;
+    outline: none;
+    cursor: pointer;
+}
+
+*[data-diagram] {
+    display: inline-block;
+    width: 10em;
+    height: 6em;
+    border: 1px solid #ffffff;
+}
+
+.left {
+    float: left;
+    margin-right: .25em;
+}
+
+.right {
+    float: right;
+    margin-left: .25em;
+}
+
+.panes-container {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    height: max-content;
+    overflow: auto;
+    display: inline-block;
+    width: 50%;
+}
+
+.pane-container {
+    margin: 1em;
+    max-width: max-content;
+    font-size: xx-large;
+    overflow: auto;
+}
+
+.program-container {
+    outline: none;
+    border-right: 1px solid white;
+    margin-left: 10px;
+    margin-top: 10px;
+    overflow: scroll;
+    height: 100%;
+    width: 480px;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: #ffffff;
+    line-height: 1.25;
+    font-family: 'Inconsolata';
+    counter-reset: line;
+}
+
+.run-button {
+    position: absolute;
+    left: 20px;
+    bottom: 40px;
+}
+
+.code-line {
+    counter-increment: line;
+}
+
+.code-line::before {
+    content: counter(line);
+    font-weight: bold;
+    margin-right: 10px;
+    text-align: right;
+    width: 20px;
+}
+

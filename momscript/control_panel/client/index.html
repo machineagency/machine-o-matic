@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Machine-o-Matic</title>
+<meta charset="utf-8">
+<link rel="icon"
+      type="image/png"
+      href="img/favicon.png">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<pre>
+    <code class="program-container" contenteditable="true" data-language="javascript">
+    </code>
+</pre>
+
+<!-- Click this button at your OWN RISK, no malicious code please. -->
+<button class="run-button" onclick="eval(reduceDivsToProgramText());">
+    RUN
+</button>
+
+<div class="panes-container">
+</div>
+
+<script src="/assets/three.js"></script>
+<script src="/assets/STLLoader.js"></script>
+<script src="/assets/TransformControls.js"></script>
+<!--
+<script src="/assets/dat.gui.min.js"></script>
+<script src="/assets/stats.min.js"></script>
+-->
+
+<script src="script.js"></script>
+
+</body>
+</html>
