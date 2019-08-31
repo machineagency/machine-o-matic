@@ -25,18 +25,19 @@ loadStl('assets/pikachu.stl')
     let mesh = meshGeomPair[0];
     let geometry = meshGeomPair[1];
     let slicer = new Slicer({
-        layerHeight: 0.2,
+        layerHeight: 1.0,
         infill: 'empty'
     });
     addPaneDomWithType('blank');
     let layers = slicer.slice(mesh, geometry);
     slicer.visualizeContours(layers);
-    // let plotter = new Machine({
-    //     'linear Axis(x)' : 'Motor(x1),
-    //         Motor(x2) @ step -> 0.03048 mm',
-    //     'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
-    //     'binary ToolUpDown' : 'Motor(t)'
-    // });
+    let plotter = new Machine({
+        'linear Axis(x)' : 'Motor(x1), Motor(x2) @ step -> 0.03048 mm',
+        'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
+        'binary ToolUpDown' : 'Motor(t)'
+    });
+    addPaneDomWithType('blank');
+    plotter.renderMachineInPane();
 });
 `;
 
@@ -350,8 +351,22 @@ class Machine {
         return kvStrings.join('\n');
     }
 
-    renderMachineInGui() {
-        // TODO
+    renderMachineInPane() {
+        // TODO: currently hardcoded. make these calls from the Machine AST
+        let paneIndex = pagePaneIndexCounter - 1;
+        let scene = scenes[paneIndex];
+        let camera = cameras[paneIndex];
+
+        let stageX1 = addLinearStage(scene, camera);
+        stageX1.position.x = -160;
+        let stageX2 = addLinearStage(scene, camera);
+        stageX2.position.x = 85;
+        let stageY = addLinearStage(scene, camera);
+        stageY.rotateY(Math.PI / 2);
+        stageY.position.y = 100;
+
+        camera.zoom = 0.25;
+        camera.updateProjectionMatrix();
     }
 
     /* PRIVATE METHODS */
