@@ -19,6 +19,23 @@ body {
     background-color: #000000;
 }
 
+button {
+    background-color: white;
+    border: none;
+    color: black;
+    font-family: 'Inconsolata', Monospace;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    letter-spacing: 3px;
+    width: 100px;
+    padding: 10px 0px 10px 0px;
+    outline: none;
+    cursor: pointer;
+}
+
 *[data-diagram] {
     display: inline-block;
     width: 10em;
@@ -69,6 +86,12 @@ body {
     line-height: 1.25;
     font-family: 'Inconsolata';
     counter-reset: line;
+}
+
+.run-button {
+    position: absolute;
+    left: 20px;
+    bottom: 40px;
 }
 
 .code-line {
