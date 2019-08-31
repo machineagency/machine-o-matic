@@ -14,7 +14,7 @@ let clock;
 let mixers = [];
 let EPSILON = 0.001;
 
-const exampleProgramText = `addPaneDomWithType('blank');
+const exampleProgramText = `'use strict';
 loadStl('assets/pikachu.stl')
 .then(() => {
     mesh = getStlMeshes()[0];
@@ -28,7 +28,6 @@ loadStl('assets/pikachu.stl')
         layerHeight: 1.0,
         infill: 'empty'
     });
-    addPaneDomWithType('blank');
     let layers = slicer.slice(mesh, geometry);
     slicer.visualizeContours(layers);
     let plotter = new Machine({
@@ -36,8 +35,7 @@ loadStl('assets/pikachu.stl')
         'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
         'binary ToolUpDown' : 'Motor(t)'
     });
-    addPaneDomWithType('blank');
-    plotter.renderMachineInPane();
+    plotter.visualizeMachine();
 });
 `;
 
@@ -85,6 +83,7 @@ class ModelMesh {
 }
 
 let loadStl = (filepath) => {
+    addPaneDomWithType('blank');
     let promise = makeLoadStlPromise(filepath);
     return addStlFromPromise(promise);
 };
@@ -240,6 +239,7 @@ class Slicer {
     };
 
     visualizeContours(contours) {
+        addPaneDomWithType('blank');
         let layerHeightShapesPairs = contours.map((contours) => {
             let sliceHeight = contours[0] && contours[0][0].y;
             let shapes = contours.map((contour) => {
@@ -351,8 +351,9 @@ class Machine {
         return kvStrings.join('\n');
     }
 
-    renderMachineInPane() {
+    visualizeMachine() {
         // TODO: currently hardcoded. make these calls from the Machine AST
+        addPaneDomWithType('blank');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
         let camera = cameras[paneIndex];
