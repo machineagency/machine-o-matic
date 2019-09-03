@@ -18,7 +18,6 @@ let EPSILON = 0.001;
 
 const exampleProgramText = `'use strict';
 loadStl('assets/pikachu.stl').then((meshGeomPair) => {
-    console.log(meshGeomPair);
     let mesh = meshGeomPair[0];
     let geometry = meshGeomPair[1];
     let slicer = new Slicer({
@@ -34,6 +33,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
         'binary ToolUpDown' : 'Motor(t)'
     });
     plotter.visualizeMachine();
+    console.log(plotter);
 });
 `;
 
