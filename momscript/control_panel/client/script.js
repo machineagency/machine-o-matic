@@ -28,7 +28,8 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let layers = slicer.slice(mesh, geometry);
     slicer.visualizeContours(layers);
     let plotter = new Machine({
-        'linear Axis(x)' : 'Motor(x1), Motor(x2) @ step -> 0.03048 mm',
+        'linear Axis(x)' : 'Motor(x1) @ step -> 0.03048 mm, \
+                            Motor(x2) @ step -> 0.03048 mm',
         'linear Axis(y)' : 'Motor(y) @ step -> ??? mm',
         'binary ToolUpDown' : 'Motor(t)'
     });
@@ -292,7 +293,7 @@ let visualizePoints = (isectPts) => {
  * where
  *
  * <DRIVE_STATEMENT> ::= "<QUAL> [Axis(] <IDEN> [)]"
- * <MOTOR_STATEMENT> ::= "Motor(<IDEN>) [@ <STEP>]"
+ * <MOTOR_STATEMENT> ::= "(Motor(<IDEN>) [@ <STEP>])*"
  * <QUAL> ::=  linear | rotary | volumetric | binary
  * <STEP> ::= step -> <NUM> (mm | rad | mm3)
  *
@@ -435,31 +436,38 @@ class Machine {
         }
     }
 
+    /**
+     * Parses a motor statement, or a comma-delimited list thereof.
+     */
     _parseMotorStatement(str) {
-        let tokens = str.split(' ');
-        let motorIden = tokens[0].replace(')', '').split('(')[1];
-        let atSymbolIndex = tokens.indexOf('@');
-        if (atSymbolIndex === -1) {
-            return [motorIden];
-        }
-        if (tokens[atSymbolIndex + 1] === 'step') {
-            let displToken = tokens[atSymbolIndex + 3];
-            let regex = /[0-9]+\.[0-9]+/;
-            let regexResult = displToken.match(regex);
-            if (regexResult) {
-                return [motorIden].concat(regexResult[0]);
+        let statements = str.split(',');
+        return statements.map((statement) => {
+            let tokens = statement.trim().split(' ');
+            let motorIden = tokens[0].replace(')', '').split('(')[1];
+            let atSymbolIndex = tokens.indexOf('@');
+            if (atSymbolIndex === -1) {
+                return [motorIden];
             }
-        }
-        return [motorIden].concat(tokens[atSymbolIndex + 1]);
+            if (tokens[atSymbolIndex + 1] === 'step') {
+                let displToken = tokens[atSymbolIndex + 3];
+                let regex = /[0-9]+\.[0-9]+/;
+                let regexResult = displToken.match(regex);
+                if (regexResult) {
+                    return [motorIden].concat(regexResult[0]);
+                }
+            }
+            return [motorIden].concat(tokens[atSymbolIndex + 1]);
+        });
     }
 
     /** DM_PAIRS is an array of the e.g. following:
-     * [['linear', 'axis', 'x'], ['x', 0.123]]
+     * [['linear', 'axis', 'x'], ['x', 0.123]], or for multiple motors,
+     * [['linear', 'axis', 'x'], ['x1', 0.6, 'x2', 0.6]]
      */
     _buildAstFromDriveMotorPairs(dmPairs) {
         dmPairs.forEach((dmPair) => {
             let driveTokens = dmPair[0];
-            let motorTokens = dmPair[1];
+            let motorTokenPairs = dmPair[1];
             let qual = driveTokens[0];
             let isAxis = driveTokens[1] === 'Axis';
             let driveIden;
@@ -469,17 +477,22 @@ class Machine {
             else {
                 driveIden = driveTokens[1];
             }
-            let motorIden = motorTokens[0];
-            let motorTransfer;
-            if (motorTokens.length == 2) {
-                motorTransfer = motorTokens[1];
-            }
             let driveNode = new Drive(qual, isAxis, driveIden);
-            let motorNode = new Motor(motorIden, motorTransfer);
-            driveNode.setMotors([motorNode]);
-            motorNode.setDrives([driveNode]);
+
+            let motorNodes = motorTokenPairs.map((tokenPair) => {
+                let motorIden = tokenPair[0];
+                let motorTransfer;
+                if (tokenPair.length == 2) {
+                    motorTransfer = tokenPair[1];
+                }
+                let motorNode = new Motor(motorIden, motorTransfer);
+                motorNode.setDrives([driveNode]);
+                return motorNode;
+            });
+
+            driveNode.setMotors(motorNodes);
+            this._root.motors.push(motorNodes);
             this._root.drives.push(driveNode);
-            this._root.motors.push(motorNode);
         });
     }
 }
