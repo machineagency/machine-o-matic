@@ -34,6 +34,15 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     });
     plotter.visualizeMachine();
     console.log(plotter);
+    // let pen = new Tool({
+    //     'penUp()' : ??? // low level moves here, using variables, QQuote,
+    //     'penDown()' : ???,
+    //     'drawContour(contour)' :???
+    // });
+    // plotter.setTool(pen); OR? pen.setMachine(plotter);
+    // return pen.drawContour(layers[0]);
+}).then(() => {
+    // stuff after the plotting finishes
 });
 `;
 
