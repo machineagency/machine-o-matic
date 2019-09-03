@@ -595,9 +595,9 @@ let _makeStageInScene = (stageType, scene) => {
     stagePlatformMesh.material.transparent = true;
 
     group.add(stageCaseLines);
-    group.add(stageCaseMesh);
+    // group.add(stageCaseMesh);
     group.add(stagePlatformLines);
-    group.add(stagePlatformMesh);
+    // group.add(stagePlatformMesh);
     // scene.add(group);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
