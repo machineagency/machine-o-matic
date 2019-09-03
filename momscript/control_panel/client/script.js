@@ -734,6 +734,15 @@ let addPaneDomWithType = (paneType) => {
     return paneContainerDom;
 };
 
+let resetPanes = () => {
+    document.querySelector('.panes-container').innerHTML= "";
+    cameras.length = 0;
+    scenes.length = 0;
+    sceneElements.length = 0;
+    activePaneIndex = 0;
+    pagePaneIndexCounter = 0;
+};
+
 /**
  * PANE INFLATE FUNCTIONS
  * Add implementations here about how particular panes should be
