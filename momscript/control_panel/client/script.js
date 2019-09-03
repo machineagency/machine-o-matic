@@ -352,25 +352,31 @@ class Machine {
     }
 
     visualizeMachine() {
-        // TODO: only works with the plotter example, expand to Z cases, may
-        // also need information about connections
+        // TODO: currently only works with cantilever + parallel 2D plotter
+        // designs where y is on top. The problem is that it is difficult to
+        // infer the visual layout of a machine from only what's provided
+        // in the DSL. This is worth thinking through at a later point.
         addPaneDomWithType('blank');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
         let camera = cameras[paneIndex];
-        let offset = 20;
+        let offset = 120;
+        let miniOffset = 5.5;
         let heightOffset = 100;
 
         this.drives.forEach((drive) => {
             let stage;
-            let stagesSoFarThisDrive = 0;
+            let stageOffsetFactor = -1;
             if (drive.isAxis) {
                 drive.motors.forEach((motor) => {
                     stage = addLinearStage(scene, camera);
-                    stagesSoFarThisDrive += 1;
-                    stage.position.x = stagesSoFarThisDrive * offset;
+                    if (drive.name === 'x') {
+                        stage.position.x = stageOffsetFactor * offset;
+                        stageOffsetFactor += 2;
+                    }
                 });
                 if (drive.name === 'y') {
+                    stage.position.x = miniOffset;
                     stage.position.y = heightOffset;
                     stage.rotateY(Math.PI / 2);
                 }
