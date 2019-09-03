@@ -1,5 +1,7 @@
 'use strict';
 
+const DEBUG_RENDER_ONCE = true;
+
 let renderer;
 let scenes = [];
 let cameras = [];
@@ -365,6 +367,9 @@ class Machine {
 
         camera.zoom = 0.25;
         camera.updateProjectionMatrix();
+        if (DEBUG_RENDER_ONCE) {
+            render();
+        }
     }
 
     /* PRIVATE METHODS */
@@ -513,6 +518,9 @@ let addLinearStage = (scene, camera) => {
     let group = _makeStageInScene('linear', scene);
     // _addConnectionHandlesToGroup(group);
     _addGroupToScene(group, scene, camera);
+    if (DEBUG_RENDER_ONCE) {
+        render();
+    }
     return group;
 };
 
@@ -719,6 +727,9 @@ let addPaneDomWithType = (paneType) => {
     } else {
         let sceneRenderFunction = sceneInitFunction(diagramDom);
         addScene(diagramDom, sceneRenderFunction);
+        if (DEBUG_RENDER_ONCE) {
+            render();
+        }
     }
     return paneContainerDom;
 };
@@ -853,8 +864,9 @@ let render = (time) => {
                     0, 0, width, height);                              // dst rect
         }
     }
-
-    requestAnimationFrame(render);
+    if (!DEBUG_RENDER_ONCE) {
+        requestAnimationFrame(render);
+    }
 };
 
 let main = () => {
@@ -867,7 +879,12 @@ let main = () => {
     const canvas = document.createElement('canvas');
     renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
     renderer.setScissorTest(true);
-    requestAnimationFrame(render);
+    if (DEBUG_RENDER_ONCE) {
+        render();
+    }
+    else {
+        requestAnimationFrame(render);
+    }
 };
 
 main();
