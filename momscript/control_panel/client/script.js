@@ -351,7 +351,39 @@ class Machine {
     }
 
     visualizeMachine() {
-        // TODO: currently hardcoded. make these calls from the Machine AST
+        // TODO: only works with the plotter example, expand to Z cases, may
+        // also need information about connections
+        addPaneDomWithType('blank');
+        let paneIndex = pagePaneIndexCounter - 1;
+        let scene = scenes[paneIndex];
+        let camera = cameras[paneIndex];
+        let offset = 20;
+        let heightOffset = 100;
+
+        this.drives.forEach((drive) => {
+            let stage;
+            let stagesSoFarThisDrive = 0;
+            if (drive.isAxis) {
+                drive.motors.forEach((motor) => {
+                    stage = addLinearStage(scene, camera);
+                    stagesSoFarThisDrive += 1;
+                    stage.position.x = stagesSoFarThisDrive * offset;
+                });
+                if (drive.name === 'y') {
+                    stage.position.y = heightOffset;
+                    stage.rotateY(Math.PI / 2);
+                }
+            }
+        });
+
+        camera.zoom = 0.25;
+        camera.updateProjectionMatrix();
+        if (DEBUG_RENDER_ONCE) {
+            render();
+        }
+    }
+
+    visualizeMachineTest() {
         addPaneDomWithType('blank');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
