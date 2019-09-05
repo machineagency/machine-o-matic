@@ -37,24 +37,28 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let pen = new Tool(plotter, {
         // NOTE: scoping
         'penUp' : () => {
-            ToolUpDown.toBeginning();
+            console.log(this);
+            moveToBeginning(ToolUpDown);
         },
         'penDown' : () => {
-            ToolUpDown.toEnd();
+            moveToEnd(ToolUpDown);
         },
-        'drawContourAtPoint' : (contour, point) => {
-            assert(machine.axes matches point);
-            assert(machine.axes matches contour[0]);
-            moveTo(point);
-            setOrigin();
-            penDown();
-            contour.forEach((contourPoint) => {
-                moveTo(contourPoint);
-            });
-            penUp();
-        }
+        // 'drawContourAtPoint' : (contour, point) => {
+        //     // assert(machine.axes matches point);
+        //     // assert(machine.axes matches contour[0]);
+        //     // TODO: can mouse over each line and visualize
+        //     moveTo(point);
+        //     setOrigin();
+        //     penDown();
+        //     contour.forEach((contourPoint) => {
+        //         moveTo(contourPoint);
+        //     });
+        //     penUp();
+        // }
     });
-    return pen.drawContour(layers[0]);
+    console.log(pen);
+    pen.penUp();
+    // return pen.drawContour(layers[0]);
 }).then(() => {
     // stuff after the plotting finishes
 });
@@ -527,7 +531,42 @@ class Machine {
 }
 
 class Tool {
-    // TODO: include actions in the domain specific language
+    constructor(machine, actionsByName) {
+        this.machine = machine;
+        this.actionsByName = actionsByName;
+        this.__inflateActionsToMethods();
+    }
+
+    /**
+     * NOTE: by defining action methods within a class method, the keyword
+     * 'this' gets bound to the Tool object in the closure.
+     */
+    __inflateActionsToMethods() {
+        this.foo = () => console.log(this);
+        let moveToBeginning = () => console.log('defined in inflate');
+        Object.keys(this.actionsByName).forEach((actionName) => {
+            let methodText = this.actionsByName[actionName];
+            let newMethod = this.__injectScopeToAction(methodText);
+            this[actionName] = newMethod;
+        });
+    }
+
+    __injectScopeToAction(actionFunc) {
+        let fnString = actionFunc.toString();
+        let firstArrowIndex = fnString.indexOf('=>');
+        let argsString = fnString.slice(0, firstArrowIndex);
+        let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
+        let args = argsString.trim().replace('(', '')
+                        .replace(')', '').split(',');
+        // TODO: fix replaceing {} bc it will replace anon funs' {}
+        let bodyStatements = bodyString.trim().replace('{', '')
+                                .replace('}', '').replace('\n', '').split(';');
+        let moveToBeginning = () => console.log('defined in inject');
+        // TODO in below line moveToBeginning not found still... may have to unroll
+        // and replace? idk
+        return new Function(...args ,bodyStatements.join(';'));
+
+    }
 }
 
 /* The following are generated as parts of the AST */
