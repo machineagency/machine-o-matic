@@ -537,6 +537,24 @@ class Tool {
         this.__inflateActionsToMethods();
     }
 
+    /** Base actions **/
+
+    moveToBeginning(drive) {
+        console.log('Not yet implemented.')
+    }
+
+    moveToEnd(drive) {
+        console.log('Not yet implemented.')
+    }
+
+    moveTo(point) {
+        console.log('Not yet implemented.')
+    }
+
+    setOrigin() {
+        console.log('Not yet implemented.')
+    }
+
     /**
      * NOTE: by defining action methods within a class method, the keyword
      * 'this' gets bound to the Tool object in the closure.
@@ -554,17 +572,25 @@ class Tool {
     __injectScopeToAction(actionFunc) {
         let fnString = actionFunc.toString();
         let firstArrowIndex = fnString.indexOf('=>');
-        let argsString = fnString.slice(0, firstArrowIndex);
+        let argsString = fnString.slice(0, firstArrowIndex).trim();
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
-        let args = argsString.trim().replace('(', '')
-                        .replace(')', '').split(',');
-        // TODO: fix replaceing {} bc it will replace anon funs' {}
-        let bodyStatements = bodyString.trim().replace('{', '')
-                                .replace('}', '').replace('\n', '').split(';');
+        let bodyStringTrimmed = bodyString.trim();
+        let bodyStatementsUntrimmed = bodyStringTrimmed
+                                .slice(1, bodyStringTrimmed.length - 1)
+                                .split(';');
+        let bodyStatements = bodyStatementsUntrimmed
+                                .slice(0, bodyStatementsUntrimmed.length - 1)
+                                .map((line) => line.trim());
         let moveToBeginning = () => console.log('defined in inject');
-        // TODO in below line moveToBeginning not found still... may have to unroll
-        // and replace? idk
-        return new Function(...args ,bodyStatements.join(';'));
+        let scopedBodyStatements = bodyStatements.map((line) => {
+            // TODO: only append this to Tool calls
+            return 'this.'.concat(line);
+        });
+        let newFunctionBody = scopedBodyStatements.join(';\n').concat(';');
+        return eval(`${argsString} => {${newFunctionBody}}`);
+    }
+
+    __addThisKeywordToStatement(statement) {
 
     }
 }
