@@ -37,6 +37,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let pen = new Tool(plotter, {
         // NOTE: scoping
         'penUp' : () => {
+            let foo = 23;
             console.log(ToolUpDown);
         },
         'penDown' : () => {
@@ -81,6 +82,10 @@ const reservedWords = [
     "super", "implements", "interface", "let", "package", "private",
     "protected", "public", "static", "yield", "async", "await", "null",
     "undefined", "true", "false", "NaN", "Infinity"
+];
+
+const declarationWords = [
+    "let", "const", "var"
 ];
 
 const DriveQualEnum = {
@@ -601,24 +606,36 @@ class Tool {
         let isKeyword = (iden) => {
             return reservedWords.includes(iden);
         };
-        let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
-        let regexResults = [...statement.matchAll(regex)];
-        let numAppendedWords = 0;
-        regexResults.forEach((result) => {
-            let iden = result[0];
-            let index = result.index + numAppendedWords * 'this.'.length;
-            // NOTE: I wish there were a better way to do this, but I don't
-            // think there is
-            try {
-                (eval(iden));
-            } catch (e) {
-                if (!isKeyword(iden)) {
-                    statement =
-                        `${statement.slice(0, index)}this.${statement.slice(index)}`;
-                    numAppendedWords += 1;
+        let idenIsDrive = (iden) => {
+
+        };
+        let statementCommented = (statement) => {
+
+        };
+        let statementIsDecl = (statement) => {
+            let wordTokens = statement.split(' ');
+            return declarationWords.includes(wordTokens[0]);
+
+        };
+        if (!statementIsDecl(statement)) {
+            let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
+            let regexResults = [...statement.matchAll(regex)];
+            let numAppendedWords = 0;
+            regexResults.forEach((result) => {
+                let iden = result[0];
+                let index = result.index + numAppendedWords * 'this.'.length;
+                // NOTE: I wish there were a better way to do this, but I don't
+                // think there is
+                try {
+                    (eval(iden));
+                } catch (e) {
+                    if (!isKeyword(iden)) {
+                        statement = `${statement.slice(0, index)}this.${statement.slice(index)}`;
+                        numAppendedWords += 1;
+                    }
                 }
-            }
-        });
+            });
+        }
         return statement;
     }
 }
