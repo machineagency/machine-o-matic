@@ -625,20 +625,35 @@ class Tool {
     }
 
     __getNestedFunctions(outerFnText) {
+        // TODO: only works with one layer of nesting, come back after
+        // redoing injection with a parser
         let outerFnTextCopy = outerFnText.slice();
-        let braceArrowRegex = /\(.*\) => {(.|\n)*}/g;
-        let braceArrowMatches = [...outerFnText.matchAll(braceArrowRegex)];
-        let addedChars = 0;
-        braceArrowMatches.forEach((match) => {
-            let innerFnText = match[0];
-            let idx = match.index + addedChars;
-            let injectedInnerFnText = this.__injectScopeToMethodText(innerFnText);
-            outerFnTextCopy = outerFnTextCopy.slice(0, idx) + injectedInnerFnText
-                + outerFnTextCopy.slice(idx + injectedInnerFnText.length);
-            addedChars += 1;
-        });
+        // let arrowFnNodes = [];
+        // esprima.parse(outerFnText, { range : true }, (node, meta) => {
+        //     if (node.type === 'ArrowFunctionExpression') {
+        //         arrowFnNodes.push(node);
+        //     }
+        // });
+        // arrowFnNodes.forEach((node) => {
+        //     let fnText = outerFnTextCopy.slice(node.range[0], node.range[1]);
+        //     let newText = this.__injectScopeToMethodText(fnText);
+        //     outerFnTextCopy = outerFnTextCopy.replace(fnText, newText);
+        // });
+
         return outerFnTextCopy;
     }
+
+    // __injectScopeToMethodText(fnString) {
+    //     let helper = (rootNode, env) => {
+    //         if (rootNode.type)
+    //     };
+    //     let ast = esprima.parse(fnString, { }, (node, meta) => {
+
+    //     });
+    //     let args = ast.body[0].expression.params.map((idenObj) => {
+    //         return idenObj.name;
+    //     });
+    // }
 
     __injectScopeToMethodText(fnString) {
         let firstArrowIndex = fnString.indexOf('=>');
@@ -646,12 +661,7 @@ class Tool {
         let args = argsString.replace('(', '').replace(')', '').split(',');
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
         let bodyStringTrimmed = bodyString.trim();
-
-        // Scan the function text for any inner functions and recursively
-        // inject scope before processing the outer function
-        let bodyStringInner = this.__getNestedFunctions(bodyStringTrimmed);
-
-        let bodyStatementsUntrimmed = bodyStringInner
+        let bodyStatementsUntrimmed = bodyStringTrimmed
                                 .slice(1, bodyStringTrimmed.length - 1)
                                 .split(';');
         let bodyStatements = bodyStatementsUntrimmed
@@ -683,6 +693,10 @@ class Tool {
             return declarationWords.includes(wordTokens[0]);
 
         };
+        let idenIsThisProperty = (iden) => {
+            return Object.keys(this.actionsByName).includes(iden)
+                    || this[iden] !== undefined;
+        };
         if (!statementIsDecl(statement) && !statementCommented(statement)) {
             let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
             let regexResults = [...statement.matchAll(regex)];
@@ -700,7 +714,8 @@ class Tool {
                                     + `this.machine.getDriveWithName('${iden}')`
                                     + `${statement.slice(index + iden.length)}`;
                     }
-                    else if (!isKeyword(iden) && !idenIsArg(iden)) {
+                    else if (!isKeyword(iden) && !idenIsArg(iden)
+                                && idenIsThisProperty(iden)) {
                         statement = `${statement.slice(0, index)}`
                                     + `this.${statement.slice(index)}`;
                     }
