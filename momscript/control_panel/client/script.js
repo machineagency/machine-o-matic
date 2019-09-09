@@ -33,11 +33,12 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
         'binary ToolUpDown' : 'Motor(t)'
     });
     plotter.visualizeMachine();
-    console.log(plotter);
+    console.log(plotter.driveNames);
     let pen = new Tool(plotter, {
         // NOTE: scoping
-        'penUp' : () => {
+        'penUp' : (bar) => {
             let foo = 23;
+            bar;
             console.log(ToolUpDown);
         },
         'penDown' : () => {
@@ -57,7 +58,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
         // }
     });
     console.log(pen);
-    pen.penUp();
+    pen.penUp(42);
     // return pen.drawContour(layers[0]);
 }).then(() => {
     // stuff after the plotting finishes
@@ -365,7 +366,8 @@ class Machine {
             motors: []
         };
         this._kvs = kvs;
-        this._initFromMomKvs(kvs)
+        this._initFromMomKvs(kvs);
+        this._initDriveNames();
     }
 
     get tools() {
@@ -374,6 +376,10 @@ class Machine {
 
     get drives() {
         return this._root.drives;
+    }
+
+    get driveNames() {
+        return this._driveNames;
     }
 
     get motors() {
@@ -464,6 +470,15 @@ class Machine {
             driveMotorTokenPairs.push([driveTokens, motorTokens]);
         });
         this._buildAstFromDriveMotorPairs(driveMotorTokenPairs);
+    }
+
+    _initDriveNames() {
+        let nonAxisDrives = this.drives.filter((drive) => !drive.isAxis);
+        let axisDrives = this.drives.filter((drive) => drive.isAxis);
+        let nonAxisDriveNames = nonAxisDrives.map((drive) => drive.name);
+        let axisDriveNames = axisDrives.map((drive) =>
+                                `Axis(${drive.name})`);
+        this._driveNames = nonAxisDriveNames.concat(axisDriveNames);
     }
 
     // TODO: check for syntax errors
