@@ -813,7 +813,8 @@ let _makeStageInScene = (stageType, scene) => {
     group.scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
     stageCase.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
-    let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stageCaseLines = new THREE.LineSegments(stageCaseEdges,
+            new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
     stageCaseMesh.name = 'stageCase';
     stageCaseMesh.material.transparent = true;
@@ -828,7 +829,8 @@ let _makeStageInScene = (stageType, scene) => {
     stagePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
-    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges,
+            new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
     stagePlatformMesh.name = 'stagePlatform';
     stagePlatformMesh.material.transparent = true;
