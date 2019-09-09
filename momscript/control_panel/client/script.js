@@ -37,28 +37,23 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let pen = new Tool(plotter, {
         // NOTE: scoping
         'penUp' : (bar) => {
-            let foo = 23;
-            bar;
-            ToolUpDown;
-            //test
-            bar; //text again
-            console.log(ToolUpDown);
+            moveToBeginning(ToolUpDown);
         },
         'penDown' : () => {
             moveToEnd(ToolUpDown);
         },
-        // 'drawContourAtPoint' : (contour, point) => {
-        //     // assert(machine.axes matches point);
-        //     // assert(machine.axes matches contour[0]);
-        //     // TODO: can mouse over each line and visualize
-        //     moveTo(point);
-        //     setOrigin();
-        //     penDown();
-        //     contour.forEach((contourPoint) => {
-        //         moveTo(contourPoint);
-        //     });
-        //     penUp();
-        // }
+        'drawContourAtPoint' : (contour, point) => {
+            // assert(machine.axes matches point);
+            // assert(machine.axes matches contour[0]);
+            // TODO: can mouse over each line and visualize
+            moveTo(point);
+            setOrigin();
+            penDown();
+            contour.forEach((contourPoint) => {
+                moveTo(contourPoint);
+            });
+            penUp();
+        }
     });
     console.log(pen);
     pen.penUp(42);
@@ -601,7 +596,8 @@ class Tool {
         Object.keys(this.actionsByName).forEach((actionName) => {
             let methodText = this.actionsByName[actionName].toString();
             let methodTextUncommented = Tool.__removeComments(methodText);
-            let newMethod = this.__injectScopeToAction(methodTextUncommented);
+            let newMethod = eval(this.__injectScopeToMethodText(
+                                    methodTextUncommented));
             this[actionName] = newMethod;
         });
     }
@@ -628,13 +624,34 @@ class Tool {
         return textCopy;
     }
 
-    __injectScopeToAction(fnString) {
+    __getNestedFunctions(outerFnText) {
+        let outerFnTextCopy = outerFnText.slice();
+        let braceArrowRegex = /\(.*\) => {(.|\n)*}/g;
+        let braceArrowMatches = [...outerFnText.matchAll(braceArrowRegex)];
+        let addedChars = 0;
+        braceArrowMatches.forEach((match) => {
+            let innerFnText = match[0];
+            let idx = match.index + addedChars;
+            let injectedInnerFnText = this.__injectScopeToMethodText(innerFnText);
+            outerFnTextCopy = outerFnTextCopy.slice(0, idx) + injectedInnerFnText
+                + outerFnTextCopy.slice(idx + injectedInnerFnText.length);
+            addedChars += 1;
+        });
+        return outerFnTextCopy;
+    }
+
+    __injectScopeToMethodText(fnString) {
         let firstArrowIndex = fnString.indexOf('=>');
         let argsString = fnString.slice(0, firstArrowIndex).trim();
         let args = argsString.replace('(', '').replace(')', '').split(',');
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
         let bodyStringTrimmed = bodyString.trim();
-        let bodyStatementsUntrimmed = bodyStringTrimmed
+
+        // Scan the function text for any inner functions and recursively
+        // inject scope before processing the outer function
+        let bodyStringInner = this.__getNestedFunctions(bodyStringTrimmed);
+
+        let bodyStatementsUntrimmed = bodyStringInner
                                 .slice(1, bodyStringTrimmed.length - 1)
                                 .split(';');
         let bodyStatements = bodyStatementsUntrimmed
@@ -644,7 +661,7 @@ class Tool {
             return this.__addThisToUnboundsInStatement(line, args);
         });
         let newFunctionBody = scopedBodyStatements.join(';\n').concat(';');
-        return eval(`${argsString} => {${newFunctionBody}}`);
+        return `${argsString} => {${newFunctionBody}}`;
     }
 
     __addThisToUnboundsInStatement(statement, args) {
