@@ -37,8 +37,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let pen = new Tool(plotter, {
         // NOTE: scoping
         'penUp' : () => {
-            console.log(this);
-            moveToBeginning(ToolUpDown);
+            console.log(ToolUpDown);
         },
         'penDown' : () => {
             moveToEnd(ToolUpDown);
@@ -591,17 +590,36 @@ class Tool {
         let bodyStatements = bodyStatementsUntrimmed
                                 .slice(0, bodyStatementsUntrimmed.length - 1)
                                 .map((line) => line.trim());
-        let moveToBeginning = () => console.log('defined in inject');
         let scopedBodyStatements = bodyStatements.map((line) => {
-            // TODO: only append this to Tool calls
-            return 'this.'.concat(line);
+            return this.__addThisToUnboundsInStatement(line);
         });
         let newFunctionBody = scopedBodyStatements.join(';\n').concat(';');
         return eval(`${argsString} => {${newFunctionBody}}`);
     }
 
-    __addThisKeywordToStatement(statement) {
-
+    __addThisToUnboundsInStatement(statement) {
+        let isKeyword = (iden) => {
+            return reservedWords.includes(iden);
+        };
+        let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
+        let regexResults = [...statement.matchAll(regex)];
+        let numAppendedWords = 0;
+        regexResults.forEach((result) => {
+            let iden = result[0];
+            let index = result.index + numAppendedWords * 'this.'.length;
+            // NOTE: I wish there were a better way to do this, but I don't
+            // think there is
+            try {
+                (eval(iden));
+            } catch (e) {
+                if (!isKeyword(iden)) {
+                    statement =
+                        `${statement.slice(0, index)}this.${statement.slice(index)}`;
+                    numAppendedWords += 1;
+                }
+            }
+        });
+        return statement;
     }
 }
 
