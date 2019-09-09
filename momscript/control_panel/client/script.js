@@ -41,6 +41,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
             bar;
             ToolUpDown;
             //test
+            bar; //text again
             console.log(ToolUpDown);
         },
         'penDown' : () => {
@@ -607,13 +608,23 @@ class Tool {
 
     static __removeComments(text) {
         let textCopy = text.slice();
-        let slashRegex = /\/\/.*\n?/g;
-        let regexMatches = [...textCopy.matchAll(slashRegex)];
-        regexMatches.forEach((match) => {
-            let len = match[0].length;
-            let idx = match.index;
-            textCopy = textCopy.slice(0, idx) + text.slice(idx + len);
-        });
+        let slashRegex = /\/\/.*\n/g;
+        let multiRegex = /\/\*(.|\n)*\*\//g;
+        let cullWithMatches = (text, matches) => {
+            let charsRemoved = 0;
+            let textCopy = text.slice();
+            matches.forEach((match) => {
+                let len = match[0].length;
+                let idx = match.index - charsRemoved;
+                textCopy = textCopy.slice(0, idx) + textCopy.slice(idx + len);
+                charsRemoved += len;
+            });
+            return textCopy;
+        };
+        let slashMatches = [...textCopy.matchAll(slashRegex)];
+        textCopy = cullWithMatches(textCopy, slashMatches)
+        let multiMatches = [...textCopy.matchAll(multiRegex)];
+        textCopy = cullWithMatches(textCopy, multiMatches)
         return textCopy;
     }
 
