@@ -33,12 +33,14 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
         'binary ToolUpDown' : 'Motor(t)'
     });
     plotter.visualizeMachine();
-    console.log(plotter.driveNames);
+    console.log(plotter.getDriveWithName('ToolUpDown'));
     let pen = new Tool(plotter, {
         // NOTE: scoping
         'penUp' : (bar) => {
             let foo = 23;
             bar;
+            ToolUpDown;
+            //test
             console.log(ToolUpDown);
         },
         'penDown' : () => {
@@ -398,6 +400,10 @@ class Machine {
         return kvStrings.join('\n');
     }
 
+    getDriveWithName(driveName) {
+        return this.drives.filter((drive) => drive.name === driveName)[0];
+    }
+
     visualizeMachine() {
         // TODO: currently only works with cantilever + parallel 2D plotter
         // designs where y is on top. The problem is that it is difficult to
@@ -602,6 +608,7 @@ class Tool {
         let fnString = actionFunc.toString();
         let firstArrowIndex = fnString.indexOf('=>');
         let argsString = fnString.slice(0, firstArrowIndex).trim();
+        let args = argsString.replace('(', '').replace(')', '').split(',');
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
         let bodyStringTrimmed = bodyString.trim();
         let bodyStatementsUntrimmed = bodyStringTrimmed
@@ -611,20 +618,24 @@ class Tool {
                                 .slice(0, bodyStatementsUntrimmed.length - 1)
                                 .map((line) => line.trim());
         let scopedBodyStatements = bodyStatements.map((line) => {
-            return this.__addThisToUnboundsInStatement(line);
+            return this.__addThisToUnboundsInStatement(line, args);
         });
         let newFunctionBody = scopedBodyStatements.join(';\n').concat(';');
         return eval(`${argsString} => {${newFunctionBody}}`);
     }
 
-    __addThisToUnboundsInStatement(statement) {
+    __addThisToUnboundsInStatement(statement, args) {
         let isKeyword = (iden) => {
             return reservedWords.includes(iden);
         };
         let idenIsDrive = (iden) => {
-
+            return this.machine.driveNames.includes(iden);
         };
+        let idenIsArg = (iden) => {
+            return args.includes(iden);
+        }
         let statementCommented = (statement) => {
+            return statement.slice(0, 2) === '//';
 
         };
         let statementIsDecl = (statement) => {
@@ -632,7 +643,7 @@ class Tool {
             return declarationWords.includes(wordTokens[0]);
 
         };
-        if (!statementIsDecl(statement)) {
+        if (!statementIsDecl(statement) && !statementCommented(statement)) {
             let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
             let regexResults = [...statement.matchAll(regex)];
             let numAppendedWords = 0;
@@ -642,12 +653,18 @@ class Tool {
                 // NOTE: I wish there were a better way to do this, but I don't
                 // think there is
                 try {
-                    (eval(iden));
+                    eval(iden);
                 } catch (e) {
-                    if (!isKeyword(iden)) {
-                        statement = `${statement.slice(0, index)}this.${statement.slice(index)}`;
-                        numAppendedWords += 1;
+                    if (idenIsDrive(iden)) {
+                        statement = `${statement.slice(0, index)}`
+                                    + `this.machine.getDriveWithName('${iden}')`
+                                    + `${statement.slice(index + iden.length)}`;
                     }
+                    else if (!isKeyword(iden) && !idenIsArg(iden)) {
+                        statement = `${statement.slice(0, index)}`
+                                    + `this.${statement.slice(index)}`;
+                    }
+                    numAppendedWords += 1;
                 }
             });
         }
