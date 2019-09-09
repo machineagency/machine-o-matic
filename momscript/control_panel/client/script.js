@@ -598,14 +598,26 @@ class Tool {
         this.foo = () => console.log(this);
         let moveToBeginning = () => console.log('defined in inflate');
         Object.keys(this.actionsByName).forEach((actionName) => {
-            let methodText = this.actionsByName[actionName];
-            let newMethod = this.__injectScopeToAction(methodText);
+            let methodText = this.actionsByName[actionName].toString();
+            let methodTextUncommented = Tool.__removeComments(methodText);
+            let newMethod = this.__injectScopeToAction(methodTextUncommented);
             this[actionName] = newMethod;
         });
     }
 
-    __injectScopeToAction(actionFunc) {
-        let fnString = actionFunc.toString();
+    static __removeComments(text) {
+        let textCopy = text.slice();
+        let slashRegex = /\/\/.*\n?/g;
+        let regexMatches = [...textCopy.matchAll(slashRegex)];
+        regexMatches.forEach((match) => {
+            let len = match[0].length;
+            let idx = match.index;
+            textCopy = textCopy.slice(0, idx) + text.slice(idx + len);
+        });
+        return textCopy;
+    }
+
+    __injectScopeToAction(fnString) {
         let firstArrowIndex = fnString.indexOf('=>');
         let argsString = fnString.slice(0, firstArrowIndex).trim();
         let args = argsString.replace('(', '').replace(')', '').split(',');
