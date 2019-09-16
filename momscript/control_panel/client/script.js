@@ -57,7 +57,8 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     });
     console.log(pen);
     pen.penUp(42);
-    // return pen.drawContour(layers[0]);
+    let point = {x: 0, y: 0};
+    return pen.drawContourAtPoint(layers[0], point);
 }).then(() => {
     // stuff after the plotting finishes
 });
@@ -623,37 +624,6 @@ class Tool {
         textCopy = cullWithMatches(textCopy, multiMatches)
         return textCopy;
     }
-
-    __getNestedFunctions(outerFnText) {
-        // TODO: only works with one layer of nesting, come back after
-        // redoing injection with a parser
-        let outerFnTextCopy = outerFnText.slice();
-        // let arrowFnNodes = [];
-        // esprima.parse(outerFnText, { range : true }, (node, meta) => {
-        //     if (node.type === 'ArrowFunctionExpression') {
-        //         arrowFnNodes.push(node);
-        //     }
-        // });
-        // arrowFnNodes.forEach((node) => {
-        //     let fnText = outerFnTextCopy.slice(node.range[0], node.range[1]);
-        //     let newText = this.__injectScopeToMethodText(fnText);
-        //     outerFnTextCopy = outerFnTextCopy.replace(fnText, newText);
-        // });
-
-        return outerFnTextCopy;
-    }
-
-    // __injectScopeToMethodText(fnString) {
-    //     let helper = (rootNode, env) => {
-    //         if (rootNode.type)
-    //     };
-    //     let ast = esprima.parse(fnString, { }, (node, meta) => {
-
-    //     });
-    //     let args = ast.body[0].expression.params.map((idenObj) => {
-    //         return idenObj.name;
-    //     });
-    // }
 
     __injectScopeToMethodText(fnString) {
         let firstArrowIndex = fnString.indexOf('=>');
