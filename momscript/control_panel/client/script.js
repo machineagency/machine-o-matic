@@ -626,27 +626,39 @@ class Tool {
     }
 
     __injectScopeToMethodText(fnString) {
-        let fnAst = esprima.parse(fnString);
+        let fnAst = esprima.parse(fnString, { range : true });
         let params = fnAst.body[0].expression.params;
         let bodyStatements = fnAst.body[0].expression.body.body;
-        // let statementNodes = [];
-        // this.__traverse(bodyStatements[0], (node) =>
-        //                     statementNodes.push.call(statementNodes, node));
-        // let idenNodes = statementNodes.filter((node) => node.type === 'Identifier');
-        this.__traverse(bodyStatements[0], this.__rebindNodeIden);
+        let idenNodes = [];
+        this.__traverse(bodyStatements[0], (node) => {
+            if (node.type === 'Identifier') {
+                Array.prototype.push.call(idenNodes, node);
+            }
+        });
+        idenNodes.forEach((node) => this.__rebindNodeIden(node));
+        console.log(escodegen.generate(fnAst));
         // return eval(`(${args}) => {${bodyStatements.join(';')}}`);
     }
 
     __rebindNodeIden(node) {
         if (node.type === 'Identifier') {
-            //TODO: actually rewrite the frickin node as a this-expression
-            //Iden... name: 'foo', type: 'Identifier'
-            //This... object: ThisExpr, type: 'ExpressionStatement', property.name: 'foo' (property is same as above)
+            let idenName = node.name;
+            node.type = 'MemberExpression';
+            node.object = {
+                type: 'ThisExpression'
+            }
+            node.property = {
+                type: 'Identifier',
+                name: idenName
+            }
+            delete node[name];
         }
     }
 
     __traverse(node, func) {
-        func(node);
+        if (node !== undefined) {
+            func(node);
+        }
         for (var key in node) {
             if (node.hasOwnProperty(key)) {
                 var child = node[key];
