@@ -558,13 +558,11 @@ class Tool {
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
         let args = argsString.trim().replace('(', '')
                         .replace(')', '').split(',');
-        // TODO: fix replaceing {} bc it will replace anon funs' {}
+        // TODO: fix replacing {} bc it will replace anon funs' {}
         let bodyStatements = bodyString.trim().replace('{', '')
                                 .replace('}', '').replace('\n', '').split(';');
         let moveToBeginning = () => console.log('defined in inject');
-        // TODO in below line moveToBeginning not found still... may have to unroll
-        // and replace? idk
-        return new Function(...args ,bodyStatements.join(';'));
+        return eval(`(${args}) => {${bodyStatements.join(';')}}`);
 
     }
 }
