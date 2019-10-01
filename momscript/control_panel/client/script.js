@@ -636,16 +636,36 @@ class Tool {
             }
         });
         idenNodes.forEach((node) => this.__rebindNodeIden(node));
-        console.log(escodegen.generate(fnAst));
-        // return eval(`(${args}) => {${bodyStatements.join(';')}}`);
+        return escodegen.generate(fnAst);
     }
 
+    /**
+     * Append THIS or THIS.MACHINE or nothing to all identifiers.
+     **/
     __rebindNodeIden(node) {
-        if (node.type === 'Identifier') {
-            let idenName = node.name;
+        let idenName = node.name;
+        if (this[idenName] !== undefined) {
             node.type = 'MemberExpression';
             node.object = {
                 type: 'ThisExpression'
+            }
+            node.property = {
+                type: 'Identifier',
+                name: idenName
+            }
+            delete node[name];
+        }
+        else if (this.machine[idenName] !== undefined) {
+            node.type = 'MemberExpression';
+            node.object = {
+                type: 'MemberExpression',
+                object: {
+                    type: 'ThisExpression'
+                },
+                property: {
+                    type: 'Identifier',
+                    name: 'machine'
+                }
             }
             node.property = {
                 type: 'Identifier',
