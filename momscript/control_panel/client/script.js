@@ -626,16 +626,34 @@ class Tool {
     }
 
     __injectScopeToMethodText(fnString) {
-        let firstArrowIndex = fnString.indexOf('=>');
-        let argsString = fnString.slice(0, firstArrowIndex).trim();
-        let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
-        let args = argsString.trim().replace('(', '')
-                        .replace(')', '').split(',');
-        // TODO: fix replacing {} bc it will replace anon funs' {}
-        let bodyStatements = bodyString.trim().replace('{', '')
-                                .replace('}', '').replace('\n', '').split(';');
-        let moveToBeginning = () => console.log('defined in inject');
-        return eval(`(${args}) => {${bodyStatements.join(';')}}`);
+        let fnAst = esprima.parse(fnString);
+        let params = fnAst.body[0].expression.params;
+        let bodyStatements = fnAst.body[0].expression.body.body;
+        let statementNodes = [];
+        this.__traverse(bodyStatements[0], (node) =>
+                            statementNodes.push.call(statementNodes, node));
+        let idenNodes = statementNodes.filter((node) => node.type === 'Identifier');
+        debugger;
+        // return eval(`(${args}) => {${bodyStatements.join(';')}}`);
+    }
+
+    __traverse(node, func) {
+        func(node);
+        for (var key in node) {
+            if (node.hasOwnProperty(key)) {
+                var child = node[key];
+                if (typeof child === 'object' && child !== null) {
+
+                    if (Array.isArray(child)) {
+                        child.forEach((node) => {
+                            this.__traverse(node, func);
+                        });
+                    } else {
+                        this.__traverse(child, func);
+                    }
+                }
+            }
+        }
     }
 
     __addThisToUnboundsInStatement(statement, args) {
