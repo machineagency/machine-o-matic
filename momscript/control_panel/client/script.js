@@ -33,32 +33,32 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
         'binary ToolUpDown' : 'Motor(t)'
     });
     plotter.visualizeMachine();
-    console.log(plotter);
+    console.log(plotter.getDriveWithName('ToolUpDown'));
     let pen = new Tool(plotter, {
         // NOTE: scoping
-        'penUp' : () => {
-            console.log(this);
+        'penUp' : (bar) => {
             moveToBeginning(ToolUpDown);
         },
         'penDown' : () => {
             moveToEnd(ToolUpDown);
         },
-        // 'drawContourAtPoint' : (contour, point) => {
-        //     // assert(machine.axes matches point);
-        //     // assert(machine.axes matches contour[0]);
-        //     // TODO: can mouse over each line and visualize
-        //     moveTo(point);
-        //     setOrigin();
-        //     penDown();
-        //     contour.forEach((contourPoint) => {
-        //         moveTo(contourPoint);
-        //     });
-        //     penUp();
-        // }
+        'drawContourAtPoint' : (contour, point) => {
+            // assert(machine.axes matches point);
+            // assert(machine.axes matches contour[0]);
+            // TODO: can mouse over each line and visualize
+            // moveTo(point);
+            // setOrigin();
+            // penDown();
+            // contour.forEach((contourPoint) => {
+            //     moveTo(contourPoint);
+            // });
+            // penUp();
+        }
     });
     console.log(pen);
-    pen.penUp();
-    // return pen.drawContour(layers[0]);
+    pen.penUp(42);
+    let point = {x: 0, y: 0};
+    return pen.drawContourAtPoint(layers[0], point);
 }).then(() => {
     // stuff after the plotting finishes
 });
@@ -72,6 +72,20 @@ const defaultStageNames = [
     "asteroid", "apricot", "monad", "asymptote", "martingale", "batman",
     "forty-two", "gravenstein", "october", "hyphybot", "gravitas", "charmer",
     "kingman", "euclid", "mechano", "rumbler", "descartes"
+];
+
+const reservedWords = [
+    "break", "case", "catch", "continue", "debugger", "default", "delete",
+    "do", "else", "finally", "for", "function", "if", "in", "instanceof",
+    "new", "return", "switch", "this", "throw", "try", "typeof", "var", "void",
+    "while", "with", "class", "const", "enum", "export", "extends", "import",
+    "super", "implements", "interface", "let", "package", "private",
+    "protected", "public", "static", "yield", "async", "await", "null",
+    "undefined", "true", "false", "NaN", "Infinity"
+];
+
+const declarationWords = [
+    "let", "const", "var"
 ];
 
 const DriveQualEnum = {
@@ -351,7 +365,8 @@ class Machine {
             motors: []
         };
         this._kvs = kvs;
-        this._initFromMomKvs(kvs)
+        this._initFromMomKvs(kvs);
+        this._initDriveNames();
     }
 
     get tools() {
@@ -360,6 +375,10 @@ class Machine {
 
     get drives() {
         return this._root.drives;
+    }
+
+    get driveNames() {
+        return this._driveNames;
     }
 
     get motors() {
@@ -376,6 +395,10 @@ class Machine {
             return key.concat(' : ').concat(this._kvs[key]);
         });
         return kvStrings.join('\n');
+    }
+
+    getDriveWithName(driveName) {
+        return this.drives.filter((drive) => drive.name === driveName)[0];
     }
 
     visualizeMachine() {
@@ -450,6 +473,15 @@ class Machine {
             driveMotorTokenPairs.push([driveTokens, motorTokens]);
         });
         this._buildAstFromDriveMotorPairs(driveMotorTokenPairs);
+    }
+
+    _initDriveNames() {
+        let nonAxisDrives = this.drives.filter((drive) => !drive.isAxis);
+        let axisDrives = this.drives.filter((drive) => drive.isAxis);
+        let nonAxisDriveNames = nonAxisDrives.map((drive) => drive.name);
+        let axisDriveNames = axisDrives.map((drive) =>
+                                `Axis(${drive.name})`);
+        this._driveNames = nonAxisDriveNames.concat(axisDriveNames);
     }
 
     // TODO: check for syntax errors
@@ -537,6 +569,24 @@ class Tool {
         this.__inflateActionsToMethods();
     }
 
+    /** Base actions **/
+
+    moveToBeginning(drive) {
+        console.log('Not yet implemented.')
+    }
+
+    moveToEnd(drive) {
+        console.log('Not yet implemented.')
+    }
+
+    moveTo(point) {
+        console.log('Not yet implemented.')
+    }
+
+    setOrigin() {
+        console.log('Not yet implemented.')
+    }
+
     /**
      * NOTE: by defining action methods within a class method, the keyword
      * 'this' gets bound to the Tool object in the closure.
@@ -545,16 +595,39 @@ class Tool {
         this.foo = () => console.log(this);
         let moveToBeginning = () => console.log('defined in inflate');
         Object.keys(this.actionsByName).forEach((actionName) => {
-            let methodText = this.actionsByName[actionName];
-            let newMethod = this.__injectScopeToAction(methodText);
+            let methodText = this.actionsByName[actionName].toString();
+            let methodTextUncommented = Tool.__removeComments(methodText);
+            let newMethod = eval(this.__injectScopeToMethodText(
+                                    methodTextUncommented));
             this[actionName] = newMethod;
         });
     }
 
-    __injectScopeToAction(actionFunc) {
-        let fnString = actionFunc.toString();
+    static __removeComments(text) {
+        let textCopy = text.slice();
+        let slashRegex = /\/\/.*\n/g;
+        let multiRegex = /\/\*(.|\n)*\*\//g;
+        let cullWithMatches = (text, matches) => {
+            let charsRemoved = 0;
+            let textCopy = text.slice();
+            matches.forEach((match) => {
+                let len = match[0].length;
+                let idx = match.index - charsRemoved;
+                textCopy = textCopy.slice(0, idx) + textCopy.slice(idx + len);
+                charsRemoved += len;
+            });
+            return textCopy;
+        };
+        let slashMatches = [...textCopy.matchAll(slashRegex)];
+        textCopy = cullWithMatches(textCopy, slashMatches)
+        let multiMatches = [...textCopy.matchAll(multiRegex)];
+        textCopy = cullWithMatches(textCopy, multiMatches)
+        return textCopy;
+    }
+
+    __injectScopeToMethodText(fnString) {
         let firstArrowIndex = fnString.indexOf('=>');
-        let argsString = fnString.slice(0, firstArrowIndex);
+        let argsString = fnString.slice(0, firstArrowIndex).trim();
         let bodyString = fnString.slice(firstArrowIndex + '=>'.length);
         let args = argsString.trim().replace('(', '')
                         .replace(')', '').split(',');
@@ -563,7 +636,57 @@ class Tool {
                                 .replace('}', '').replace('\n', '').split(';');
         let moveToBeginning = () => console.log('defined in inject');
         return eval(`(${args}) => {${bodyStatements.join(';')}}`);
+    }
 
+    __addThisToUnboundsInStatement(statement, args) {
+        let isKeyword = (iden) => {
+            return reservedWords.includes(iden);
+        };
+        let idenIsDrive = (iden) => {
+            return this.machine.driveNames.includes(iden);
+        };
+        let idenIsArg = (iden) => {
+            return args.includes(iden);
+        }
+        let statementCommented = (statement) => {
+            return statement.slice(0, 2) === '//';
+
+        };
+        let statementIsDecl = (statement) => {
+            let wordTokens = statement.split(' ');
+            return declarationWords.includes(wordTokens[0]);
+        };
+        let idenIsThisProperty = (iden) => {
+            return Object.keys(this.actionsByName).includes(iden)
+                    || this[iden] !== undefined;
+        };
+        if (!statementIsDecl(statement) && !statementCommented(statement)) {
+            let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
+            let regexResults = [...statement.matchAll(regex)];
+            let numAppendedWords = 0;
+            regexResults.forEach((result) => {
+                let iden = result[0];
+                let index = result.index + numAppendedWords * 'this.'.length;
+                // NOTE: I wish there were a better way to do this, but I don't
+                // think there is
+                try {
+                    eval(iden);
+                } catch (e) {
+                    if (idenIsDrive(iden)) {
+                        statement = `${statement.slice(0, index)}`
+                                    + `this.machine.getDriveWithName('${iden}')`
+                                    + `${statement.slice(index + iden.length)}`;
+                    }
+                    else if (!isKeyword(iden) && !idenIsArg(iden)
+                                && idenIsThisProperty(iden)) {
+                        statement = `${statement.slice(0, index)}`
+                                    + `this.${statement.slice(index)}`;
+                    }
+                    numAppendedWords += 1;
+                }
+            });
+        }
+        return statement;
     }
 }
 
@@ -685,7 +808,8 @@ let _makeStageInScene = (stageType, scene) => {
     group.scaleFactor = stageTypeScale / stageCase.boundingSphere.radius;
     stageCase.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     let stageCaseEdges = new THREE.EdgesGeometry(stageCase);
-    let stageCaseLines = new THREE.LineSegments(stageCaseEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stageCaseLines = new THREE.LineSegments(stageCaseEdges,
+            new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
     let stageCaseMesh = new THREE.Mesh(stageCase, group.color);
     stageCaseMesh.name = 'stageCase';
     stageCaseMesh.material.transparent = true;
@@ -700,7 +824,8 @@ let _makeStageInScene = (stageType, scene) => {
     stagePlatform.scale(group.scaleFactor, group.scaleFactor, group.scaleFactor);
     stagePlatform.translate(0, platformRaiseTranslateFactor, 0);
     let stagePlatformEdges = new THREE.EdgesGeometry(stagePlatform);
-    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges, new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
+    let stagePlatformLines = new THREE.LineSegments(stagePlatformEdges,
+            new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 5 } ));
     let stagePlatformMesh = new THREE.Mesh(stagePlatform, group.color);
     stagePlatformMesh.name = 'stagePlatform';
     stagePlatformMesh.material.transparent = true;
