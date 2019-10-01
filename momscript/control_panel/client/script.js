@@ -46,13 +46,13 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
             // assert(machine.axes matches point);
             // assert(machine.axes matches contour[0]);
             // TODO: can mouse over each line and visualize
-            // moveTo(point);
-            // setOrigin();
-            // penDown();
-            // contour.forEach((contourPoint) => {
-            //     moveTo(contourPoint);
-            // });
-            // penUp();
+            moveTo(point);
+            setOrigin();
+            penDown();
+            contour.forEach((contourPoint) => {
+                moveTo(contourPoint);
+            });
+            penUp();
         }
     });
     console.log(pen);
@@ -596,33 +596,9 @@ class Tool {
         let moveToBeginning = () => console.log('defined in inflate');
         Object.keys(this.actionsByName).forEach((actionName) => {
             let methodText = this.actionsByName[actionName].toString();
-            let methodTextUncommented = Tool.__removeComments(methodText);
-            let newMethod = eval(this.__injectScopeToMethodText(
-                                    methodTextUncommented));
+            let newMethod = eval(this.__injectScopeToMethodText(methodText));
             this[actionName] = newMethod;
         });
-    }
-
-    static __removeComments(text) {
-        let textCopy = text.slice();
-        let slashRegex = /\/\/.*\n/g;
-        let multiRegex = /\/\*(.|\n)*\*\//g;
-        let cullWithMatches = (text, matches) => {
-            let charsRemoved = 0;
-            let textCopy = text.slice();
-            matches.forEach((match) => {
-                let len = match[0].length;
-                let idx = match.index - charsRemoved;
-                textCopy = textCopy.slice(0, idx) + textCopy.slice(idx + len);
-                charsRemoved += len;
-            });
-            return textCopy;
-        };
-        let slashMatches = [...textCopy.matchAll(slashRegex)];
-        textCopy = cullWithMatches(textCopy, slashMatches)
-        let multiMatches = [...textCopy.matchAll(multiRegex)];
-        textCopy = cullWithMatches(textCopy, multiMatches)
-        return textCopy;
     }
 
     __injectScopeToMethodText(fnString) {
@@ -655,22 +631,30 @@ class Tool {
             }
             delete node[name];
         }
-        else if (this.machine[idenName] !== undefined) {
-            node.type = 'MemberExpression';
-            node.object = {
+        else if (this.machine.getDriveWithName(idenName) !== undefined) {
+            node.type = 'CallExpression',
+            node.callee = {
                 type: 'MemberExpression',
                 object: {
-                    type: 'ThisExpression'
+                    type: 'MemberExpression',
+                    object: {
+                        type: 'ThisExpression'
+                    },
+                    property: {
+                        type: 'Identifier',
+                        name: 'machine'
+                    }
                 },
                 property: {
                     type: 'Identifier',
-                    name: 'machine'
+                    name: 'getDriveWithName'
                 }
-            }
-            node.property = {
-                type: 'Identifier',
-                name: idenName
-            }
+            };
+            node.arguments = [{
+                type: 'Literal',
+                value: idenName,
+                raw: `"${idenName}"`
+            }];
             delete node[name];
         }
     }
@@ -694,57 +678,6 @@ class Tool {
                 }
             }
         }
-    }
-
-    __addThisToUnboundsInStatement(statement, args) {
-        let isKeyword = (iden) => {
-            return reservedWords.includes(iden);
-        };
-        let idenIsDrive = (iden) => {
-            return this.machine.driveNames.includes(iden);
-        };
-        let idenIsArg = (iden) => {
-            return args.includes(iden);
-        }
-        let statementCommented = (statement) => {
-            return statement.slice(0, 2) === '//';
-
-        };
-        let statementIsDecl = (statement) => {
-            let wordTokens = statement.split(' ');
-            return declarationWords.includes(wordTokens[0]);
-        };
-        let idenIsThisProperty = (iden) => {
-            return Object.keys(this.actionsByName).includes(iden)
-                    || this[iden] !== undefined;
-        };
-        if (!statementIsDecl(statement) && !statementCommented(statement)) {
-            let regex = /([a-zA-Z_$][a-zA-Z\d_\.$]*)/g;
-            let regexResults = [...statement.matchAll(regex)];
-            let numAppendedWords = 0;
-            regexResults.forEach((result) => {
-                let iden = result[0];
-                let index = result.index + numAppendedWords * 'this.'.length;
-                // NOTE: I wish there were a better way to do this, but I don't
-                // think there is
-                try {
-                    eval(iden);
-                } catch (e) {
-                    if (idenIsDrive(iden)) {
-                        statement = `${statement.slice(0, index)}`
-                                    + `this.machine.getDriveWithName('${iden}')`
-                                    + `${statement.slice(index + iden.length)}`;
-                    }
-                    else if (!isKeyword(iden) && !idenIsArg(iden)
-                                && idenIsThisProperty(iden)) {
-                        statement = `${statement.slice(0, index)}`
-                                    + `this.${statement.slice(index)}`;
-                    }
-                    numAppendedWords += 1;
-                }
-            });
-        }
-        return statement;
     }
 }
 
