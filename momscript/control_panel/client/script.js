@@ -1,6 +1,6 @@
 'use strict';
 
-const DEBUG_RENDER_ONCE = true;
+const DEBUG_RENDER_ONCE = false;
 
 let renderer;
 let scenes = [];
@@ -47,6 +47,8 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
             // TODO: can mouse over each line and visualize
             moveTo(point);
             setOrigin();
+            // $scale(contour); // dynamically scale and reposition contour
+                                // at run time using gui control
             penDown();
             contour.forEach((contourPoint) => {
                 console.log(moveTo(contourPoint));
@@ -757,8 +759,8 @@ let addLinearStage = (scene, camera) => {
 
 let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
     scene.add(group);
-    // destroyControl();
-    // generateControlForGroup(group, scene, camera);
+    destroyControl(scene);
+    generateControlForGroup(group, scene, camera);
 
     if (adjustPosition) {
         group.position.y = 50;
@@ -766,9 +768,43 @@ let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
         group.position.z = 35;
     }
 
-    // focus(group);
+    focus(group, scene);
 
 };
+
+let destroyControl = (scene) => {
+    let control = getControl(scene);
+    if (control !== undefined) {
+        control.detach();
+        scene.remove(control);
+    }
+};
+
+let focus = (object, scene) => {
+    scene.focusedStage = object;
+};
+
+let getFocus = (scene) => {
+    return scene.focusedStage;
+};
+
+let unfocus = (scene) => {
+    scene.focusedStage = null;
+};
+
+let getControl = (scene) => {
+    let control = scene.children.find(obj => obj instanceof THREE.TransformControls);
+    return control;
+};
+
+let swapControlMode = (scene) => {
+    scene.controlMode = (controlMode === "translate") ? "rotate" : "translate";
+    let controls = getControl(scene);
+    if (controls) {
+        controls.mode = scene.controlMode;
+    }
+};
+
 
 const geometryFactories = {
     stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2),
@@ -854,7 +890,7 @@ let generateControlForGroup = (group, scene, camera) => {
     let control = new THREE.TransformControls( camera, renderer.domElement );
     let offset = new THREE.Vector3();
     // let parentMods = gatherDeepParentStages(group);
-    control.mode = controlMode;
+    control.mode = scene.controlMode;
     control.addEventListener('change', (event) => {
         render();
     });
@@ -928,6 +964,7 @@ let makeScene = (domElement) => {
     scene.add(camera);
     scene.background = new THREE.Color(0x000000);
     scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
+    scene.controlMode = 'translate';
     return { scene, camera, undefined };
 }
 
@@ -1051,6 +1088,82 @@ const paneInflateFunctionsByName = {
         };
     }
 };
+
+//// PANE TOUCH EVENT LOGIC /////
+let onDocumentMouseDown = (event) => {
+//TODO: how to get scene? should be getStages(scene). Also this only works for
+// machine scenes. do scene type?
+    if (scenes.length !== 3) {
+        return;
+    }
+    let scene = scenes[2];
+    let candidates = getStages(scene).concat(getTool()).concat(getConnectionHandles());
+    let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
+    let isectControl;
+    if (getControl() === undefined) {
+        isectControl = [];
+    }
+    else {
+        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
+    }
+    let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
+    if (possibleHandles.length > 0) {
+        let currHandle = possibleHandles[0];
+        if (activeSelectionHandle === undefined) {
+            setActiveSelectionHandle(currHandle);
+        } else {
+            let fromModule;
+            if (activeSelectionHandle.object.parent.isTool) {
+                fromModule = getTool();
+            } else {
+                fromModule = findStageWithName(activeSelectionHandle.object.parent.stageName);
+            }
+            let fromPlace = activeSelectionHandle.object.place;
+            let toStage = findStageWithName(currHandle.object.parent.stageName);
+            let toPlace = currHandle.object.place;
+            connectParentChild(fromModule, fromPlace, toStage, toPlace);
+            releaseActiveSelectionHandle();
+        }
+    }
+    // Kludge: isectControl length >= 3 means we are clicking the controls
+    if (isectControl.length < 3 && isectGroups.length > 0) {
+        let stage = getObjectGroup(isectGroups[0].object);
+        // If we are holding shift, make a connection
+        if (event.shiftKey) {
+            if (getFocus().isTool) {
+                connectToolToStage(getFocus(), stage);
+            }
+            else {
+                let parentStageName = getStageName(getFocus());
+                let childStageName = getStageName(stage);
+                let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
+                if (!(place === 'platform' || place === 'right' || place === 'left')) {
+                    return;
+                }
+                connectParentChild(getFocus(), stage, place);
+            }
+        }
+
+        // Otherwise, just focus the new stage
+        destroyControl();
+        generateControlForGroup(stage);
+        focus(stage);
+    }
+    else if (isectControl.length < 3) {
+        unfocus();
+        destroyControl();
+    }
+};
+
+let onDocumentMouseUp = (event) => {
+
+};
+
+document.addEventListener('mousedown', onDocumentMouseDown, false);
+document.addEventListener('mouseup', onDocumentMouseUp, false);
+// document.addEventListener('keydown', onDocumentKeyDown, false);
+
+//// ANIMATION /////
 
 let cappedFramerateRequestAnimationFrame = (framerate) => {
     if (framerate === undefined) {
