@@ -435,6 +435,7 @@ class Machine {
             }
         });
 
+        let tool = addStraightTool(scene, camera);
         camera.zoom = 0.25;
         camera.updateProjectionMatrix();
         if (DEBUG_RENDER_ONCE) {
@@ -455,6 +456,7 @@ class Machine {
         let stageY = addLinearStage(scene, camera);
         stageY.rotateY(Math.PI / 2);
         stageY.position.y = 100;
+        let tool = addStraightTool(scene, camera);
 
         camera.zoom = 0.25;
         camera.updateProjectionMatrix();
@@ -757,6 +759,16 @@ let addLinearStage = (scene, camera) => {
     return group;
 };
 
+let addStraightTool = (scene, camera) => {
+    let group = _makeTool('straight', scene);
+    // _addConnectionHandlesToGroup(group);
+    _addGroupToScene(group, scene, camera);
+    if (DEBUG_RENDER_ONCE) {
+        render();
+    }
+    return group;
+};
+
 let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
     scene.add(group);
     destroyControl(scene);
@@ -883,6 +895,41 @@ let _makeStageInScene = (stageType, scene) => {
 
 }
 
+let _makeTool = (toolType, scene) => {
+    let group = new THREE.Group();
+    group.isTool = true;
+    let toolGeom;
+
+    if (toolType === 'angled') {
+        toolGeom = geometryFactories.angledTool();
+    }
+    else if (toolType === 'straight') {
+        toolGeom = geometryFactories.straightTool();
+    }
+
+    group.color = new THREE.MeshLambertMaterial({ color: 0xf90f5c });
+    let toolEdges = new THREE.EdgesGeometry(toolGeom);
+    let toolLines = new THREE.LineSegments(toolEdges, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 5 }));
+
+    group.add(toolLines);
+
+    let toolName = 'Pen';
+    group.toolName = toolName;
+
+    group.accepts = '(?)';
+
+    // Attempt to center on grid helper's axis
+    group.position.y = 50;
+    group.position.x = -35;
+    group.position.z = 35;
+
+    focus(group, scene);
+
+    scene.tool = group;
+    return group;
+};
+
+
 let generateControlForGroup = (group, scene, camera) => {
     // Add controls to the new mesh group
     let lastPosition = new THREE.Vector3();
@@ -932,6 +979,10 @@ let getStages = (scene) => {
     }).map((group) => {
         return getStagesFromGroup(group);
     }).flat();
+};
+
+let getTool = (scene) => {
+    return scene.tool;
 };
 
 /* SCENE RENDERING MAIN FUNCTIONS */
@@ -1090,6 +1141,7 @@ const paneInflateFunctionsByName = {
 };
 
 //// PANE TOUCH EVENT LOGIC /////
+
 let onDocumentMouseDown = (event) => {
 //TODO: how to get scene? should be getStages(scene). Also this only works for
 // machine scenes. do scene type?
@@ -1097,33 +1149,15 @@ let onDocumentMouseDown = (event) => {
         return;
     }
     let scene = scenes[2];
-    let candidates = getStages(scene).concat(getTool()).concat(getConnectionHandles());
-    let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
+    let camera = cameras[2];
+    let candidates = getStages(scene).concat(getTool(scene));
+    let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates, camera);
     let isectControl;
-    if (getControl() === undefined) {
+    if (getControl(scene) === undefined) {
         isectControl = [];
     }
     else {
-        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
-    }
-    let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
-    if (possibleHandles.length > 0) {
-        let currHandle = possibleHandles[0];
-        if (activeSelectionHandle === undefined) {
-            setActiveSelectionHandle(currHandle);
-        } else {
-            let fromModule;
-            if (activeSelectionHandle.object.parent.isTool) {
-                fromModule = getTool();
-            } else {
-                fromModule = findStageWithName(activeSelectionHandle.object.parent.stageName);
-            }
-            let fromPlace = activeSelectionHandle.object.place;
-            let toStage = findStageWithName(currHandle.object.parent.stageName);
-            let toPlace = currHandle.object.place;
-            connectParentChild(fromModule, fromPlace, toStage, toPlace);
-            releaseActiveSelectionHandle();
-        }
+        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl(scene)]);
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
@@ -1133,31 +1167,38 @@ let onDocumentMouseDown = (event) => {
             if (getFocus().isTool) {
                 connectToolToStage(getFocus(), stage);
             }
-            else {
-                let parentStageName = getStageName(getFocus());
-                let childStageName = getStageName(stage);
-                let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
-                if (!(place === 'platform' || place === 'right' || place === 'left')) {
-                    return;
-                }
-                connectParentChild(getFocus(), stage, place);
-            }
         }
 
         // Otherwise, just focus the new stage
-        destroyControl();
-        generateControlForGroup(stage);
-        focus(stage);
+        destroyControl(scene);
+        generateControlForGroup(stage, scene);
+        focus(stage, scene);
     }
     else if (isectControl.length < 3) {
-        unfocus();
-        destroyControl();
+        unfocus(scene);
+        destroyControl(scene);
     }
 };
 
 let onDocumentMouseUp = (event) => {
 
 };
+
+let _getIntersectsFromClickWithCandidates = (event, candidates, camera) => {
+    let vector = new THREE.Vector3();
+    let raycaster = new THREE.Raycaster();
+    let dir = new THREE.Vector3();
+
+    vector.set((event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1, -1); // z = - 1 important!
+    vector.unproject(camera);
+    dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
+    raycaster.set(vector, dir);
+
+    let searchRecursively = true;
+    return raycaster.intersectObjects(candidates, searchRecursively);
+};
+
 
 document.addEventListener('mousedown', onDocumentMouseDown, false);
 document.addEventListener('mouseup', onDocumentMouseUp, false);
