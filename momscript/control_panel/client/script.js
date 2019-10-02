@@ -49,7 +49,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
             setOrigin();
             penDown();
             contour.forEach((contourPoint) => {
-                moveTo(contourPoint);
+                console.log(moveTo(contourPoint));
             });
             penUp();
         }
@@ -57,7 +57,8 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     console.log(pen);
     pen.penUp(42);
     let point = {x: 0, y: 0};
-    pen.drawContourAtPoint(layers[0], point);
+    pen.drawContourAtPoint(layers[10][0], point);
+    // debugger;
 }).then(() => {
     // stuff after the plotting finishes
 });
@@ -579,7 +580,11 @@ class Tool {
     }
 
     moveTo(point) {
-        console.log('Not yet implemented.')
+        let axisValStrs = Object.keys(point).map((axisName) => {
+            return `${axisName.toUpperCase()}${point[axisName]}`;
+        });
+        return `G0 ${axisValStrs.join(' ')}`;
+        //TODO: returned or sent?
     }
 
     setOrigin() {
@@ -611,8 +616,8 @@ class Tool {
                     Array.prototype.push.call(idenNodes, node);
                 }
             });
-            idenNodes.forEach((node) => this.__rebindNodeIden(node));
         });
+        idenNodes.forEach((node) => this.__rebindNodeIden(node));
         return escodegen.generate(fnAst);
     }
 
