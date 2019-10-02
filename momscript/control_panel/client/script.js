@@ -35,7 +35,6 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     plotter.visualizeMachine();
     console.log(plotter.getDriveWithName('ToolUpDown'));
     let pen = new Tool(plotter, {
-        // NOTE: scoping
         'penUp' : (bar) => {
             moveToBeginning(ToolUpDown);
         },
@@ -58,7 +57,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     console.log(pen);
     pen.penUp(42);
     let point = {x: 0, y: 0};
-    return pen.drawContourAtPoint(layers[0], point);
+    pen.drawContourAtPoint(layers[0], point);
 }).then(() => {
     // stuff after the plotting finishes
 });
@@ -606,12 +605,14 @@ class Tool {
         let params = fnAst.body[0].expression.params;
         let bodyStatements = fnAst.body[0].expression.body.body;
         let idenNodes = [];
-        this.__traverse(bodyStatements[0], (node) => {
-            if (node.type === 'Identifier') {
-                Array.prototype.push.call(idenNodes, node);
-            }
+        bodyStatements.forEach((statement) => {
+            this.__traverse(statement, (node) => {
+                if (node.type === 'Identifier') {
+                    Array.prototype.push.call(idenNodes, node);
+                }
+            });
+            idenNodes.forEach((node) => this.__rebindNodeIden(node));
         });
-        idenNodes.forEach((node) => this.__rebindNodeIden(node));
         return escodegen.generate(fnAst);
     }
 
