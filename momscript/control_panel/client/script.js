@@ -12,9 +12,10 @@ let activePaneIndex = 0;
 let mesh, lines, geometry;
 let tool;
 let programText;
-let clock;
+let clock = new THREE.Clock();
 let mixers = [];
-let EPSILON = 0.001;
+const EPSILON = 0.001;
+const ANIMATION_TIMESCALE = 2;
 
 const exampleProgramText = `'use strict';
 loadStl('assets/pikachu.stl').then((meshGeomPair) => {
@@ -63,6 +64,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     // debugger;
 }).then(() => {
     // stuff after the plotting finishes
+    // $controlPad();
 });
 `;
 
@@ -771,8 +773,8 @@ let addStraightTool = (scene, camera) => {
 
 let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
     scene.add(group);
-    destroyControl(scene);
-    generateControlForGroup(group, scene, camera);
+    // destroyControl(scene);
+    // generateControlForGroup(group, scene, camera);
 
     if (adjustPosition) {
         group.position.y = 50;
@@ -780,7 +782,7 @@ let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
         group.position.z = 35;
     }
 
-    focus(group, scene);
+    // focus(group, scene);
 
 };
 
@@ -942,6 +944,7 @@ let generateControlForGroup = (group, scene, camera) => {
         render();
     });
     control.addEventListener('mouseDown', (event) => {
+        console.log('mouse down on control');
         lastPosition.copy(group.position);
     });
     control.addEventListener('objectChange', (event) => {
@@ -1152,12 +1155,14 @@ let onDocumentMouseDown = (event) => {
     let camera = cameras[2];
     let candidates = getStages(scene).concat(getTool(scene));
     let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates, camera);
+    console.log(isectGroups);
     let isectControl;
     if (getControl(scene) === undefined) {
         isectControl = [];
     }
     else {
-        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl(scene)]);
+        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl(scene)], camera);
+        console.log(isectControl);
     }
     // Kludge: isectControl length >= 3 means we are clicking the controls
     if (isectControl.length < 3 && isectGroups.length > 0) {
@@ -1200,11 +1205,53 @@ let _getIntersectsFromClickWithCandidates = (event, candidates, camera) => {
 };
 
 
-document.addEventListener('mousedown', onDocumentMouseDown, false);
-document.addEventListener('mouseup', onDocumentMouseUp, false);
+// TODO: doesn't work with small panes--leave for now
+// document.addEventListener('mousedown', onDocumentMouseDown, false);
+// document.addEventListener('mouseup', onDocumentMouseUp, false);
 // document.addEventListener('keydown', onDocumentKeyDown, false);
 
 //// ANIMATION /////
+
+let animateObjToPosition = (obj, position) => {
+    let mixerClipPair = makeAnimateObjToPositionMixerClipPair(obj, position);
+    let mixer = mixerClipPair[0];
+    let clip = mixerClipPair[1];
+    let action = mixer.clipAction(clip);
+    mixers.push(mixer);
+    action.loop = THREE.LoopOnce;
+    action.timeScale = ANIMATION_TIMESCALE;
+    action.play();
+
+    return mixerClipPair;
+};
+
+let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
+    // TODO: check if an object is already being animated, if so, take existing
+    // KF into account and add it to the new mixer-action.
+    // Don't have time to currently implement this, so come back to it.
+    // mixers.forEach((mixer) => {
+    //     let mixerObj = mixer.getRoot();
+    //     if (mixerObj === obj) {
+    //         // TODO
+    //     }
+    // });
+
+    let mixer = new THREE.AnimationMixer(obj);
+    mixer.addEventListener('finished', (event) => {
+        mixer.stopAllAction();
+        let idx = mixers.indexOf(mixer);
+        if (idx !== -1) {
+            mixers.splice(idx, 1);
+        }
+        obj.position.set(newPos.x, newPos.y, newPos.z);
+    });
+    let currPos = obj.position;
+    let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
+                        [currPos.x, currPos.y, currPos.z,
+                         newPos.x, newPos.y, newPos.z], THREE.InterpolateLinear);
+    let clip = new THREE.AnimationClip('Action', 2, [ positionKF ]);
+    return [mixer, clip];
+};
 
 let cappedFramerateRequestAnimationFrame = (framerate) => {
     if (framerate === undefined) {
@@ -1218,6 +1265,7 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
 
 let render = (time) => {
     time *= 0.001;
+    updateAnimationMixers();
 
     for (const {elem, fn, ctx} of sceneElements) {
         // get the viewport relative position opf this element
@@ -1263,6 +1311,13 @@ let render = (time) => {
     if (!DEBUG_RENDER_ONCE) {
         requestAnimationFrame(render);
     }
+};
+
+let updateAnimationMixers = () => {
+    let deltaSeconds = clock.getDelta();
+    mixers.forEach((mixer) => {
+        mixer.update(deltaSeconds);
+    });
 };
 
 let main = () => {
