@@ -57,15 +57,37 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
             penUp();
         }
     });
-    console.log(pen);
-    pen.penUp(42);
+    let connection = new Connection(pen, true);
     let point = {x: 0, y: 0};
-    pen.drawContourAtPoint(layers[1][0], point);
-    debugger;
-}).then(() => {
-    // stuff after the plotting finishes
-    // $controlPad();
-});
+    let testContour = layers[1][0];
+    return connection.execute(() => {
+        // Line below needs rewriting to generate chained movement commands...
+        // pen.drawContourAtPoint(testContour, point);
+        // What I would WANT to write
+        // anim(...)
+        // anim(...)
+        // anim(...)
+        // assuming that anim primitive returns a promise, which we should enforce
+        return new Promise(resolve => { animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
+            .then(() => {
+                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 20, 0))
+            })
+            .then(() => {
+                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 20, 0))
+            })
+            .then(() => {
+                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 0, 0))
+            })
+            .then(() => {
+                resolve('secret message');
+            });
+        });
+    }).then((res) => {
+        // stuff after the plotting finishes
+        // $controlPad();
+        console.log('Post plot');
+    });
+})
 `;
 
 const defaultStageNames = [
@@ -693,6 +715,28 @@ class Tool {
     }
 }
 
+/* CONNECTION */
+
+class Connection {
+    constructor(tool, isVirtual, port) {
+        this.tool = tool;
+        this.isVirtual = isVirtual;
+        this.port = port || -1;
+    }
+
+    // TODO: execFn only nullary? the style we passed in yeah.
+    // this doesn't get around the fact that execFn needs to return
+    // a promise. will want to rewrite "synch" code in exec fn to do this
+    execute(execFn) {
+        return new Promise(resolve => {
+            return execFn().then(() => {
+                resolve()
+            });
+        });
+    }
+}
+
+
 /* The following are generated as parts of the AST */
 
 class Drive {
@@ -1230,7 +1274,7 @@ let animateObjToPosition = (obj, position) => {
 };
 
 let testChainAnimate = () => {
-    animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
+    return new Promise(resolve => { animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
         .then(() => {
             return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 20, 0))
         })
@@ -1239,7 +1283,11 @@ let testChainAnimate = () => {
         })
         .then(() => {
             return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 0, 0))
+        })
+        .then(() => {
+            resolve('secret message');
         });
+    });
 }
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
