@@ -60,8 +60,8 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     console.log(pen);
     pen.penUp(42);
     let point = {x: 0, y: 0};
-    pen.drawContourAtPoint(layers[10][0], point);
-    // debugger;
+    pen.drawContourAtPoint(layers[1][0], point);
+    debugger;
 }).then(() => {
     // stuff after the plotting finishes
     // $controlPad();
@@ -1213,17 +1213,34 @@ let _getIntersectsFromClickWithCandidates = (event, candidates, camera) => {
 //// ANIMATION /////
 
 let animateObjToPosition = (obj, position) => {
-    let mixerClipPair = makeAnimateObjToPositionMixerClipPair(obj, position);
-    let mixer = mixerClipPair[0];
-    let clip = mixerClipPair[1];
-    let action = mixer.clipAction(clip);
-    mixers.push(mixer);
-    action.loop = THREE.LoopOnce;
-    action.timeScale = ANIMATION_TIMESCALE;
-    action.play();
-
-    return mixerClipPair;
+    return new Promise(resolve => {
+        let mixerClipPair = makeAnimateObjToPositionMixerClipPair(obj, position);
+        let mixer = mixerClipPair[0];
+        let clip = mixerClipPair[1];
+        let action = mixer.clipAction(clip);
+        mixers.push(mixer);
+        mixer.addEventListener('finished', (e) => {
+            console.log(`Move to ${position.x}, ${position.y} finished.`);
+            resolve(mixerClipPair);
+        });
+        action.loop = THREE.LoopOnce;
+        action.timeScale = ANIMATION_TIMESCALE;
+        action.play();
+    });
 };
+
+let testChainAnimate = () => {
+    animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
+        .then(() => {
+            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 20, 0))
+        })
+        .then(() => {
+            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 20, 0))
+        })
+        .then(() => {
+            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 0, 0))
+        });
+}
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
     // TODO: check if an object is already being animated, if so, take existing
