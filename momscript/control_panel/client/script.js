@@ -60,28 +60,19 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let connection = new Connection(pen, true);
     let point = {x: 0, y: 0};
     let testContour = layers[1][0];
+    pen.setConnection(connection);
     return connection.execute(() => {
-        // Line below needs rewriting to generate chained movement commands...
-        // pen.drawContourAtPoint(testContour, point);
-        // What I would WANT to write
-        // anim(...)
-        // anim(...)
-        // anim(...)
-        // assuming that anim primitive returns a promise, which we should enforce
-        return new Promise(resolve => { animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
+        // TODO: shouldn't have to prefix with pen
+        return pen.moveTo({x: 0, y: 0})
             .then(() => {
-                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 20, 0))
+                return pen.moveTo({x: 100, y: 0});
             })
             .then(() => {
-                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 20, 0))
+                return pen.moveTo({x: 100, y: 100});
             })
             .then(() => {
-                return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 0, 0))
-            })
-            .then(() => {
-                resolve('secret message');
+                return pen.moveTo({x: 0, y: 100});
             });
-        });
     }).then((res) => {
         // stuff after the plotting finishes
         // $controlPad();
@@ -597,6 +588,10 @@ class Tool {
         this.__inflateActionsToMethods();
     }
 
+    setConnection(connection) {
+        this.connection = connection
+    }
+
     /** Base actions **/
 
     moveToBeginning(drive) {
@@ -611,8 +606,21 @@ class Tool {
         let axisValStrs = Object.keys(point).map((axisName) => {
             return `${axisName.toUpperCase()}${point[axisName]}`;
         });
-        return `G0 ${axisValStrs.join(' ')}`;
-        //TODO: returned or sent?
+        let gcodeLine = `G0 ${axisValStrs.join(' ')}`;
+        return new Promise((resolve) => {
+            if (this.connection && this.connection.isVirtual) {
+                let position = new THREE.Vector3(point.x, point.y, point.z);
+                console.log(gcodeLine);
+                return animateObjToPosition(getTool(scenes[2]), position)
+                    .then(() => resolve());
+            }
+            else if (this.connection && !this.connection.isVirtual) {
+                // Send GCode over serial, get confirmation, resolve
+            }
+            else {
+                console.error('No connection.');
+            }
+        });
     }
 
     setOrigin() {
@@ -722,6 +730,10 @@ class Connection {
         this.tool = tool;
         this.isVirtual = isVirtual;
         this.port = port || -1;
+    }
+
+    connect() {
+        this.tool.setConnection(this);
     }
 
     // TODO: execFn only nullary? the style we passed in yeah.
