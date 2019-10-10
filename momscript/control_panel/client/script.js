@@ -632,8 +632,6 @@ class Tool {
      * 'this' gets bound to the Tool object in the closure.
      */
     __inflateActionsToMethods() {
-        this.foo = () => console.log(this);
-        let moveToBeginning = () => console.log('defined in inflate');
         Object.keys(this.actionsByName).forEach((actionName) => {
             let methodText = this.actionsByName[actionName].toString();
             let newMethod = eval(LangUtil.injectScopeToMethodText(methodText, this));
