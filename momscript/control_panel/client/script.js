@@ -60,7 +60,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let connection = new Connection(pen, true);
     let point = {x: 0, y: 0};
     let testContour = layers[1][0];
-    pen.setConnection(connection);
+    connection.connect();
     return connection.execute(() => {
         // TODO: shouldn't have to prefix with pen
         return pen.moveTo({x: 0, y: 0})
@@ -588,7 +588,7 @@ class Tool {
         this.__inflateActionsToMethods();
     }
 
-    setConnection(connection) {
+    _setConnection(connection) {
         this.connection = connection
     }
 
@@ -733,7 +733,7 @@ class Connection {
     }
 
     connect() {
-        this.tool.setConnection(this);
+        this.tool._setConnection(this);
     }
 
     // TODO: execFn only nullary? the style we passed in yeah.
