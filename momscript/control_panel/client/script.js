@@ -636,33 +636,53 @@ class Tool {
         let moveToBeginning = () => console.log('defined in inflate');
         Object.keys(this.actionsByName).forEach((actionName) => {
             let methodText = this.actionsByName[actionName].toString();
-            let newMethod = eval(this.__injectScopeToMethodText(methodText));
+            let newMethod = eval(LangUtil.injectScopeToMethodText(methodText, this));
             this[actionName] = newMethod;
         });
     }
 
-    __injectScopeToMethodText(fnString) {
+}
+/* LANGUAGE UTILS */
+
+class LangUtil {
+
+    /**
+     * Rebinds MoMScript calls with missing scope to valid Javascript
+     *
+     * @param {string} fnString - the string representing the function statement
+     * @param {Object} rebindObj - the Object representing the keyword this that
+     *                             will be rebound into the function
+     * @returns {string} the function text with necessary expressions rebound
+     */
+    static injectScopeToMethodText(fnString, rebindObj) {
         let fnAst = esprima.parse(fnString, { range : true });
         let params = fnAst.body[0].expression.params;
         let bodyStatements = fnAst.body[0].expression.body.body;
         let idenNodes = [];
         bodyStatements.forEach((statement) => {
-            this.__traverse(statement, (node) => {
+            LangUtil.traverse(statement, (node) => {
                 if (node.type === 'Identifier') {
                     Array.prototype.push.call(idenNodes, node);
                 }
             });
         });
-        idenNodes.forEach((node) => this.__rebindNodeIden(node));
+        idenNodes.forEach((node) => LangUtil.rebindNodeIden(node, rebindObj));
         return escodegen.generate(fnAst);
     }
 
     /**
-     * Append THIS or THIS.MACHINE or nothing to all identifiers.
-     **/
-    __rebindNodeIden(node) {
+     * Given an AST node, look up whether we can rebind expressions in the node
+     * based on whether valid fields exist in rebindObj, and if so, create a new
+     * node representing rebound statements.
+     *
+     * @param {Object} node - the AST node
+     * @param {Object} rebindObj - the Object representing the keyword this that
+     *                             will be rebound into the function
+     * @returns {undefined}
+     */
+    static rebindNodeIden(node, rebindObj) {
         let idenName = node.name;
-        if (this[idenName] !== undefined) {
+        if (rebindObj[idenName] !== undefined) {
             node.type = 'MemberExpression';
             node.object = {
                 type: 'ThisExpression'
@@ -673,7 +693,7 @@ class Tool {
             }
             delete node[name];
         }
-        else if (this.machine.getDriveWithName(idenName) !== undefined) {
+        else if (rebindObj.machine.getDriveWithName(idenName) !== undefined) {
             node.type = 'CallExpression',
             node.callee = {
                 type: 'MemberExpression',
@@ -701,7 +721,7 @@ class Tool {
         }
     }
 
-    __traverse(node, func) {
+    static traverse(node, func) {
         if (node !== undefined) {
             func(node);
         }
@@ -712,10 +732,10 @@ class Tool {
 
                     if (Array.isArray(child)) {
                         child.forEach((node) => {
-                            this.__traverse(node, func);
+                            LangUtil.traverse(node, func);
                         });
                     } else {
-                        this.__traverse(child, func);
+                        LangUtil.traverse(child, func);
                     }
                 }
             }
