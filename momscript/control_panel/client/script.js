@@ -62,17 +62,10 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let testContour = layers[1][0];
     connection.connect();
     return connection.execute(() => {
-        // TODO: shouldn't have to prefix with pen
-        return pen.moveTo({x: 0, y: 0})
-            .then(() => {
-                return pen.moveTo({x: 100, y: 0});
-            })
-            .then(() => {
-                return pen.moveTo({x: 100, y: 100});
-            })
-            .then(() => {
-                return pen.moveTo({x: 0, y: 100});
-            });
+        moveTo({x: 0, y: 0});
+        moveTo({x: 100, y: 0});
+        moveTo({x: 100, y: 100});
+        moveTo({x: 0, y: 100});
     }).then((res) => {
         // stuff after the plotting finishes
         // $controlPad();
@@ -664,11 +657,36 @@ class LangUtil {
                 }
             });
         });
-        idenNodes.forEach((node) => LangUtil.rebindNodeIden(node, rebindObj));
+        if (Tool.prototype.isPrototypeOf(rebindObj)) {
+            idenNodes.forEach((node) =>
+                LangUtil.rebindNodeIdenForAction(node, rebindObj));
+        }
+        return escodegen.generate(fnAst);
+    }
+
+    static rewriteExecFn(fnString) {
+        let fnAst = esprima.parse(fnString, { range : true });
+        let topFnExpression = fnAst.body[0].expression;
+        topFnExpression.async = true;
+        let bodyStatements = fnAst.body[0].expression.body.body;
+        let innerCallNodes = [];
+        bodyStatements.forEach((statement) => {
+            LangUtil.traverse(statement, (node) => {
+                if (node.type === 'ExpressionStatement'
+                        && node.expression.type === 'CallExpression') {
+                    Array.prototype.push.call(innerCallNodes, node);
+                }
+            });
+        });
+        innerCallNodes.forEach((node) => {
+            LangUtil.addScopeToExecCall(node);
+            LangUtil.makeExecCallAwait(node);
+        });
         return escodegen.generate(fnAst);
     }
 
     /**
+     * For rebinding nodes in Tool actions.
      * Given an AST node, look up whether we can rebind expressions in the node
      * based on whether valid fields exist in rebindObj, and if so, create a new
      * node representing rebound statements.
@@ -678,7 +696,7 @@ class LangUtil {
      *                             will be rebound into the function
      * @returns {undefined}
      */
-    static rebindNodeIden(node, rebindObj) {
+    static rebindNodeIdenForAction(node, rebindObj) {
         let idenName = node.name;
         if (rebindObj[idenName] !== undefined) {
             node.type = 'MemberExpression';
@@ -719,7 +737,43 @@ class LangUtil {
         }
     }
 
+    static makeExecCallAwait(node) {
+        let origCallExpression = node.expression;
+        node.expression = {
+            type: 'AwaitExpression',
+            argument: origCallExpression
+        }
+    }
+
+    static addScopeToExecCall(node) {
+        let origFnName = node.expression.callee.name;
+        let callExpr = node.expression;
+        callExpr.type = 'CallExpression',
+        callExpr.callee = {
+            type: 'MemberExpression',
+            object: {
+                type: 'MemberExpression',
+                object: {
+                    type: 'ThisExpression'
+                },
+                property: {
+                    type: 'Identifier',
+                    name: 'tool'
+                }
+            },
+            property: {
+                type: 'Identifier',
+                name: `${origFnName}`
+            }
+        };
+    }
+
     static traverse(node, func) {
+        // TODO: don't rebind identifiers in properties, BUT still need to rebind
+        // identifiers on the RHS of :
+        if (node.type == 'Property') {
+            return;
+        }
         if (node !== undefined) {
             func(node);
         }
@@ -758,11 +812,19 @@ class Connection {
     // this doesn't get around the fact that execFn needs to return
     // a promise. will want to rewrite "synch" code in exec fn to do this
     execute(execFn) {
+        // let inflatedExecFn = execFn;
+        let inflatedExecFn = this.__inflateExecFn(execFn);
         return new Promise(resolve => {
-            return execFn().then(() => {
+            return inflatedExecFn().then(() => {
                 resolve()
             });
         });
+    }
+
+    __inflateExecFn(execFn) {
+        let fnText = execFn.toString();
+        let newFnText = LangUtil.rewriteExecFn(fnText);
+        return eval(newFnText);
     }
 }
 
