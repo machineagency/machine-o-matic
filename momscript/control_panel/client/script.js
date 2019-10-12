@@ -442,6 +442,17 @@ let visualizePoints = (isectPts) => {
 
 class Machine {
     constructor(kvs) {
+        if (kvs['preset'] !== undefined) {
+            if (kvs['preset'] === 'axidraw') {
+                kvs['linear Axis(x)'] = 'Motor(x1) @ step -> 0.03048 mm, Motor(x2) @ step -> 0.03048 mm';
+                kvs['linear Axis(y)'] = 'Motor(y) @ step -> ??? mm';
+                kvs['binar ToolUpDown'] = 'Motor(t)';
+                delete kvs['preset'];
+            }
+            else {
+                console.error('Unrecognized machine preset.');
+            }
+        }
         this._root = {
             tools: [],
             drives: [],
