@@ -76,8 +76,35 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 
 const uistProgramText = `'use strict';
 let main = async () => {
+    // TODO: load several small SVGs to choose from
     let svg = await loadSvg('assets/logo.svg');
     drawSvgToPane(svg);
+    let plotter = new Machine({ preset: 'axidraw' });
+    let pen = new Tool(plotter, {
+        'penUp' : () => {
+            moveToBeginning(ToolUpDown);
+        },
+        'penDown' : () => {
+            moveToEnd(ToolUpDown);
+        },
+        'drawContour' : (contour) => {
+            moveTo(contour[0]);
+            penDown();
+            sendContour(contour);
+            penUp();
+        }
+    });
+    plotter.visualizeMachine();
+    //let projector = new Projector();
+    let connection = new Connection(pen, true);
+    connection.connect();
+    // TODO: able to run this without rerunning rest of code
+    // e.g. executeOnce vs executeLeaveOpen or $ annotation
+    return connection.execute((drawing) => {
+        //projector.project(drawing);
+        //$svg.scaleAndTranslate();
+        drawContour(drawing);
+    }, [svg]);
 };
 main();
 `;
