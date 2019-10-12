@@ -700,6 +700,10 @@ class Tool {
         });
     }
 
+    sendContour(contour) {
+        console.log('Not yet implemented.')
+    }
+
     setOrigin() {
         console.log('Not yet implemented.')
     }
