@@ -899,11 +899,11 @@ class Connection {
     // TODO: execFn only nullary? the style we passed in yeah.
     // this doesn't get around the fact that execFn needs to return
     // a promise. will want to rewrite "synch" code in exec fn to do this
-    execute(execFn) {
+    execute(execFn, args) {
         // let inflatedExecFn = execFn;
         let inflatedExecFn = this.__inflateExecFn(execFn);
         return new Promise(resolve => {
-            return inflatedExecFn().then(() => {
+            return inflatedExecFn.apply(this, args).then(() => {
                 resolve()
             });
         });
