@@ -17,7 +17,7 @@ let mixers = [];
 const EPSILON = 0.001;
 const ANIMATION_TIMESCALE = 2;
 
-const exampleProgramText = `'use strict';
+const pikachuProgramText = `'use strict';
 loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let mesh = meshGeomPair[0];
     let geometry = meshGeomPair[1];
@@ -74,6 +74,16 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 })
 `;
 
+const uistProgramText = `'use strict';
+// So I could sugar in the async IIFE but like... Do I want to
+// redefine javascript execution semantics for the entire program
+// without writing it in explicitly?
+(async () => {
+    let svg = await loadSvg('assets/logo.svg');
+    console.log(svg);
+})();
+`;
+
 const defaultStageNames = [
     "sheep", "spinny", "rocket", "ike", "stagezilla", "unicorn", "mustache",
     "plant", "rutabaga", "turnip", "queen", "cedar", "douglas", "quaternion",
@@ -123,6 +133,22 @@ THREE.Vector3.prototype.approxEqual = function(v) {
     return Math.abs(v.x - this.x) <= EPSILON
            && Math.abs(v.y - this.y) <= EPSILON
            && Math.abs(v.z - this.z) <= EPSILON;
+};
+
+/* 2D DRAWING STUFF */
+
+let loadSvg = async (filepath) => {
+    let loader = new THREE.SVGLoader();
+    let isItGeom = await (() => {
+        return new Promise((resolve) => {
+            loader.load(filepath, (svgGeom) => {
+                resolve(svgGeom);
+            }, undefined, (errorMsg) => {
+                console.log(errorMsg);
+            });
+        });
+    })();
+    return isItGeom;
 };
 
 /* MESH STUFF */
@@ -1479,7 +1505,7 @@ let updateAnimationMixers = () => {
 
 let main = () => {
     let programTextElem = document.querySelector('.program-container');
-    programTextToDivs(exampleProgramText);
+    programTextToDivs(uistProgramText);
     programTextElem.spellcheck = false;
     programTextElem.focus();
     programTextElem.blur();
