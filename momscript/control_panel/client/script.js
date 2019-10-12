@@ -75,13 +75,11 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 `;
 
 const uistProgramText = `'use strict';
-// So I could sugar in the async IIFE but like... Do I want to
-// redefine javascript execution semantics for the entire program
-// without writing it in explicitly?
-(async () => {
+let main = async () => {
     let svg = await loadSvg('assets/logo.svg');
-    console.log(svg);
-})();
+    drawSvgToPane(svg);
+};
+main();
 `;
 
 const defaultStageNames = [
@@ -149,6 +147,20 @@ let loadSvg = async (filepath) => {
         });
     })();
     return isItGeom;
+};
+
+let drawSvgToPane = (svg) => {
+    addPaneDomWithType('blank');
+    let group = new THREE.Group();
+    svg.paths.forEach((path) => {
+        let shapes = path.toShapes(true);
+        shapes.forEach((shape) => {
+            let geom = new THREE.ShapeBufferGeometry(shape);
+            let mesh = new THREE.Mesh(geom, MESH_MATERIAL);
+            group.add(mesh);
+        });
+    });
+    scenes[activePaneIndex].add(group);
 };
 
 /* MESH STUFF */
@@ -315,6 +327,13 @@ class Slicer {
         return contoursPerLayer;
     };
 
+    /**
+     * Creates a new pane and draws contours.
+     *
+     * @param {Vector3[][]} contours - An array of layers, where each layer is
+     *                                 an array of Vector3 points.
+     * @return {void}
+     */
     visualizeContours(contours) {
         addPaneDomWithType('blank');
         let layerHeightShapesPairs = contours.map((contours) => {
@@ -1506,6 +1525,7 @@ let updateAnimationMixers = () => {
 let main = () => {
     let programTextElem = document.querySelector('.program-container');
     programTextToDivs(uistProgramText);
+    // programTextToDivs(pikachuProgramText);
     programTextElem.spellcheck = false;
     programTextElem.focus();
     programTextElem.blur();
