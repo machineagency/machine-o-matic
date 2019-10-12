@@ -183,8 +183,9 @@ let drawSvgToPane = (svg) => {
         let shapes = path.toShapes(true);
         shapes.forEach((shape) => {
             let geom = new THREE.ShapeBufferGeometry(shape);
-            let mesh = new THREE.Mesh(geom, MESH_MATERIAL);
-            group.add(mesh);
+            let edgeGeom = new THREE.EdgesGeometry(geom);
+            let segments = new THREE.LineSegments(edgeGeom, LINE_MATERIAL);
+            group.add(segments);
         });
     });
     scenes[activePaneIndex].add(group);
