@@ -200,6 +200,31 @@ let drawSvgToPane = (svg) => {
     scenes[activePaneIndex].add(group);
 };
 
+// TODO: change SVG to standard contour format, posible with edgeGeom
+let convertSvgToContours = (svg) => {
+    let contours = [];
+    svg.paths.forEach((path) => {
+        let shapes = path.toShapes(true);
+        let layerContours = [];
+        shapes.forEach((shape) => {
+            let currContour = [];
+            let geom = new THREE.ShapeBufferGeometry(shape);
+            let edgeGeom = new THREE.EdgesGeometry(geom);
+            let points32Matrix = edgeGeom.attributes.position;
+            [...Array(32).keys()].forEach((pointIdx) => {
+                let point = new THREE.Vector3(
+                                    points32Matrix.getX(pointIdx),
+                                    points32Matrix.getY(pointIdx),
+                                    0);
+                currContour.push(point);
+            });
+            layerContours.push(currContour);
+        });
+        contours.push(layerContours);
+    });
+    return contours;
+}
+
 /* MESH STUFF */
 
 class ModelMesh {
