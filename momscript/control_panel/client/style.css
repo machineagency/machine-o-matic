@@ -38,8 +38,8 @@ button {
 
 *[data-diagram] {
     display: inline-block;
-    width: 10em;
-    height: 6em;
+    width: 12em;
+    height: 8em;
     border: 1px solid #ffffff;
 }
 
