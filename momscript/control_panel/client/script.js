@@ -79,6 +79,8 @@ let main = async () => {
     // TODO: load several small SVGs to choose from
     let svg = await loadSvg('assets/logo.svg');
     drawSvgToPane(svg);
+    drawSvgToPane(svg);
+    let contours = convertSvgToContours(svg);
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
         'penUp' : () => {
@@ -87,12 +89,19 @@ let main = async () => {
         'penDown' : () => {
             moveToEnd(ToolUpDown);
         },
-        'drawContour' : (contour) => {
-            moveTo(contour[0]);
+        'drawContour' : (async (contour) => {
+            await moveTo(contour[0]);
+            await moveTo(contour[1]);
+            await moveTo(contour[2]);
+            await moveTo(contour[3]);
+            await moveTo(contour[4]);
+            await moveTo(contour[5]);
+            await moveTo(contour[6]);
+            await moveTo(contour[7]);
             penDown();
             sendContour(contour);
             penUp();
-        }
+        })
     });
     plotter.visualizeMachine();
     //let projector = new Projector();
@@ -104,7 +113,7 @@ let main = async () => {
         //projector.project(drawing);
         //$svg.scaleAndTranslate();
         drawContour(drawing);
-    }, [svg]);
+    }, [contours[0][0]]);
 };
 main();
 `;
