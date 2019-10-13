@@ -1262,7 +1262,7 @@ let renderWithAnimate = () => {
     renderer.render(scene, camera);
 };
 
-let makeScene = (domElement) => {
+let makeScene3d = (domElement) => {
     let scene = new THREE.Scene();
     let aspect = domElement.offsetWidth / domElement.offsetHeight;
     let viewSize = 50;
@@ -1277,8 +1277,13 @@ let makeScene = (domElement) => {
     scene.background = new THREE.Color(0x000000);
     scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
     scene.controlMode = 'translate';
-    return { scene, camera, undefined };
+    let controls = new THREE.OrbitControls(camera, domElement);
+    scene.controls = controls
+    return { scene, camera, controls };
 }
+
+let makeScene2d = (domElement) => {
+};
 
 let addScene = (elem, fn) => {
     const ctx = document.createElement('canvas').getContext('2d');
