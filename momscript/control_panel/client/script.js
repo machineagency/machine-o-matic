@@ -77,7 +77,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 const uistProgramText = `'use strict';
 let main = async () => {
     // TODO: load several small SVGs to choose from
-    let svg = await loadSvg('assets/logo.svg');
+    let svg = await loadSvg('assets/u.svg');
     drawSvgToPane(svg);
     let contours = convertSvgToContours(svg);
     visualizeContours2d(contours);
@@ -206,18 +206,11 @@ let convertSvgToContours = (svg) => {
         let shapes = path.toShapes(true);
         let layerContours = [];
         shapes.forEach((shape) => {
-            let currContour = [];
-            let geom = new THREE.ShapeBufferGeometry(shape);
-            let edgeGeom = new THREE.EdgesGeometry(geom);
-            let points32Matrix = edgeGeom.attributes.position;
-            [...Array(32).keys()].forEach((pointIdx) => {
-                let point = new THREE.Vector3(
-                                    points32Matrix.getX(pointIdx),
-                                    0,
-                                    points32Matrix.getY(pointIdx))
-                currContour.push(point);
+            let points2d = shape.getPoints();
+            let points3d = points2d.map((point) => {
+                return new THREE.Vector3(point.x, 0, point.y);
             });
-            layerContours.push(currContour);
+            layerContours.push(points3d);
         });
         contours.push(layerContours);
     });
