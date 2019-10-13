@@ -79,8 +79,8 @@ let main = async () => {
     // TODO: load several small SVGs to choose from
     let svg = await loadSvg('assets/logo.svg');
     drawSvgToPane(svg);
-    drawSvgToPane(svg);
     let contours = convertSvgToContours(svg);
+    visualizeContours2d(contours);
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
         'penUp' : () => {
@@ -200,7 +200,6 @@ let drawSvgToPane = (svg) => {
     scenes[activePaneIndex].add(group);
 };
 
-// TODO: change SVG to standard contour format, posible with edgeGeom
 let convertSvgToContours = (svg) => {
     let contours = [];
     svg.paths.forEach((path) => {
@@ -214,8 +213,8 @@ let convertSvgToContours = (svg) => {
             [...Array(32).keys()].forEach((pointIdx) => {
                 let point = new THREE.Vector3(
                                     points32Matrix.getX(pointIdx),
-                                    points32Matrix.getY(pointIdx),
-                                    0);
+                                    0,
+                                    points32Matrix.getY(pointIdx))
                 currContour.push(point);
             });
             layerContours.push(currContour);
@@ -224,6 +223,25 @@ let convertSvgToContours = (svg) => {
     });
     return contours;
 }
+
+let visualizeContours2d = (contoursPerLayer) => {
+    addPaneDomWithType('blank3d');
+    let group = new THREE.Group();
+    contoursPerLayer.forEach((layerContours) => {
+        layerContours.forEach((contour) => {
+            let vec2s = contour.map((point3d) => {
+                return new THREE.Vector2(point3d.x, point3d.z);
+            });
+            let shape = new THREE.Shape(vec2s);
+            let geom = new THREE.ShapeBufferGeometry(shape);
+            let edgesGeom = new THREE.EdgesGeometry(geom);
+            let segments = new THREE.LineSegments(edgesGeom, LINE_MATERIAL);
+            group.add(segments);
+        });
+    });
+    scenes[activePaneIndex].add(group);
+    return group;
+};
 
 /* MESH STUFF */
 
