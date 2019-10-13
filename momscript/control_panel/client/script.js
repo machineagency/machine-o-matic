@@ -186,7 +186,7 @@ let loadSvg = async (filepath) => {
 };
 
 let drawSvgToPane = (svg) => {
-    addPaneDomWithType('blank');
+    addPaneDomWithType('blank3d');
     let group = new THREE.Group();
     svg.paths.forEach((path) => {
         let shapes = path.toShapes(true);
@@ -232,7 +232,7 @@ class ModelMesh {
 }
 
 let loadStl = (filepath) => {
-    addPaneDomWithType('blank');
+    addPaneDomWithType('blank3d');
     let promise = makeLoadStlPromise(filepath);
     return addStlFromPromise(promise);
 };
@@ -397,7 +397,7 @@ class Slicer {
      * @return {void}
      */
     visualizeContours(contours) {
-        addPaneDomWithType('blank');
+        addPaneDomWithType('blank3d');
         let layerHeightShapesPairs = contours.map((contours) => {
             let sliceHeight = contours[0] && contours[0][0].y;
             let shapes = contours.map((contour) => {
@@ -534,7 +534,7 @@ class Machine {
         // designs where y is on top. The problem is that it is difficult to
         // infer the visual layout of a machine from only what's provided
         // in the DSL. This is worth thinking through at a later point.
-        addPaneDomWithType('blank');
+        addPaneDomWithType('blank3d');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
         let camera = cameras[paneIndex];
@@ -570,7 +570,7 @@ class Machine {
     }
 
     visualizeMachineTest() {
-        addPaneDomWithType('blank');
+        addPaneDomWithType('blank3d');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
         let camera = cameras[paneIndex];
@@ -1335,8 +1335,19 @@ let resetPanes = () => {
  * Add implementations here about how particular panes should be
  * implemented. */
 const paneInflateFunctionsByName = {
-    'blank': (elem) => {
-        const {scene, camera, controls} = makeScene(elem);
+    'blank3d': (elem) => {
+        const {scene, camera, controls} = makeScene3d(elem);
+        scenes.push(scene);
+        cameras.push(camera);
+
+        activePaneIndex = parseInt(elem.id);
+
+        return () => {
+            renderer.render(scene, camera);
+        };
+    },
+    'blank2d': (elem) => {
+        const {scene, camera, controls} = makeScene3d2d(elem);
         scenes.push(scene);
         cameras.push(camera);
 
@@ -1347,7 +1358,7 @@ const paneInflateFunctionsByName = {
         };
     },
     'mesh': (elem) => {
-        const {scene, camera, controls} = makeScene(elem);
+        const {scene, camera, controls} = makeScene3d(elem);
         scenes.push(scene);
         cameras.push(camera);
 
@@ -1364,7 +1375,7 @@ const paneInflateFunctionsByName = {
     },
 
     'slices': (elem) => {
-        const {scene, camera, controls} = makeScene(elem);
+        const {scene, camera, controls} = makeScene3d(elem);
         scenes.push(scene);
         cameras.push(camera);
 
@@ -1383,7 +1394,7 @@ const paneInflateFunctionsByName = {
     },
 
     'machine': (elem) => {
-        const {scene, camera, controls} = makeScene(elem);
+        const {scene, camera, controls} = makeScene3d(elem);
         scenes.push(scene);
         cameras.push(camera);
 
