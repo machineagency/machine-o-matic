@@ -169,11 +169,17 @@ THREE.Vector3.prototype.approxEqual = function(v) {
            && Math.abs(v.z - this.z) <= EPSILON;
 };
 
-let API__sendAndPlotCoords = (coordText) => {
+/**
+ * @param {Number[][]} coordsArr - array of coords, each coord [x, y]
+ */
+let API__sendAndPlotCoords = (coordsArr) => {
     let req = new XMLHttpRequest();
+    let coordsObj = {
+        'coords' : coordsArr
+    };
     req.open('POST', '/plot');
     req.setRequestHeader('Content-Type', 'application/json');
-    req.send(JSON.stringify({ "coordText" : coordText }));
+    req.send(JSON.stringify({ "coordsObj" : coordsObj }));
 };
 
 
