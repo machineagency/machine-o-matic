@@ -92,7 +92,7 @@ let main = async () => {
         },
         'drawContour' : (async (contour) => {
             API__sendContourToProjection(contour);
-            //API__sendAndPlotCoords(contourToPointArrays(contour, true)[0][0])
+            API__sendAndPlotCoords(contourToPointArrays(contour, false)[0][0])
             penDown();
             sendContour(contour);
             penUp();

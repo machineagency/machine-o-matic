@@ -34,7 +34,7 @@ app.post('/plot', (req, res) => {
         console.log(message);
     });
 
-    res.status(200).send(`Plotted ${coordObj}`);
+    res.status(200).send(`Plotted ${coordsObj}`);
 });
 
 app.post('/projection', (req, res) => {
