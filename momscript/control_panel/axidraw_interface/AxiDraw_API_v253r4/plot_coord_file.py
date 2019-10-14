@@ -17,25 +17,34 @@ def plot_svg_string(svg_string, axidraw) -> str:
     axidraw.plot_setup(svg_string)
     return axidraw.plot_run(True)
 
-with open('axidraw_interface/AxiDraw_API_v253r4/coords.txt', 'r+') as file:
-    coord_text = file.read();
-    coord_dict = json.loads(coord_text);
-    coords = coord_dict['coords']
-    file.close();
+def read_coords_from_file(filepath) -> str:
+    with open(filepath, 'r+') as file:
+        coord_text = file.read();
+        coord_dict = json.loads(coord_text);
+        coords = coord_dict['coords']
+        file.close();
+    return coords
 
-print(path_coords_to_svg(coords))
-exit()
+def init_axidraw():
+    ad = axidraw.AxiDraw()          # Initialize class
+    ad.interactive()                # Enter interactive context
+    ad.options.units = 1            # Interpret numbers as centimeter values
 
-ad = axidraw.AxiDraw()          # Initialize class
-ad.interactive()                # Enter interactive context
-ad.options.units = 1            # Interpret numbers as centimeter values
-ad.connect()                    # Open serial port to AxiDraw
+if __name__ == '__main__':
+    coords = read_coords_from_file('axidraw_interface/AxiDraw_API_v253r4/coords.txt')
+    new_svg = path_coords_to_svg(coords)
+    print(new_svg)
+    exit()
 
-for coord in coords:
-    print(coord)
-    ad.lineto(coord[0], coord[1])
+    # TODO: reincorporate later
+    ad = init_axidraw()
+    ad.connect()                    # Open serial port to AxiDraw
 
-ad.moveto(0, 0)
+    for coord in coords:
+        print(coord)
+        ad.lineto(coord[0], coord[1])
 
-ad.disconnect()
+    ad.moveto(0, 0)
+
+    ad.disconnect()
 
