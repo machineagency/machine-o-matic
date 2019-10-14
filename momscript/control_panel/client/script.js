@@ -90,14 +90,7 @@ let main = async () => {
             moveToEnd(ToolUpDown);
         },
         'drawContour' : (async (contour) => {
-            await moveTo(contour[0]);
-            await moveTo(contour[1]);
-            await moveTo(contour[2]);
-            await moveTo(contour[3]);
-            await moveTo(contour[4]);
-            await moveTo(contour[5]);
-            await moveTo(contour[6]);
-            await moveTo(contour[7]);
+        API__sendAndPlotCoords(contourToPointArrays(contour, true)[0][0])
             penDown();
             sendContour(contour);
             penUp();
@@ -113,7 +106,7 @@ let main = async () => {
         //projector.project(drawing);
         //$svg.scaleAndTranslate();
         drawContour(drawing);
-    }, [contours[0][0]]);
+    }, [contours]);
 };
 main();
 `;
@@ -262,6 +255,19 @@ let segmentsToContour = (segments) => {
         return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
     });
 };
+
+let contourToPointArrays = (contoursByLayer, downscale) => {
+    return contoursByLayer.map((layerContours) => {
+        return layerContours.map((contour) => {
+            if (downscale) {
+                return contour.map((vec3) => [vec3.x * 0.1, vec3.y * 0.1]);
+            }
+            else {
+                return contour.map((vec3) => [vec3.x, vec3.y]);
+            }
+        });
+    });
+}
 
 /* MESH STUFF */
 
