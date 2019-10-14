@@ -240,6 +240,15 @@ let visualizeContours2d = (contoursPerLayer) => {
     return group;
 };
 
+let segmentsToContour = (segments) => {
+    let geom = segments.geometry;
+    let buffer = geom.attributes.position;
+    let numVertices = buffer.count;
+    return [...Array(numVertices).keys()].map((vtxIdx) => {
+        return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
+    });
+};
+
 /* MESH STUFF */
 
 class ModelMesh {
