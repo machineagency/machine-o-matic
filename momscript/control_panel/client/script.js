@@ -161,7 +161,7 @@ const LINE_MATERIAL = new THREE.LineBasicMaterial({
 const greenColor = 0xbed346;
 const platformRaiseTranslateFactor = 8;
 
-// NOTE: +y is the "up" direction
+// NOTE: +z is the "up" direction
 
 THREE.Vector3.prototype.approxEqual = function(v) {
     return Math.abs(v.x - this.x) <= EPSILON
@@ -208,7 +208,7 @@ let convertSvgToContours = (svg) => {
         shapes.forEach((shape) => {
             let points2d = shape.getPoints();
             let points3d = points2d.map((point) => {
-                return new THREE.Vector3(point.x, 0, point.y);
+                return new THREE.Vector3(point.x, point.y, 0);
             });
             layerContours.push(points3d);
         });
@@ -223,7 +223,7 @@ let visualizeContours2d = (contoursPerLayer) => {
     contoursPerLayer.forEach((layerContours) => {
         layerContours.forEach((contour) => {
             let vec2s = contour.map((point3d) => {
-                return new THREE.Vector2(point3d.x, point3d.z);
+                return new THREE.Vector2(point3d.x, point3d.y);
             });
             let shape = new THREE.Shape(vec2s);
             let geom = new THREE.ShapeBufferGeometry(shape);
@@ -551,7 +551,7 @@ class Machine {
         let camera = cameras[paneIndex];
         let offset = 120;
         let miniOffset = 5.5;
-        let heightOffset = 100;
+        let heightOffset = 75;
 
         this.drives.forEach((drive) => {
             let stage;
@@ -566,8 +566,8 @@ class Machine {
                 });
                 if (drive.name === 'y') {
                     stage.position.x = miniOffset;
-                    stage.position.y = heightOffset;
-                    stage.rotateY(Math.PI / 2);
+                    stage.position.z = heightOffset;
+                    stage.rotateZ(Math.PI / 2);
                 }
             }
         });
@@ -1090,9 +1090,9 @@ let swapControlMode = (scene) => {
 
 
 const geometryFactories = {
-    stageCase: () => new THREE.BoxBufferGeometry(200, 100, 1000, 2, 2, 2),
-    stagePlatform: () => new THREE.BoxBufferGeometry(200, 150, 200, 2, 2, 2),
-    rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 50, 150, 2, 2, 2),
+    stageCase: () => new THREE.BoxBufferGeometry(200, 1000, 100, 2, 2, 2),
+    stagePlatform: () => new THREE.BoxBufferGeometry(200, 200, 150, 2, 2, 2),
+    rotaryStageCase: () => new THREE.BoxBufferGeometry(150, 150, 50, 2, 2, 2),
     rotaryStagePlatform: () => new THREE.CylinderBufferGeometry(50, 50, 80, 10),
     angledTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
     straightTool: () => new THREE.CylinderBufferGeometry(10, 10, 80, 10),
@@ -1151,6 +1151,7 @@ let _makeStageInScene = (stageType, scene) => {
     group.add(stagePlatformLines);
     // group.add(stagePlatformMesh);
     // scene.add(group);
+    stagePlatformLines.translateZ(12.5);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
@@ -1190,9 +1191,8 @@ let _makeTool = (toolType, scene) => {
     group.accepts = '(?)';
 
     // Attempt to center on grid helper's axis
-    group.position.y = 50;
-    group.position.x = -35;
-    group.position.z = 35;
+    toolLines.translateZ(40);
+    group.rotateX(Math.PI / 2);
 
     focus(group, scene);
 
@@ -1279,14 +1279,17 @@ let makeScene3d = (domElement) => {
     let viewSize = 50;
     let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
+    camera.up.set(0, 0, 1);
     camera.zoom = 1;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
-    camera.position.set(-500, 500, 500); // I don't know why this works
+    camera.position.set(500, 500, 500); // I don't know why this works
     camera.lookAt(scene.position);
     scene.add(camera);
     scene.background = new THREE.Color(0x000000);
-    scene.add(new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444));
+    let gridHelper = new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444);
+    scene.add(gridHelper);
+    gridHelper.rotateX(Math.PI / 2);
     scene.controlMode = 'translate';
     let controls = new THREE.OrbitControls(camera, domElement);
     scene.controls = controls
