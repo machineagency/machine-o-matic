@@ -43,7 +43,6 @@ app.post('/projection', (req, res) => {
     // GET route for that
     // TODO: send coords and render on projection page, don't pass image
     let contour = req.body.contour;
-    console.log(contour)
     projectionContour = contour;
 
     res.status(200).send('Received contour.');

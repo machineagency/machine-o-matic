@@ -14,6 +14,7 @@ let tool;
 let programText;
 let clock = new THREE.Clock();
 let mixers = [];
+let pageProjectionContour;
 const EPSILON = 0.001;
 const ANIMATION_TIMESCALE = 2;
 
@@ -193,9 +194,20 @@ let API__getContourFromServer = (contour) => {
         }
         else {
             console.log(`Received ${req.response} from server`);
+            pageProjectionContour = JSON.parse(req.response);
         }
     };
     req.send();
+};
+
+let setIntervalForProjectionPoll = (interval) => {
+    return setInterval(() => {
+        resetPanes();
+        API__getContourFromServer();
+        if (pageProjectionContour) {
+            visualizeContours2d(pageProjectionContour);
+        }
+    }, interval);
 };
 
 /* 2D DRAWING STUFF */
