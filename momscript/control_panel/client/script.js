@@ -1205,35 +1205,18 @@ let _makeTool = (toolType, scene) => {
 };
 
 
-let generateControlForGroup = (group, scene, camera) => {
+let generateControlForGroup = (group, sceneNumber) => {
+    let scene = scenes[sceneNumber];
+    let camera = cameras[sceneNumber];
+    let domElem = sceneElements[sceneNumber].elem;
     // Add controls to the new mesh group
-    let lastPosition = new THREE.Vector3();
-    let currPosition = new THREE.Vector3();
-    let control = new THREE.TransformControls( camera, renderer.domElement );
+    let control = new THREE.TransformControls(camera, domElem);
     let offset = new THREE.Vector3();
-    // let parentMods = gatherDeepParentStages(group);
     control.mode = scene.controlMode;
-    control.addEventListener('change', (event) => {
-        render();
-    });
-    control.addEventListener('mouseDown', (event) => {
-        console.log('mouse down on control');
-        lastPosition.copy(group.position);
-    });
-    control.addEventListener('objectChange', (event) => {
-        currPosition.copy(group.position);
-        offset = currPosition.sub(lastPosition);
-        parentMods.forEach((parentMod) => {
-            parentMod.position.add(offset);
-        });
-        lastPosition.copy(group.position);
-    });
-    control.addEventListener('dragging-changed', (event) => {
-        // console.log(event)
-    });
     control.setRotationSnap(THREE.Math.degToRad(45));
     scene.add(control);
     control.attach(group);
+    scene.transformControls = control;
     return control;
 };
 
@@ -1296,7 +1279,7 @@ let makeScene3d = (domElement) => {
     gridHelper.rotateX(Math.PI / 2);
     scene.controlMode = 'translate';
     let controls = new THREE.OrbitControls(camera, domElement);
-    scene.controls = controls
+    scene.orbitControls = controls
     return { scene, camera, controls };
 }
 
@@ -1320,7 +1303,7 @@ let makeScene2d = (domElement) => {
     scene.controlMode = 'translate';
     let controls = new THREE.OrbitControls(camera, domElement);
     controls.enableRotate = false;
-    scene.controls = controls
+    scene.orbitControls = controls
     return { scene, camera, controls };
 };
 
