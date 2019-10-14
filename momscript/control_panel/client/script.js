@@ -1690,11 +1690,13 @@ let updateAnimationMixers = () => {
 
 let main = () => {
     let programTextElem = document.querySelector('.program-container');
-    programTextToDivs(uistProgramText);
-    // programTextToDivs(pikachuProgramText);
-    programTextElem.spellcheck = false;
-    programTextElem.focus();
-    programTextElem.blur();
+    if (programTextElem) {
+        programTextToDivs(uistProgramText);
+        // programTextToDivs(pikachuProgramText);
+        programTextElem.spellcheck = false;
+        programTextElem.focus();
+        programTextElem.blur();
+    }
 
     const canvas = document.createElement('canvas');
     renderer = new THREE.WebGLRenderer({canvas, antialias: true, alpha: true});
