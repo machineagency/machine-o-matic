@@ -3,13 +3,13 @@ import serial, json
 from pyaxidraw import axidraw   # import module
 
 def path_coords_to_svg(path_coords) -> str:
-    svg = '<svg width=“500” height=“500" xmlns=“http://www.w3.org/2000/svg“>'
+    svg = '<svg width="10" height="10" xmlns="http://www.w3.org/2000/svg">'
     # NOTE: this is an SVG with only one path, if you need more than
     # one path, use another outer loop and update accordingly
-    svg += '\n<polygon points='
+    svg += '\n<polygon points="'
     for coord in path_coords:
         svg += '{:.5f},{:.5f} '.format(coord[0], coord[1])
-    svg += ' style="fill=none; stroke:black; stroke-width:1;"/>'
+    svg += '" style="fill=none; stroke:black; stroke-width:1;"/>'
     svg += '\n</svg>'
     return svg
 
