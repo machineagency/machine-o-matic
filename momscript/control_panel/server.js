@@ -35,12 +35,14 @@ app.post('/plot', (req, res) => {
     res.status(200).send(`Plotted ${coordObj}`);
 });
 
-app.post('/inst', (req, res) => {
+app.post('/projection', (req, res) => {
+    // TODO: load image from client post, update any open projection.html pages
+    // Perhaps projection will just have to poll periodically and we'll have another
+    // GET route for that
     let inst = req.body.inst;
     shell.send(inst);
     res.status(200).send('Sent command.');
 });
-
 
 // start app ===============================================
 app.listen(port, () => {
