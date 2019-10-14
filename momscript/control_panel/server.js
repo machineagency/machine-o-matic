@@ -23,22 +23,16 @@ let shell;
 
 app.post('/plot', (req, res) => {
     let coordsObj = req.body.coordsObj;
-    console.log(coordsObj);
-    console.log('there');
     fs.writeFileSync(plotCoordinateFile, JSON.stringify(coordsObj));
     shell = new ps.PythonShell('axidraw_interface/AxiDraw_API_v253r4/plot_coord_file.py', {
-        // pythonPath : 'python', // use python 2
-        pythonOptions: ['-u'], // don't buffer messages sent from interpreter.py
-        // args: [ momProgramFilename ]
+        pythonOptions: ['-u'], // don't buffer messages sent from plot_coord_file.py
     });
 
     shell.on('message', (message) => {
         console.log(message);
     });
 
-    // console.log(`Created an interpreter with program:\n ${momProgram}`);
-
-    res.status(200).send('Wrote program.mom');
+    res.status(200).send(`Plotted ${coordObj}`);
 });
 
 app.post('/inst', (req, res) => {
