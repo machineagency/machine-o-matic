@@ -17,6 +17,8 @@ app.use(express.static(__dirname + '/client')); // set the static files location
 
 const plotCoordinateFile = 'axidraw_interface/AxiDraw_API_v253r4/coords.txt';
 
+let projectionContour = [[[]]];
+
 let shell;
 
 // routes ==================================================
@@ -39,9 +41,16 @@ app.post('/projection', (req, res) => {
     // TODO: load image from client post, update any open projection.html pages
     // Perhaps projection will just have to poll periodically and we'll have another
     // GET route for that
-    let inst = req.body.inst;
-    shell.send(inst);
-    res.status(200).send('Sent command.');
+    // TODO: send coords and render on projection page, don't pass image
+    let contour = req.body.contour;
+    console.log(contour)
+    projectionContour = contour;
+
+    res.status(200).send('Received contour.');
+});
+
+app.get('/projection', (req, res) => {
+    res.status(200).send(projectionContour);
 });
 
 // start app ===============================================

@@ -90,7 +90,8 @@ let main = async () => {
             moveToEnd(ToolUpDown);
         },
         'drawContour' : (async (contour) => {
-        API__sendAndPlotCoords(contourToPointArrays(contour, true)[0][0])
+            API__sendContourToProjection(contour);
+            //API__sendAndPlotCoords(contourToPointArrays(contour, true)[0][0])
             penDown();
             sendContour(contour);
             penUp();
@@ -175,6 +176,27 @@ let API__sendAndPlotCoords = (coordsArr) => {
     req.send(JSON.stringify({ "coordsObj" : coordsObj }));
 };
 
+let API__sendContourToProjection = (contour) => {
+    let req = new XMLHttpRequest();
+    req.open('POST', '/projection');
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.send(JSON.stringify({ "contour" : contour }));
+};
+
+let API__getContourFromServer = (contour) => {
+    let req = new XMLHttpRequest();
+    req.open('get', '/projection');
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.onload = () => {
+        if (req.status !== 200) {
+            console.log(`Error ${req.status} getting projection: ${req.statusText}`);
+        }
+        else {
+            console.log(`Received ${req.response} from server`);
+        }
+    };
+    req.send();
+};
 
 /* 2D DRAWING STUFF */
 
