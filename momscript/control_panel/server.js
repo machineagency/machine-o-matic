@@ -15,26 +15,27 @@ app.use(express.static(__dirname + '/client')); // set the static files location
 
 // open a MoM interpreter ==================================
 
-const momProgramFilename = 'momlang/program.mom';
+const plotCoordinateFile = 'axidraw_interface/coords.txt';
 
 let shell;
 
 // routes ==================================================
 
-app.post('/program', (req, res) => {
-    let momProgram = req.body.program;
-    fs.writeFileSync(momProgramFilename, momProgram);
-    shell = new ps.PythonShell('momlang/interpreter.py', {
-        pythonPath : 'python', // use python 2
-        pythonOptions: ['-u'], // don't buffer messages sent from interpreter.py
-        args: [ momProgramFilename ]
-    });
+app.post('/plot', (req, res) => {
+    let coordText = req.body.coordText;
+    fs.writeFileSync(plotCoordinateFile, coordText);
+    console.log(coordText);
+    // shell = new ps.PythonShell('momlang/interpreter.py', {
+    //     pythonPath : 'python', // use python 2
+    //     pythonOptions: ['-u'], // don't buffer messages sent from interpreter.py
+    //     args: [ momProgramFilename ]
+    // });
 
-    shell.on('message', (message) => {
-        console.log(message);
-    });
+    // shell.on('message', (message) => {
+    //     console.log(message);
+    // });
 
-    console.log(`Created an interpreter with program:\n ${momProgram}`);
+    // console.log(`Created an interpreter with program:\n ${momProgram}`);
 
     res.status(200).send('Wrote program.mom');
 });

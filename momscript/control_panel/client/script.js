@@ -169,6 +169,14 @@ THREE.Vector3.prototype.approxEqual = function(v) {
            && Math.abs(v.z - this.z) <= EPSILON;
 };
 
+let API__sendAndPlotCoords = (coordText) => {
+    let req = new XMLHttpRequest();
+    req.open('POST', '/plot');
+    req.setRequestHeader('Content-Type', 'application/json');
+    req.send(JSON.stringify({ "coordText" : coordText }));
+};
+
+
 /* 2D DRAWING STUFF */
 
 let loadSvg = async (filepath) => {
