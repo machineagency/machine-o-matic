@@ -186,7 +186,7 @@ let loadSvg = async (filepath) => {
 };
 
 let drawSvgToPane = (svg) => {
-    addPaneDomWithType('blank3d');
+    addPaneDomWithType('blank2d');
     let group = new THREE.Group();
     svg.paths.forEach((path) => {
         let shapes = path.toShapes(true);
@@ -198,6 +198,7 @@ let drawSvgToPane = (svg) => {
         });
     });
     scenes[activePaneIndex].add(group);
+    group.rotateX(Math.PI);
 };
 
 let convertSvgToContours = (svg) => {
@@ -218,7 +219,7 @@ let convertSvgToContours = (svg) => {
 }
 
 let visualizeContours2d = (contoursPerLayer) => {
-    addPaneDomWithType('blank3d');
+    addPaneDomWithType('blank2d');
     let group = new THREE.Group();
     contoursPerLayer.forEach((layerContours) => {
         layerContours.forEach((contour) => {
@@ -233,6 +234,9 @@ let visualizeContours2d = (contoursPerLayer) => {
         });
     });
     scenes[activePaneIndex].add(group);
+    // TODO: this may cause the points to differ from points sent to GCode
+    // keep an eye on this.
+    group.rotateX(Math.PI);
     return group;
 };
 
@@ -1297,6 +1301,27 @@ let makeScene3d = (domElement) => {
 }
 
 let makeScene2d = (domElement) => {
+    let scene = new THREE.Scene();
+    let aspect = domElement.offsetWidth / domElement.offsetHeight;
+    let viewSize = 50;
+    let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
+        viewSize, -viewSize, -1000, 10000);
+    camera.up.set(0, 0, 1);
+    camera.zoom = 0.5;
+    camera.updateProjectionMatrix();
+    camera.frustumCulled = false;
+    camera.position.set(0, 0, 500); // I don't know why this works
+    camera.lookAt(scene.position);
+    scene.add(camera);
+    scene.background = new THREE.Color(0x000000);
+    let gridHelper = new THREE.GridHelper(2000, 50, 0xe5e6e8, 0x444444);
+    scene.add(gridHelper);
+    gridHelper.rotateX(Math.PI / 2);
+    scene.controlMode = 'translate';
+    let controls = new THREE.OrbitControls(camera, domElement);
+    controls.enableRotate = false;
+    scene.controls = controls
+    return { scene, camera, controls };
 };
 
 let addScene = (elem, fn) => {
@@ -1361,7 +1386,7 @@ const paneInflateFunctionsByName = {
         };
     },
     'blank2d': (elem) => {
-        const {scene, camera, controls} = makeScene3d2d(elem);
+        const {scene, camera, controls} = makeScene2d(elem);
         scenes.push(scene);
         cameras.push(camera);
 
