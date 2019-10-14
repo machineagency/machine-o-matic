@@ -13,6 +13,9 @@ def path_coords_to_svg(path_coords) -> str:
     svg += '\n</svg>'
     return svg
 
+def plot_svg_string(svg_string, axidraw) -> str:
+    axidraw.plot_setup(svg_string)
+    return axidraw.plot_run(True)
 
 with open('axidraw_interface/AxiDraw_API_v253r4/coords.txt', 'r+') as file:
     coord_text = file.read();
