@@ -674,6 +674,7 @@ class Machine {
         addPaneDomWithType('blank3d');
         let paneIndex = pagePaneIndexCounter - 1;
         let scene = scenes[paneIndex];
+        scene.machineScene = true;
         let camera = cameras[paneIndex];
         let offset = 120;
         let miniOffset = 5.5;
@@ -855,11 +856,12 @@ class Tool {
             return `${axisName.toUpperCase()}${point[axisName]}`;
         });
         let gcodeLine = `G0 ${axisValStrs.join(' ')}`;
+        let machineScene = scenes.find((scene) => scene.machineScene);
         return new Promise((resolve) => {
             if (this.connection && this.connection.isVirtual) {
                 let position = new THREE.Vector3(point.x, point.y, point.z);
                 console.log(gcodeLine);
-                return animateObjToPosition(getTool(scenes[2]), position)
+                return animateObjToPosition(getTool(machineScene), position)
                     .then(() => resolve());
             }
             else if (this.connection && !this.connection.isVirtual) {
@@ -1646,23 +1648,6 @@ let animateObjToPosition = (obj, position) => {
         action.play();
     });
 };
-
-let testChainAnimate = () => {
-    return new Promise(resolve => { animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 0, 0))
-        .then(() => {
-            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(20, 20, 0))
-        })
-        .then(() => {
-            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 20, 0))
-        })
-        .then(() => {
-            return animateObjToPosition(getTool(scenes[2]), new THREE.Vector3(0, 0, 0))
-        })
-        .then(() => {
-            resolve('secret message');
-        });
-    });
-}
 
 let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
     // TODO: check if an object is already being animated, if so, take existing
