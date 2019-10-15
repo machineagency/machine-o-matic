@@ -281,13 +281,19 @@ let visualizeContours2d = (contoursPerLayer) => {
     return group;
 };
 
-let segmentsToContour = (segments) => {
-    let geom = segments.geometry;
-    let buffer = geom.attributes.position;
-    let numVertices = buffer.count;
-    return [...Array(numVertices).keys()].map((vtxIdx) => {
-        return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
-    });
+let lineObjToContour = (lineObj) => {
+    let geom = lineObj.geometry;
+    if (geom instanceof THREE.Geometry) {
+        return [[lineObj.geometry.vertices]];
+    }
+    else {
+        let buffer = geom.attributes.position;
+        let numVertices = buffer.count;
+        let vertices = [...Array(numVertices).keys()].map((vtxIdx) => {
+            return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
+        });
+        return [[vertices]];
+    }
 };
 
 let contourToPointArrays = (contoursByLayer, downscale) => {
