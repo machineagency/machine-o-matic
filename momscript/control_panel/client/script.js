@@ -943,11 +943,24 @@ class LangUtil {
                     && statement.id.name === 'main';
             });
         };
-        let injectFnAst = esprima.parse(LangUtil
-            .interactiveFunctionTexts['$interpreter']);
+        let gatherInteractiveFnNamesInMain = (mainNode) => {
+            let names = [];
+            LangUtil.traverse(mainNode, (node) => {
+                if (node.type === 'Identifier' && node.name[0] === '$') {
+                    Array.prototype.push.call(names, node.name);
+                }
+            });
+            return names;
+        };
         let mainFnNode = shallowFindMainFn(ast);
-        let mainFnBodyStatements = mainFnNode.body.body;
-        mainFnBodyStatements.splice(0, 0, injectFnAst);
+        let interactiveFnNames = gatherInteractiveFnNamesInMain(mainFnNode);
+        let injectFnAsts = interactiveFnNames.map((name) => {
+            let fnText = LangUtil.interactiveFunctionTexts[name];
+            let ast = esprima.parse(fnText);
+            let fnDeclNode = ast.body[0];
+            return fnDeclNode;
+        });
+        mainFnNode.body.body = injectFnAsts.concat(mainFnNode.body.body);
         return ast;
     }
 
