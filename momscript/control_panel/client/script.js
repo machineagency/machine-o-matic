@@ -323,28 +323,6 @@ let orderContourVec3s = (contoursByLayer) => {
     });
 };
 
-/* INTERACTIVE FUNCTIONS */
-
-// For these functions to have scope in the main function, we want them to be
-// defined in the main function. The super ugly solution for now is to represent
-// these as strings and eval them in the beginning of the main function.
-
-// TODO
-let $calibrateProjection = () => {
-    console.log('Not yet implemented');
-};
-
-// TODO
-let FROZEN__$interpreter = `function $interpreter() {
-    while (true) {
-        console.log(pen);
-    }
-};
-`
-
-let repl = () => {
-};
-
 /* MESH STUFF */
 
 class ModelMesh {
@@ -908,6 +886,15 @@ class Tool {
 
 class LangUtil {
 
+    static interactiveFunctionTexts = {
+        '$interpreter' : (function $interpreter() {
+            console.log(pen);
+        }).toString(),
+        '$calibrateProjection' : (function $calibrateProjection() {
+            console.log(machine);
+        }).toString()
+    };
+
     /**
      * Rebinds MoMScript calls with missing scope to valid Javascript
      *
@@ -956,7 +943,8 @@ class LangUtil {
                     && statement.id.name === 'main';
             });
         };
-        let injectFnAst = esprima.parse(FROZEN__$interpreter);
+        let injectFnAst = esprima.parse(LangUtil
+            .interactiveFunctionTexts['$interpreter']);
         let mainFnNode = shallowFindMainFn(ast);
         let mainFnBodyStatements = mainFnNode.body.body;
         mainFnBodyStatements.splice(0, 0, injectFnAst);
