@@ -539,20 +539,26 @@ let visualizePoints = (isectPts) => {
     return pointsObj;
 };
 
-let DEBUG__visualizePointOrderInScene = (segment, scene) => {
-    let geom = segments.geometry;
+let DEBUG__visualizePointOrderInScene = (line, scene) => {
+    let geom = line.geometry;
     let buffer = geom.attributes.position;
     let numVertices = buffer.count;
     let pointsMaterial = new THREE.PointsMaterial({
         size: 5.0,
         color: 0xEA2027
     });
-    let pointObjs = [...Array(numVertices).keys()].map((vtxIdx) => {
-        let vec3 = new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
-        let singleGeom = new THREE.Geometry();
-        singleGeom.vertices = [vec3];
-        return new THREE.Points(singleGeom, pointsMaterial);
-    });
+    let pointObjs;
+    if (line instanceof THREE.Geometry) {
+        pointObjs = line.geometry.vertices;
+    }
+    else {
+        pointObjs = [...Array(numVertices).keys()].map((vtxIdx) => {
+            let vec3 = new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
+            let singleGeom = new THREE.Geometry();
+            singleGeom.vertices = [vec3];
+            return new THREE.Points(singleGeom, pointsMaterial);
+        });
+    }
     let currPtIdx = 0
     let interval = setInterval(() => {
         if (currPtIdx >= numVertices) {
