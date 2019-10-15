@@ -78,7 +78,7 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 const uistProgramText = `'use strict';
 let main = async () => {
     // TODO: load several small SVGs to choose from
-    let svg = await loadSvg('assets/u.svg');
+    let svg = await loadSvg('assets/uist-letters_u.svg');
     drawSvgToPane(svg);
     let contours = convertSvgToContours(svg);
     visualizeContours2d(contours);
@@ -301,7 +301,27 @@ let contourToPointArrays = (contoursByLayer, downscale) => {
             }
         });
     });
-}
+};
+
+let orderContourVec3s = (contoursByLayer) => {
+    return contoursByLayer.map((layerContours) => {
+        return layerContours.map((contour) => {
+            let addNeighboringPointAndUpdateArrays
+                    = (point, newContour, contour) => {
+                if (contour.length === 0) {
+                    return [null, newContour, contour]
+                }
+                let neighboringPoint;
+                // TODO: probably not worth finishing this because it wouldn't
+                // fix a corrupted vertex ordering
+            };
+            let contourCopy = contour.splice();
+            let newContour = [];
+            let point = contour[0];
+            addNeighboringPointToNewContour(point, newContour, contourCopy);
+        });
+    });
+};
 
 /* MESH STUFF */
 
