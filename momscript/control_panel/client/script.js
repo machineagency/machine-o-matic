@@ -76,10 +76,9 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 `;
 
 const uistProgramText = `'use strict';
-let main = async () => {
+async function main() {
     // TODO: load several small SVGs to choose from
     let svg = await loadSvg('assets/uist-letters_u.svg');
-    drawSvgToPane(svg);
     let contours = convertSvgToContours(svg);
     visualizeContours2d(contours);
     let plotter = new Machine({ preset: 'axidraw' });
@@ -104,12 +103,13 @@ let main = async () => {
     connection.connect();
     // TODO: able to run this without rerunning rest of code
     // e.g. executeOnce vs executeLeaveOpen or $ annotation
+    $interpreter();
     return connection.execute((drawing) => {
         //projector.project(drawing);
         //$svg.scaleAndTranslate();
         drawContour(drawing);
     }, [contours]);
-};
+}
 main();
 `;
 
@@ -325,14 +325,24 @@ let orderContourVec3s = (contoursByLayer) => {
 
 /* INTERACTIVE FUNCTIONS */
 
+// For these functions to have scope in the main function, we want them to be
+// defined in the main function. The super ugly solution for now is to represent
+// these as strings and eval them in the beginning of the main function.
+
 // TODO
 let $calibrateProjection = () => {
     console.log('Not yet implemented');
 };
 
 // TODO
-let $interpreter = () => {
-    console.log('Not yet implemented');
+let FROZEN__$interpreter = `function $interpreter() {
+    while (true) {
+        console.log(pen);
+    }
+};
+`
+
+let repl = () => {
 };
 
 /* MESH STUFF */
@@ -923,6 +933,34 @@ class LangUtil {
                 LangUtil.rebindNodeIdenForAction(node, rebindObj));
         }
         return escodegen.generate(fnAst);
+    }
+
+    static preprocess(progText) {
+        let ast = esprima.parse(progText);
+        let injectedMainAst =
+            LangUtil.injectInteractiveFunctionsIntoMain(ast);
+        let newProgText = escodegen.generate(injectedMainAst);
+        return newProgText;
+    }
+
+    /**
+     * Adds $interactive function declarations at the beginning of main function
+     */
+    static injectInteractiveFunctionsIntoMain(ast) {
+        //TODO: do this NOW. Assume program is written with a main function.
+        let shallowFindMainFn = (ast) => {
+            let bodyStatements = ast.body;
+            return bodyStatements.find((statement) => {
+                return statement.type === 'FunctionDeclaration' &&
+                    statement.id && statement.id.type === 'Identifier'
+                    && statement.id.name === 'main';
+            });
+        };
+        let injectFnAst = esprima.parse(FROZEN__$interpreter);
+        let mainFnNode = shallowFindMainFn(ast);
+        let mainFnBodyStatements = mainFnNode.body.body;
+        mainFnBodyStatements.splice(0, 0, injectFnAst);
+        return ast;
     }
 
     static rewriteExecFn(fnString) {
