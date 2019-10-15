@@ -552,8 +552,10 @@ let DEBUG__visualizePointOrderInScene = (segment, scene) => {
         if (currPtIdx >= numVertices) {
             clearInterval(interval);
         }
-        scene.add(pointObjs[currPtIdx]);
-        currPtIdx += 1;
+        else {
+            scene.add(pointObjs[currPtIdx]);
+            currPtIdx += 1;
+        }
     }, 100);
     return interval
 };
