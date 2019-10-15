@@ -34,22 +34,13 @@ def init_axidraw():
     return ad
 
 if __name__ == '__main__':
-    coords = read_coords_from_file('axidraw_interface/AxiDraw_API_v253r4/coords.txt')
-    new_svg = path_coords_to_svg(coords)
-    print(new_svg)
-    ad = init_axidraw()
-    plot_svg_string(new_svg, ad)
-    exit()
+    try:
+        coords = read_coords_from_file('axidraw_interface/AxiDraw_API_v253r4/coords.txt')
+        new_svg = path_coords_to_svg(coords)
+        print(new_svg)
+        ad = init_axidraw()
+        plot_svg_string(new_svg, ad)
+    except Exception as e:
+        print('Ran into exception while trying to plot: {}'.format(e))
 
-    # TODO: reincorporate later
-    ad = init_axidraw()
-    ad.connect()                    # Open serial port to AxiDraw
-
-    for coord in coords:
-        print(coord)
-        ad.lineto(coord[0], coord[1])
-
-    ad.moveto(0, 0)
-
-    ad.disconnect()
 
