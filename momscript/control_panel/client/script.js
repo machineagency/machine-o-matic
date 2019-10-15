@@ -323,6 +323,18 @@ let orderContourVec3s = (contoursByLayer) => {
     });
 };
 
+/* INTERACTIVE FUNCTIONS */
+
+// TODO
+let $calibrateProjection = () => {
+    console.log('Not yet implemented');
+};
+
+// TODO
+let $interpreter = () => {
+    console.log('Not yet implemented');
+};
+
 /* MESH STUFF */
 
 class ModelMesh {
