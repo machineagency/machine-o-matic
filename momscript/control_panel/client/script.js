@@ -81,6 +81,9 @@ async function main() {
     let svg = await loadSvg('assets/uist-letters_u.svg');
     let contours = convertSvgToContours(svg);
     visualizeContours2d(contours);
+    let lineObj = scenes[0].children[2].children[0];
+    let regenContour = lineObjToContour(lineObj);
+    visualizeContours2d(regenContour);
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
         'penUp' : () => {
@@ -263,15 +266,12 @@ let visualizeContours2d = (contoursPerLayer) => {
     addPaneDomWithType('blank2d');
     let group = new THREE.Group();
     contoursPerLayer.forEach((layerContours) => {
+        let geom = new THREE.Geometry();
         layerContours.forEach((contour) => {
-            let vec2s = contour.map((point3d) => {
-                return new THREE.Vector2(point3d.x, point3d.y);
-            });
-            let shape = new THREE.Shape(vec2s);
-            let geom = new THREE.ShapeBufferGeometry(shape);
-            let edgesGeom = new THREE.EdgesGeometry(geom);
-            let segments = new THREE.LineSegments(edgesGeom, LINE_MATERIAL);
-            group.add(segments);
+            contour.forEach((point) => geom.vertices.push(point));
+            geom.vertices.push(contour[0]);
+            let line = new THREE.Line(geom, LINE_MATERIAL);
+            group.add(line);
         });
     });
     scenes[activePaneIndex].add(group);
