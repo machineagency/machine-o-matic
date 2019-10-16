@@ -292,7 +292,8 @@ let lineObjToContour = (lineObj) => {
         });
     }
     let transformMatrix = lineObj.matrixWorld;
-    let worldVertices = vertices.map((vec3) => vec3.applyMatrix4(transformMatrix));
+    let verticesCopy = vertices.slice();
+    let worldVertices = verticesCopy.map((vec3) => vec3.applyMatrix4(transformMatrix));
     return [[worldVertices]];
 };
 
