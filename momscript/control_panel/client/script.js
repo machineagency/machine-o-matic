@@ -267,7 +267,7 @@ let visualizeContours2d = (contoursPerLayer) => {
         layerContours.forEach((contour) => {
             contour.forEach((point) => geom.vertices.push(point));
             // geom.vertices.push(contour[0]);
-            let line = new THREE.Line(geom, LINE_MATERIAL);
+            let line = new THREE.LineLoop(geom, LINE_MATERIAL);
             group.add(line);
         });
     });
