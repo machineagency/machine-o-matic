@@ -279,6 +279,8 @@ let visualizeContours2d = (contoursPerLayer) => {
 };
 
 let lineObjToContour = (lineObj) => {
+    // Force update in case the renderer doesn't get to it first
+    lineObj.updateMatrixWorld(true);
     let geom = lineObj.geometry;
     let vertices;
     if (geom instanceof THREE.Geometry) {
