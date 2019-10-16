@@ -38,10 +38,6 @@ app.post('/plot', (req, res) => {
 });
 
 app.post('/projection', (req, res) => {
-    // TODO: load image from client post, update any open projection.html pages
-    // Perhaps projection will just have to poll periodically and we'll have another
-    // GET route for that
-    // TODO: send coords and render on projection page, don't pass image
     let contour = req.body.contour;
     projectionContour = contour;
 

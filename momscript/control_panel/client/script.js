@@ -1480,7 +1480,7 @@ let makeScene2d = (domElement) => {
     camera.zoom = 0.5;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
-    camera.position.set(0, 0, 500); // I don't know why this works
+    camera.position.set(0, 0, -500); // I don't know why this works
     camera.lookAt(scene.position);
     scene.add(camera);
     scene.background = new THREE.Color(0x000000);
