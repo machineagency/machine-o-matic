@@ -70,6 +70,19 @@ button {
     overflow: auto;
 }
 
+.panes-container.full-pane {
+    right: unset;
+    left: 0px;
+    width: 100%;
+}
+
+.full-pane *[data-diagram] {
+    display: inline-block;
+    width: 36em;
+    height: 24em;
+    border: 1px solid #ffffff;
+}
+
 .program-container {
     outline: none;
     border-right: 1px solid #aaaaaa;
