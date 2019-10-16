@@ -4,7 +4,7 @@ from pyaxidraw import axidraw   # import module
 
 def path_coords_to_svg(path_coords) -> str:
     # TODO: compute sensible bounding box
-    svg = '<svg width="4in" height="4in" xmlns="http://www.w3.org/2000/svg">'
+    svg = '<svg width="8in" height="8in" xmlns="http://www.w3.org/2000/svg">'
     svg += '<title>my_svg</title>'
     svg += '\n<path d="M{:.5f},{:.5f}'.format(path_coords[0][0], path_coords[0][1])
     for coord in path_coords[1:]:
