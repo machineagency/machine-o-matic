@@ -90,25 +90,24 @@ async function main() {
             moveToEnd(ToolUpDown);
         },
         'drawContour' : (async (contour) => {
-            API__sendContourToProjection(contour);
             API__sendAndPlotCoords(contourToPointArrays(contour, false)[0][0])
-            penDown();
-            sendContour(contour);
-            penUp();
+            // penDown();
+            // sendContour(contour);
+            // penUp();
         })
     });
     plotter.visualizeMachine();
     //let projector = new Projector();
     let connection = new Connection(pen, true);
     connection.connect();
-    // TODO: able to run this without rerunning rest of code
-    // e.g. executeOnce vs executeLeaveOpen or $ annotation
     $transformLineInSceneNum(0);
+    let updatedLineObj = getLineObjFromSceneNum(0);
+    let updatedContour = lineObjToContour(updatedLineObj);
     return connection.execute((drawing) => {
         //projector.project(drawing);
         //$svg.scaleAndTranslate();
         drawContour(drawing);
-    }, [contours]);
+    }, [updatedContour]);
 }
 main();
 `;
@@ -940,6 +939,7 @@ class LangUtil {
                 let rKeyCode = 82;
                 let tKeyCode = 84;
                 let pKeyCode = 80;
+                let dKeyCode = 68;
                 if (event.keyCode === escapeKeycode) {
                     keepWaiting = false;
                 }
@@ -955,12 +955,19 @@ class LangUtil {
                 if (event.keyCode === pKeyCode) {
                     computeAndSendToProjector();
                 }
+                if (event.keyCode === dKeyCode) {
+                    draw();
+                }
             });
+            let lineContour;
             let computeAndSendToProjector = () => {
                 let lineObj = getLineObjFromSceneNum(sceneNumber);
-                let lineContour = lineObjToContour(lineObj);
+                lineContour = lineObjToContour(lineObj);
                 API__sendContourToProjection(lineContour);
             };
+            let draw = () => {
+                API__sendAndPlotCoords(contourToPointArrays(lineContour, false)[0][0])
+            }
             let spinLock = () => {
                 if (keepWaiting) {
                     console.log('spinnin');
