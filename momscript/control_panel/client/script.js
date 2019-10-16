@@ -291,10 +291,10 @@ let lineObjToContour = (lineObj) => {
             return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
         });
     }
-    let transformMatrix = lineObj.matrixWorld;
-    let verticesCopy = vertices.slice();
-    let worldVertices = verticesCopy.map((vec3) => vec3.applyMatrix4(transformMatrix));
-    return [[worldVertices]];
+    let newLineObj = new THREE.LineLoop(new THREE.Geometry(), LINE_MATERIAL);
+    newLineObj.copy(lineObj);
+    newLineObj.geometry.applyMatrix(newLineObj.matrixWorld);
+    return [[newLineObj.geometry.vertices]];
 };
 
 let contourToPointArrays = (contoursByLayer, downscale) => {
