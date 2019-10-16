@@ -81,9 +81,6 @@ async function main() {
     let svg = await loadSvg('assets/uist-letters_u.svg');
     let contours = convertSvgToContours(svg);
     visualizeContours2d(contours);
-    let lineObj = scenes[0].children[2].children[0];
-    let regenContour = lineObjToContour(lineObj);
-    visualizeContours2d(regenContour);
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
         'penUp' : () => {
@@ -269,7 +266,7 @@ let visualizeContours2d = (contoursPerLayer) => {
         let geom = new THREE.Geometry();
         layerContours.forEach((contour) => {
             contour.forEach((point) => geom.vertices.push(point));
-            geom.vertices.push(contour[0]);
+            // geom.vertices.push(contour[0]);
             let line = new THREE.Line(geom, LINE_MATERIAL);
             group.add(line);
         });
@@ -277,23 +274,26 @@ let visualizeContours2d = (contoursPerLayer) => {
     scenes[activePaneIndex].add(group);
     // TODO: this may cause the points to differ from points sent to GCode
     // keep an eye on this.
-    group.rotateX(Math.PI);
+    // group.rotateX(Math.PI);
     return group;
 };
 
 let lineObjToContour = (lineObj) => {
     let geom = lineObj.geometry;
+    let vertices;
     if (geom instanceof THREE.Geometry) {
-        return [[lineObj.geometry.vertices]];
+        vertices = lineObj.geometry.vertices;
     }
     else {
         let buffer = geom.attributes.position;
         let numVertices = buffer.count;
-        let vertices = [...Array(numVertices).keys()].map((vtxIdx) => {
+        vertices = [...Array(numVertices).keys()].map((vtxIdx) => {
             return new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
         });
-        return [[vertices]];
     }
+    let transformMatrix = lineObj.matrixWorld;
+    let worldVertices = vertices.map((vec3) => vec3.applyMatrix4(transformMatrix));
+    return [[worldVertices]];
 };
 
 let contourToPointArrays = (contoursByLayer, downscale) => {
@@ -541,17 +541,24 @@ let visualizePoints = (isectPts) => {
 
 let DEBUG__visualizePointOrderInScene = (line, scene) => {
     let geom = line.geometry;
-    let buffer = geom.attributes.position;
-    let numVertices = buffer.count;
     let pointsMaterial = new THREE.PointsMaterial({
         size: 5.0,
         color: 0xEA2027
     });
     let pointObjs;
-    if (line instanceof THREE.Geometry) {
-        pointObjs = line.geometry.vertices;
+    let numVertices;
+    if (line.geometry instanceof THREE.Geometry) {
+        let vertices = line.geometry.vertices;
+        pointObjs = vertices.map((vtx) => {
+            let singleGeom = new THREE.Geometry();
+            singleGeom.vertices = [vtx];
+            return new THREE.Points(singleGeom, pointsMaterial);
+        });
+        numVertices = pointObjs.length;
     }
     else {
+        let buffer = geom.attributes.position;
+        numVertices = buffer.count;
         pointObjs = [...Array(numVertices).keys()].map((vtxIdx) => {
             let vec3 = new THREE.Vector3(buffer.getX(vtxIdx), buffer.getY(vtxIdx), 0);
             let singleGeom = new THREE.Geometry();
@@ -1379,7 +1386,6 @@ let _makeTool = (toolType, scene) => {
     return group;
 };
 
-
 let generateControlForGroup = (group, sceneNumber) => {
     let scene = scenes[sceneNumber];
     let camera = cameras[sceneNumber];
@@ -1393,6 +1399,12 @@ let generateControlForGroup = (group, sceneNumber) => {
     control.attach(group);
     scene.transformControls = control;
     return control;
+};
+
+let generateTranslateControlsForSingleObjSceneNum = (sceneNumber) => {
+    let scene = scenes[sceneNumber];
+    let group = scene.children.find((child) => child.type === 'Group');
+    return generateControlForGroup(group, sceneNumber);
 };
 
 let getStages = (scene) => {
