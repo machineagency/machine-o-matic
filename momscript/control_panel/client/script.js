@@ -103,7 +103,7 @@ async function main() {
     connection.connect();
     // TODO: able to run this without rerunning rest of code
     // e.g. executeOnce vs executeLeaveOpen or $ annotation
-    $interpreter();
+    $transformLineInSceneNum(0);
     return connection.execute((drawing) => {
         //projector.project(drawing);
         //$svg.scaleAndTranslate();
@@ -908,10 +908,54 @@ class LangUtil {
 
     static interactiveFunctionTexts = {
         '$interpreter' : (function $interpreter() {
-            console.log(pen);
+            // TODO: just use debugger until we have a real REPL
+            debugger;
         }).toString(),
         '$calibrateProjection' : (function $calibrateProjection() {
             console.log(machine);
+        }).toString(),
+        '$transformLineInSceneNum' : (function $transformLineInSceneNum(sceneNumber) {
+            console.log('in transform');
+            let tControl = generateTranslateControlsForSingleObjSceneNum(sceneNumber);
+            let keepWaiting = true;
+            window.addEventListener('keydown', (event) => {
+                let escapeKeycode = 27;
+                let sKeyCode = 83;
+                let rKeyCode = 82;
+                let tKeyCode = 84;
+                let pKeyCode = 80;
+                if (event.keyCode === escapeKeycode) {
+                    keepWaiting = false;
+                }
+                if (event.keyCode === sKeyCode) {
+                    tControl.setMode('scale');
+                }
+                if (event.keyCode === rKeyCode) {
+                    tControl.setMode('rotate');
+                }
+                if (event.keyCode === tKeyCode) {
+                    tControl.setMode('translate');
+                }
+                if (event.keyCode === pKeyCode) {
+                    computeAndSendToProjector();
+                }
+            });
+            let computeAndSendToProjector = () => {
+                let lineObj = getLineObjFromSceneNum(sceneNumber);
+                let lineContour = lineObjToContour(lineObj);
+                API__sendContourToProjection(lineContour);
+            };
+            let spinLock = () => {
+                if (keepWaiting) {
+                    console.log('spinnin');
+                    setTimeout(spinLock, 500);
+                }
+                else {
+                    computeAndSendToProjector();
+                    tControl.detach();
+                }
+            };
+            spinLock();
         }).toString()
     };
 
