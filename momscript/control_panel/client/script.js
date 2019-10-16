@@ -332,6 +332,20 @@ let orderContourVec3s = (contoursByLayer) => {
     });
 };
 
+let getLineObjFromSceneNum = (sceneNum) => {
+    let maybeLineObj = scenes[sceneNum].children
+        .find((obj) => obj.type === 'LineLoop');
+    if (maybeLineObj) {
+        return maybeLineObj;
+    }
+    else {
+        let groups = scenes[sceneNum].children
+            .filter((obj) => obj.type === 'Group');
+        let groupObjs = groups.map((group) => group.children).flat();
+        return groupObjs.find((obj) => obj.type === 'LineLoop');
+    }
+};
+
 /* MESH STUFF */
 
 class ModelMesh {
