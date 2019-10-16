@@ -1462,7 +1462,6 @@ let generateControlForGroup = (group, sceneNumber) => {
     let control = new THREE.TransformControls(camera, domElem);
     let offset = new THREE.Vector3();
     control.mode = scene.controlMode;
-    control.setRotationSnap(THREE.Math.degToRad(45));
     scene.add(control);
     control.attach(group);
     scene.transformControls = control;
@@ -1629,6 +1628,12 @@ const paneInflateFunctionsByName = {
         cameras.push(camera);
 
         activePaneIndex = parseInt(elem.id);
+
+        // Move the camera to focus on the lower right quadrant,
+        // not sure why but the position setting must be done
+        // after makeScene2d is called
+        camera.position.setX(145);
+        camera.position.setY(95);
 
         return () => {
             renderer.render(scene, camera);
