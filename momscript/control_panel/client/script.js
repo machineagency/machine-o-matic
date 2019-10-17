@@ -906,7 +906,7 @@ class Tool {
     }
 
     sendContour(contour) {
-        console.log('Not yet implemented.')
+        API__sendAndPlotCoords(contourToPointArrays(contour, false)[0][0])
     }
 
     setOrigin() {
