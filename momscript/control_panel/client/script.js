@@ -90,24 +90,33 @@ async function main() {
             moveToEnd(ToolUpDown);
         },
         'drawContour' : (async (contour) => {
-            API__sendAndPlotCoords(contourToPointArrays(contour, false)[0][0])
-            // penDown();
-            // sendContour(contour);
-            // penUp();
+            sendContour(contour);
         })
     });
     plotter.visualizeMachine();
-    //let projector = new Projector();
-    let connection = new Connection(pen, true);
-    connection.connect();
-    $transformLineInSceneNum(0);
-    let updatedLineObj = getLineObjFromSceneNum(0);
-    let updatedContour = lineObjToContour(updatedLineObj);
-    return connection.execute((drawing) => {
-        //projector.project(drawing);
-        //$svg.scaleAndTranslate();
-        drawContour(drawing);
-    }, [updatedContour]);
+    let projector = new Projector();
+    let modifiedContour;
+    let plotButton = new Button((pen) => {
+        pen.drawContour(modifiedContour);
+    });
+    $loop(() => {
+        let newLine = $transformLineInSceneNum(0)
+        let newContour = lineObjToContour(newLine);
+        projector.project(newContour);
+    });
+
+
+
+    // let connection = new Connection(pen, true);
+    // connection.connect();
+    // $transformLineInSceneNum(0);
+    // let updatedLineObj = getLineObjFromSceneNum(0);
+    // let updatedContour = lineObjToContour(updatedLineObj);
+    // return connection.execute((drawing) => {
+    //     //projector.project(drawing);
+    //     //$svg.scaleAndTranslate();
+    //     drawContour(drawing);
+    // }, [updatedContour]);
 }
 main();
 `;
