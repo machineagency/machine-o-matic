@@ -107,6 +107,10 @@ button {
     bottom: 40px;
 }
 
+.non-run-button-container {
+    display: inline-block;
+}
+
 .run-button {
 }
 

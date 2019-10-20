@@ -934,7 +934,8 @@ class Button {
     }
 
     generateDom() {
-        let buttonContainerDom = document.querySelector('.button-container');
+        let buttonContainerDom = document
+            .querySelector('.non-run-button-container');
         let buttonDom = document.createElement('button');
         buttonDom.className = 'run-button';
         buttonDom.innerText = this.labelText;
@@ -943,6 +944,17 @@ class Button {
         return buttonDom;
     }
 
+    clearButtonAndSiblings() {
+        let buttonContainerDom = document
+            .querySelector('.non-run-button-container');
+        buttonContainerDom.innerHTML = '';
+    }
+
+    fireAllOnClickFns() {
+        this.onClickFnArr.forEach((fn) => {
+            fn();
+        });
+    }
 }
 
 
@@ -964,7 +976,6 @@ class LangUtil {
             console.log(machine);
         }).toString(),
         '$transformLineInSceneNum' : (function $transformLineInSceneNum(sceneNumber, cb) {
-            console.log('in transform');
             let tControl = generateTranslateControlsForSingleObjSceneNum(sceneNumber);
             let keepWaiting = true;
             window.addEventListener('keydown', (event) => {
@@ -994,11 +1005,6 @@ class LangUtil {
                 }
             });
             let lineContour;
-            let computeAndSendToProjector = () => {
-                let lineObj = getLineObjFromSceneNum(sceneNumber);
-                lineContour = lineObjToContour(lineObj);
-                API__sendContourToProjection(lineContour);
-            };
             let draw = () => {
                 API__sendAndPlotCoords(contourToPointArrays(lineContour, false)[0][0])
             }
@@ -1008,18 +1014,12 @@ class LangUtil {
                     setTimeout(spinLock, 500);
                 }
                 else {
-                    // computeAndSendToProjector();
                     tControl.detach();
                     let lineObj = getLineObjFromSceneNum(sceneNumber);
                     cb(lineObj);
                 }
             };
             spinLock();
-            // while (keepWaiting) {
-
-            // }
-            // tControl.detach();
-            // return getLineObjFromSceneNum(sceneNum);
         }).toString()
     };
 

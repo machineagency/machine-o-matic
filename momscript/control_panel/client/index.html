@@ -22,10 +22,14 @@
         resetPanes();
         let progText = reduceDivsToProgramText();
         let processedProgText = LangUtil.preprocess(progText);
+        let nonRunDom = document.querySelector('.non-run-button-container');
+        nonRunDom.innerHTML = '';
         eval(processedProgText);
     ">
         RUN
     </button>
+    <div class='non-run-button-container'>
+    </div>
 </div>
 
 <div class="panes-container">
