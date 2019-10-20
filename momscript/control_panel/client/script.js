@@ -99,6 +99,7 @@ async function main() {
     let switchLetterButton = new Button('LETTER++', () => {
         currLetterNum = (currLetterNum + 1) % letterContours.length;
         setContourInSceneNum(letterContours[currLetterNum], 0);
+        $transformLineInSceneNum(0, projectLineAndTransformAgain);
     });
     let projectLineAndTransformAgain = (newLine) => {
         modifiedContour = lineObjToContour(newLine);
@@ -967,7 +968,7 @@ class Button {
         let buttonDom = document.createElement('button');
         buttonDom.className = 'run-button';
         buttonDom.innerText = this.labelText;
-        buttonDom.setAttribute('onclick', this.onClickFn());
+        buttonDom.addEventListener('click', this.onClickFn, false);
         buttonContainerDom.appendChild(buttonDom);
         return buttonDom;
     }
