@@ -348,12 +348,11 @@ let setContourInSceneNum = (contoursPerLayer, sceneNum) => {
             obj.detach();
         }
     });
-    let groups = scenes[sceneNum].children
-        .filter((obj) => obj.type === 'Group');
-    let lineObjs = scenes[sceneNum].children
-        .filter((obj) => obj.type === 'LineLoop');
-    groups.forEach((group) => scene.remove(group));
-    lineObjs.forEach((lineObj) => scene.remove(lineObj));
+    let delObj = scene.children.filter((obj) => {
+        return !(obj instanceof THREE.Camera)
+            && !(obj instanceof THREE.GridHelper);
+    });
+    delObj.forEach((obj) => scene.remove(obj));
     let group = new THREE.Group();
     contoursPerLayer.forEach((layerContours) => {
         let geom = new THREE.Geometry();
