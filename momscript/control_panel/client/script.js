@@ -77,29 +77,36 @@ loadStl('assets/pikachu.stl').then((meshGeomPair) => {
 
 const uistProgramText = `'use strict';
 async function main() {
-    // TODO: load several small SVGs to choose from
-    let svg = await loadSvg('assets/uist-letters_u.svg');
-    let contours = convertSvgToContours(svg);
-    visualizeContours2d(contours);
+    let svgs = Array(4);
+    svgs[0] = await loadSvg('assets/uist-letters_u.svg');
+    svgs[1] = await loadSvg('assets/uist-letters_i.svg');
+    svgs[2] = await loadSvg('assets/uist-letters_s.svg');
+    svgs[3] = await loadSvg('assets/uist-letters_t.svg');
+    let letterContours = svgs.map((svg) => convertSvgToContours(svg));
+    let currLetterNum = 0;
+    let modifiedContour;
+
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
         'drawContour' : (async (contour) => {
             sendContour(contour);
         })
     });
-    plotter.visualizeMachine();
     let projector = new Projector();
-    // Confusing, we just need a legit contour bc buttonFn gets called somehow
-    let modifiedContour = contours;
-    let buttonFn = () => {
+    let plotButton = new Button('PLOT', () => {
         pen.drawContour(modifiedContour);
-    }
-    let plotButton = new Button('PLOT', buttonFn);
+    });
+    let switchLetterButton = new Button('LETTER++', () => {
+        currLetterNum = (currLetterNum + 1) % letterContours.length;
+        setContourInSceneNum(letterContours[currLetterNum], 0);
+    });
     let projectLineAndTransformAgain = (newLine) => {
         modifiedContour = lineObjToContour(newLine);
         projector.projectContour(modifiedContour);
         $transformLineInSceneNum(0, projectLineAndTransformAgain)
     };
+    visualizeContours2d(letterContours[currLetterNum]);
+    plotter.visualizeMachine();
     $transformLineInSceneNum(0, projectLineAndTransformAgain);
 }
 main();
