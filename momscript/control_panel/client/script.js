@@ -83,40 +83,24 @@ async function main() {
     visualizeContours2d(contours);
     let plotter = new Machine({ preset: 'axidraw' });
     let pen = new Tool(plotter, {
-        'penUp' : () => {
-            moveToBeginning(ToolUpDown);
-        },
-        'penDown' : () => {
-            moveToEnd(ToolUpDown);
-        },
         'drawContour' : (async (contour) => {
             sendContour(contour);
         })
     });
     plotter.visualizeMachine();
     let projector = new Projector();
-    let modifiedContour;
-    let plotButton = new Button((pen) => {
+    // Confusing, we just need a legit contour bc buttonFn gets called somehow
+    let modifiedContour = contours;
+    let buttonFn = () => {
         pen.drawContour(modifiedContour);
-    });
-    $loop(() => {
-        let newLine = $transformLineInSceneNum(0)
-        let newContour = lineObjToContour(newLine);
-        projector.project(newContour);
-    });
-
-
-
-    // let connection = new Connection(pen, true);
-    // connection.connect();
-    // $transformLineInSceneNum(0);
-    // let updatedLineObj = getLineObjFromSceneNum(0);
-    // let updatedContour = lineObjToContour(updatedLineObj);
-    // return connection.execute((drawing) => {
-    //     //projector.project(drawing);
-    //     //$svg.scaleAndTranslate();
-    //     drawContour(drawing);
-    // }, [updatedContour]);
+    }
+    let plotButton = new Button('PLOT', buttonFn);
+    let projectLineAndTransformAgain = (newLine) => {
+        modifiedContour = lineObjToContour(newLine);
+        projector.projectContour(modifiedContour);
+        $transformLineInSceneNum(0, projectLineAndTransformAgain)
+    };
+    $transformLineInSceneNum(0, projectLineAndTransformAgain);
 }
 main();
 `;
@@ -935,10 +919,15 @@ class LangUtil {
             // TODO: just use debugger until we have a real REPL
             debugger;
         }).toString(),
+        '$loop' : (function $loop(executeFn) {
+            while (true) {
+                executeFn();
+            }
+        }).toString(),
         '$calibrateProjection' : (function $calibrateProjection() {
             console.log(machine);
         }).toString(),
-        '$transformLineInSceneNum' : (function $transformLineInSceneNum(sceneNumber) {
+        '$transformLineInSceneNum' : (function $transformLineInSceneNum(sceneNumber, cb) {
             console.log('in transform');
             let tControl = generateTranslateControlsForSingleObjSceneNum(sceneNumber);
             let keepWaiting = true;
@@ -983,11 +972,18 @@ class LangUtil {
                     setTimeout(spinLock, 500);
                 }
                 else {
-                    computeAndSendToProjector();
+                    // computeAndSendToProjector();
                     tControl.detach();
+                    let lineObj = getLineObjFromSceneNum(sceneNumber);
+                    cb(lineObj);
                 }
             };
             spinLock();
+            // while (keepWaiting) {
+
+            // }
+            // tControl.detach();
+            // return getLineObjFromSceneNum(sceneNum);
         }).toString()
     };
 
