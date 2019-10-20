@@ -265,15 +265,11 @@ let visualizeContours2d = (contoursPerLayer) => {
         let geom = new THREE.Geometry();
         layerContours.forEach((contour) => {
             contour.forEach((point) => geom.vertices.push(point));
-            // geom.vertices.push(contour[0]);
             let line = new THREE.LineLoop(geom, LINE_MATERIAL);
             group.add(line);
         });
     });
     scenes[activePaneIndex].add(group);
-    // TODO: this may cause the points to differ from points sent to GCode
-    // keep an eye on this.
-    // group.rotateX(Math.PI);
     return group;
 };
 
@@ -343,6 +339,32 @@ let getLineObjFromSceneNum = (sceneNum) => {
         let groupObjs = groups.map((group) => group.children).flat();
         return groupObjs.find((obj) => obj.type === 'LineLoop');
     }
+};
+
+let setContourInSceneNum = (contoursPerLayer, sceneNum) => {
+    let scene = scenes[sceneNum];
+    scene.children.forEach((obj) => {
+        if (obj instanceof THREE.TransformControls) {
+            obj.detach();
+        }
+    });
+    let groups = scenes[sceneNum].children
+        .filter((obj) => obj.type === 'Group');
+    let lineObjs = scenes[sceneNum].children
+        .filter((obj) => obj.type === 'LineLoop');
+    groups.forEach((group) => scene.remove(group));
+    lineObjs.forEach((lineObj) => scene.remove(lineObj));
+    let group = new THREE.Group();
+    contoursPerLayer.forEach((layerContours) => {
+        let geom = new THREE.Geometry();
+        layerContours.forEach((contour) => {
+            contour.forEach((point) => geom.vertices.push(point));
+            let line = new THREE.LineLoop(geom, LINE_MATERIAL);
+            group.add(line);
+        });
+    });
+    scene.add(group);
+    return group;
 };
 
 /* MESH STUFF */
