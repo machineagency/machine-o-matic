@@ -910,6 +910,42 @@ class Tool {
     }
 
 }
+
+/* PROJECTOR */
+
+class Projector {
+
+    constructor() {
+    }
+
+    projectContour(contour) {
+        API__sendContourToProjection(contour);
+    }
+}
+
+/* BUTTON */
+
+class Button {
+
+    constructor(labelText, onClickFn) {
+        this.onClickFn = onClickFn;
+        this.labelText = labelText;
+        this.dom = this.generateDom();
+    }
+
+    generateDom() {
+        let buttonContainerDom = document.querySelector('.button-container');
+        let buttonDom = document.createElement('button');
+        buttonDom.className = 'run-button';
+        buttonDom.innerText = this.labelText;
+        buttonDom.setAttribute('onclick', this.onClickFn());
+        buttonContainerDom.appendChild(buttonDom);
+        return buttonDom;
+    }
+
+}
+
+
 /* LANGUAGE UTILS */
 
 class LangUtil {
