@@ -16,15 +16,17 @@
     </code>
 </pre>
 
-<!-- Click this button at your OWN RISK, no malicious code please. -->
-<button class="run-button" onclick="
-    resetPanes();
-    let progText = reduceDivsToProgramText();
-    let processedProgText = LangUtil.preprocess(progText);
-    eval(processedProgText);
-">
-    RUN
-</button>
+<div class='button-container'>
+    <!-- Click this button at your OWN RISK, no malicious code please. -->
+    <button class="run-button" onclick="
+        resetPanes();
+        let progText = reduceDivsToProgramText();
+        let processedProgText = LangUtil.preprocess(progText);
+        eval(processedProgText);
+    ">
+        RUN
+    </button>
+</div>
 
 <div class="panes-container">
 </div>

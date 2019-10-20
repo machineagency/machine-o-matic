@@ -101,10 +101,13 @@ button {
     counter-reset: line;
 }
 
-.run-button {
+.button-container {
     position: absolute;
     left: 20px;
     bottom: 40px;
+}
+
+.run-button {
 }
 
 .code-line {
