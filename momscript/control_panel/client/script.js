@@ -102,6 +102,7 @@ async function main() {
     let switchLetterButton = new Button('LETTER++', () => {
         currLetterNum = (currLetterNum + 1) % letterContours.length;
         setContourInSceneNum(letterContours[currLetterNum], 0);
+        $setControlsInScene(0);
         calculateContourAndProject();
     });
     let calculateContourAndProject = () => {
