@@ -664,8 +664,8 @@ class Machine {
     constructor(kvs) {
         if (kvs['preset'] !== undefined) {
             if (kvs['preset'] === 'axidraw') {
-                kvs['linear Axis(x)'] = 'Motor(x1) @ step -> 0.03048 mm, Motor(x2) @ step -> 0.03048 mm';
-                kvs['linear Axis(y)'] = 'Motor(y) @ step -> ??? mm';
+                kvs['linear Axis(x)'] = 'Motor(x) @ step -> 0.03048 mm';
+                kvs['linear Axis(y)'] = 'Motor(y) @ step -> 0.03048 mm';
                 kvs['binar ToolUpDown'] = 'Motor(t)';
                 delete kvs['preset'];
             }
@@ -736,19 +736,20 @@ class Machine {
                 drive.motors.forEach((motor) => {
                     stage = addLinearStage(scene, camera);
                     if (drive.name === 'x') {
-                        stage.position.x = stageOffsetFactor * offset;
+                        // stage.position.x = stageOffsetFactor * offset;
+                        stage.position.set(0, 0, 20);
                         stageOffsetFactor += 2;
                     }
                 });
                 if (drive.name === 'y') {
-                    stage.position.x = miniOffset;
-                    stage.position.z = heightOffset;
+                    stage.position.set(0, 0, 65);
                     stage.rotateZ(Math.PI / 2);
                 }
             }
         });
 
         let tool = addStraightTool(scene, camera);
+        tool.position.set(165, 0, 65)
         camera.zoom = 0.25;
         camera.updateProjectionMatrix();
         if (DEBUG_RENDER_ONCE) {
@@ -1378,7 +1379,7 @@ let addStraightTool = (scene, camera) => {
     return group;
 };
 
-let _addGroupToScene = (group, scene, camera, adjustPosition=true) => {
+let _addGroupToScene = (group, scene, camera, adjustPosition=false) => {
     scene.add(group);
     // destroyControl(scene);
     // generateControlForGroup(group, scene, camera);
@@ -1489,7 +1490,8 @@ let _makeStageInScene = (stageType, scene) => {
     group.add(stagePlatformLines);
     // group.add(stagePlatformMesh);
     // scene.add(group);
-    stagePlatformLines.translateZ(12.5);
+    stagePlatformLines.translateY(-8);
+    stagePlatformLines.translateZ(8);
 
     // NOTE: currently we get the id of the Mesh (ignoring group and line ids)
     // May have to change this in the future
@@ -1529,7 +1531,7 @@ let _makeTool = (toolType, scene) => {
     group.accepts = '(?)';
 
     // Attempt to center on grid helper's axis
-    toolLines.translateZ(40);
+    // toolLines.translateZ(40);
     group.rotateX(Math.PI / 2);
 
     focus(group, scene);
