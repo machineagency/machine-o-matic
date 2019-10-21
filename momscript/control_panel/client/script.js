@@ -1716,8 +1716,8 @@ const paneInflateFunctionsByName = {
         // Move the camera to focus on the lower right quadrant,
         // not sure why but the position setting must be done
         // after makeScene2d is called
-        camera.position.setX(220);
-        camera.position.setY(170);
+        camera.position.setX(300);
+        camera.position.setY(230);
 
         return () => {
             renderer.render(scene, camera);
