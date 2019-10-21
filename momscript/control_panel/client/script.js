@@ -102,16 +102,17 @@ async function main() {
     let switchLetterButton = new Button('LETTER++', () => {
         currLetterNum = (currLetterNum + 1) % letterContours.length;
         setContourInSceneNum(letterContours[currLetterNum], 0);
-        $transformLineInSceneNum(0, projectLineAndTransformAgain);
+        calculateContourAndProject();
     });
-    let projectLineAndTransformAgain = (newLine) => {
-        modifiedContour = lineObjToContour(newLine);
+    let calculateContourAndProject = () => {
+        let lineObj = getLineObjFromSceneNum(0);
+        modifiedContour = lineObjToContour(lineObj);
         projector.projectContour(modifiedContour);
-        $transformLineInSceneNum(0, projectLineAndTransformAgain)
     };
     visualizeContours2d(letterContours[currLetterNum]);
+    $setControlsInScene(0);
     plotter.visualizeMachine();
-    $transformLineInSceneNum(0, projectLineAndTransformAgain);
+    let calcInterval = setInterval(calculateContourAndProject, 200);
 }
 main();
 `;
@@ -1015,7 +1016,6 @@ class LangUtil {
                 let sKeyCode = 83;
                 let rKeyCode = 82;
                 let tKeyCode = 84;
-                let pKeyCode = 80;
                 let dKeyCode = 68;
                 if (event.keyCode === escapeKeycode) {
                     keepWaiting = false;
@@ -1029,21 +1029,12 @@ class LangUtil {
                 if (event.keyCode === tKeyCode) {
                     tControl.setMode('translate');
                 }
-                if (event.keyCode === pKeyCode) {
-                    computeAndSendToProjector();
-                }
                 if (event.keyCode === dKeyCode) {
                     draw();
                 }
             });
-            let lineContour;
-            let draw = () => {
-                API__sendAndPlotCoords(contourToPointArrays(lineContour, false)[0][0])
-            }
-            // TODO: won't work since we generate multple timeouts
             let spinLock = () => {
                 if (keepWaiting) {
-                    console.log('spinnin');
                     clearTimeout(timeout);
                     timeout = setTimeout(spinLock, 500);
                 }
@@ -1055,6 +1046,23 @@ class LangUtil {
                 }
             };
             spinLock();
+        }).toString(),
+        '$setControlsInScene' : (function $setControlsInScene(sceneNum) {
+            let tControl = generateTranslateControlsForSingleObjSceneNum(sceneNum);
+            window.addEventListener('keydown', (event) => {
+                let sKeyCode = 83;
+                let rKeyCode = 82;
+                let tKeyCode = 84;
+                if (event.keyCode === sKeyCode) {
+                    tControl.setMode('scale');
+                }
+                if (event.keyCode === rKeyCode) {
+                    tControl.setMode('rotate');
+                }
+                if (event.keyCode === tKeyCode) {
+                    tControl.setMode('translate');
+                }
+            });
         }).toString()
     };
 
