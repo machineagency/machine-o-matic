@@ -18,6 +18,9 @@ let pageProjectionContour;
 const EPSILON = 0.001;
 const ANIMATION_TIMESCALE = 2;
 
+// TODO: kludge
+let timeout;
+
 const pikachuProgramText = `'use strict';
 loadStl('assets/pikachu.stl').then((meshGeomPair) => {
     let mesh = meshGeomPair[0];
@@ -1037,13 +1040,16 @@ class LangUtil {
             let draw = () => {
                 API__sendAndPlotCoords(contourToPointArrays(lineContour, false)[0][0])
             }
+            // TODO: won't work since we generate multple timeouts
             let spinLock = () => {
                 if (keepWaiting) {
                     console.log('spinnin');
-                    setTimeout(spinLock, 500);
+                    clearTimeout(timeout);
+                    timeout = setTimeout(spinLock, 500);
                 }
                 else {
                     tControl.detach();
+                    clearTimeout(timeout);
                     let lineObj = getLineObjFromSceneNum(sceneNumber);
                     cb(lineObj);
                 }
@@ -1614,7 +1620,7 @@ let makeScene2d = (domElement) => {
     let camera = new THREE.OrthographicCamera(-viewSize * aspect, viewSize * aspect,
         viewSize, -viewSize, -1000, 10000);
     camera.up.set(0, 0, 1);
-    camera.zoom = 0.5;
+    camera.zoom = 0.20;
     camera.updateProjectionMatrix();
     camera.frustumCulled = false;
     camera.position.set(0, 0, -500); // I don't know why this works
@@ -1702,8 +1708,8 @@ const paneInflateFunctionsByName = {
         // Move the camera to focus on the lower right quadrant,
         // not sure why but the position setting must be done
         // after makeScene2d is called
-        camera.position.setX(145);
-        camera.position.setY(95);
+        camera.position.setX(220);
+        camera.position.setY(170);
 
         return () => {
             renderer.render(scene, camera);

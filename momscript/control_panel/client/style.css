@@ -78,8 +78,8 @@ button {
 
 .full-pane *[data-diagram] {
     display: inline-block;
-    width: 36em;
-    height: 24em;
+    width: 26em;
+    height: 20em;
     border: 1px solid #ffffff;
 }
 
