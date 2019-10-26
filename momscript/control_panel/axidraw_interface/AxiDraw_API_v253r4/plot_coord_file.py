@@ -37,7 +37,7 @@ if __name__ == '__main__':
     try:
         coords = read_coords_from_file('axidraw_interface/AxiDraw_API_v253r4/coords.txt')
         new_svg = path_coords_to_svg(coords)
-        print(new_svg)
+        # print(new_svg)
         ad = init_axidraw()
         plot_svg_string(new_svg, ad)
     except Exception as e:
