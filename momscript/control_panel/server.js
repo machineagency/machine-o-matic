@@ -31,7 +31,7 @@ app.post('/plot', (req, res) => {
     });
 
     shell.on('message', (message) => {
-        console.log(message);
+        // console.log(message);
     });
 
     res.status(200).send(`Plotted ${coordsObj}`);
