@@ -38,8 +38,8 @@ button {
 
 *[data-diagram] {
     display: inline-block;
-    width: 18em;
-    height: 12em;
+    width: 12em;
+    height: 8em;
     border: 1px solid #ffffff;
 }
 
@@ -90,7 +90,7 @@ button {
     margin-top: 10px;
     overflow: scroll;
     height: 100%;
-    width: 600px;
+    width: 500px;
     display: inline-block;
     position: absolute;
     top: 0;
