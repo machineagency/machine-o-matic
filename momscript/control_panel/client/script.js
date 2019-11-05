@@ -118,6 +118,23 @@ async function main() {
 main();
 `;
 
+const projectorCalibrationText = `'use strict';
+    async function main() {
+        let plotter = new Machine({ preset: 'axidraw' });
+        let pen = new Tool(plotter, {
+            'drawContour' : (async (contour) => {
+                sendContour(contour);
+            })
+        });
+        let projector = new Projector();
+        // USA letter size in millimeters
+        projector.calibrate(pen, {
+            envelope: [216, 279] // USA letter size in mm
+        });
+    }
+main();
+`;
+
 const defaultStageNames = [
     "sheep", "spinny", "rocket", "ike", "stagezilla", "unicorn", "mustache",
     "plant", "rutabaga", "turnip", "queen", "cedar", "douglas", "quaternion",
@@ -1970,7 +1987,7 @@ let updateAnimationMixers = () => {
 let main = () => {
     let programTextElem = document.querySelector('.program-container');
     if (programTextElem) {
-        programTextToDivs(uistProgramText);
+        programTextToDivs(projectorCalibrationText);
         // programTextToDivs(pikachuProgramText);
         programTextElem.spellcheck = false;
         programTextElem.focus();
