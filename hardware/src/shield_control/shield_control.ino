@@ -9,18 +9,20 @@
 //   Max travel of +/- 90 degrees
 // Total steps count is +/- 800 steps with the above settings.
 
+// Pin Mapping
 #define XSTEP 2
-#define XDIR 5
 #define YSTEP 3
-#define YDIR 6
 #define ZSTEP 4
+
+#define XDIR 5
+#define YDIR 6
 #define ZDIR 7
 
-
 /* Cartesian example */
+// This section declares the constants for the stepper motors.
 const int NUM_STAGES = 3;
 String stage_names[3] = { "x1", "x2", "y" };
-AccelStepper phys_motors[3];// = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
+AccelStepper phys_motors[3]; // = { &phys_x_motor, &phys_y_motor, &phys_z_motor };
 // TODO: un-hardcode mapping
 // index is stage index, value at index is physical index
 int stage_to_phys[3] = { 0, 1, 2 };
@@ -45,9 +47,9 @@ int MS_FACTOR = 4;
 float SPEED = 200.0;
 
 void setup() {
-    Serial.begin(9600);
-    pinMode(8, OUTPUT); // Disable pin.
-    digitalWrite(8, LOW);
+    Serial.begin(115200); // set serial com baud rate
+    pinMode(8, OUTPUT);   // set pin 8 as output
+    digitalWrite(8, LOW); // set pin 8 to low
 
     phys_motors[0] = AccelStepper(AccelStepper::DRIVER, XSTEP, XDIR);
     phys_motors[1] = AccelStepper(AccelStepper::DRIVER, YSTEP, YDIR);
@@ -55,50 +57,46 @@ void setup() {
 
     for (int i = 0; i < NUM_STAGES; i++) {
         phys_motors[i].setMaxSpeed(MS_FACTOR * SPEED);
-        phys_motors[i].setAcceleration(MS_FACTOR * SPEED / 2.0);
+        phys_motors[i].setAcceleration(MS_FACTOR * SPEED / 8.0);
     }
-
-    // Uncomment to test motors
-    // test_motors();
-
+    // Serial.println(phys_motors[2]);
+    test_motors();
     Serial.println("Hello! I am the motor hub.");
-
 }
 
 void loop() {
-    if (Serial.available()) {
-        String s = Serial.readString();
-        Serial.print("Got: ");
-        Serial.println(s);
+    // if (Serial.available()) {
+    //     String s = Serial.readString();
+    //     Serial.print("Got: ");
+    //     Serial.println(s);
 
-        char *json_str = (char *) malloc((s.length() + 1) * sizeof(char));
-        s.toCharArray(json_str, s.length() + 1);
+    //     char *json_str = (char *) malloc((s.length() + 1) * sizeof(char));
+    //     s.toCharArray(json_str, s.length() + 1);
 
-        StaticJsonBuffer<16384> jsonBuffer;
-        JsonObject& root = jsonBuffer.parseObject(json_str);
+    //     StaticJsonBuffer<16384> jsonBuffer;
+    //     JsonObject& root = jsonBuffer.parseObject(json_str);
 
-        // Test if parsing succeeds.
-        if (!root.success()) {
-          Serial.println("parseObject() failed");
-          free(json_str);
-          return;
-        }
+    //     // Test if parsing succeeds.
+    //     if (!root.success()) {
+    //       Serial.println("parseObject() failed");
+    //       free(json_str);
+    //       return;
+    //     }
 
-        const char *inst = root["inst"];
+    //     const char *inst = root["inst"];
 
-        if (strcmp("move", inst) == 0) {
-            JsonObject& steps = root["steps"];
-            handle_move(steps);
-        }
+    //     if (strcmp("move", inst) == 0) {
+    //         JsonObject& steps = root["steps"];
+    //         handle_move(steps);
+    //     }
 
-        if (strcmp("moves", inst) == 0) {
-            JsonArray& steps_arr = root["steps"];
-            handle_multiple_moves(steps_arr);
-        }
+    //     if (strcmp("moves", inst) == 0) {
+    //         JsonArray& steps_arr = root["steps"];
+    //         handle_multiple_moves(steps_arr);
+    //     }
 
-        free(json_str);
-
-    }
+    //     free(json_str);
+    // }
 }
 
 void handle_move(JsonObject& steps) {
@@ -145,18 +143,26 @@ AccelStepper& get_phys_motor(String stage_name, String *stage_names) {
 }
 
 void test_motors(void) {
-    long coords0[3] = { 4 * 328, 4 * 328, 0 };
-    long coords1[3] = { 4 * -328, 4 * -328, 0 };
+    long coords0[3] = { 10 * 328, 10 * 328, 4 * 328 };
+    long coords1[3] = { 10 * -328, 10 * -328, 4 * -328 };
     MultiStepper steppers;
-    for (int i = 0; i < NUM_STAGES; i += 1) {
+    for (int i = 0; i < NUM_STAGES; i++) {
         steppers.addStepper(phys_motors[i]);
     }
+
     steppers.moveTo(coords0);
     steppers.runSpeedToPosition();
+    delay(100);
+    
     zero_motors();
+    delay(100);
+    
     steppers.moveTo(coords1);
     steppers.runSpeedToPosition();
+    delay(100);
+    
     zero_motors();
+    delay(100);
 }
 
 void zero_motors(void) {
@@ -164,4 +170,3 @@ void zero_motors(void) {
         phys_motors[i].setCurrentPosition(0);
     }
 }
-
