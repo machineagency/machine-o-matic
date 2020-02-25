@@ -4,16 +4,13 @@
       "stages" : 3,
       "motors" : [{
          "name" : "x1",
-         "step" : 2,
-         "dir" : 5
+         "map"  : 0
       },{
          "name" : "x2",
-         "step" : 3,
-         "dir" : 6
+         "map"  : 1
       },{
          "name" : "y",
-         "step" : 4,
-         "dir" : 7
+         "map"  : 2
       }]
    }
 }
