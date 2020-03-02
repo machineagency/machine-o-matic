@@ -1,6 +1,7 @@
 #ifndef SHIELDCONTROL_H
 #define SHIELDCONTROL_H
 
+#include "ArduinoJson.h"
 #include "AccelStepper.h"
 #include "MultiStepper.h"
 #include <ctype.h>
@@ -19,6 +20,7 @@
 #define MAX_STAGES 5
 #define MS_FACTOR 4
 #define SPEED 200.0
+#define JSON_SIZE 4096
 
 // Assumes all steppers are configured identically with the following settings:
 // 0.9 Degree Steppers
@@ -37,6 +39,7 @@ int NUM_STAGES = 3;
 String stage_names[3]; // array of names of each of the motors
 AccelStepper phys_motors[3]; // array of AccelStepper classes for each motor
 int stage_to_phys[3] = { 0, 1, 2 }; // array of name to AccelStepper mapping
+String frame;
 
 /* Polar example */
 // const int NUM_STAGES = 2;

@@ -1,14 +1,11 @@
-#include "AccelStepper.h"
-#include "MultiStepper.h"
-#include "ArduinoJson.h"
 #include "shield_control.h"
-#include <ctype.h>
 
 void setup() {
-	Serial.println("{2:Initiating Setup}");
 	Serial.begin(115200); // set serial com baud rate
+	Serial.println("{2:Initiating Setup}");
 	pinMode(8, OUTPUT);   // set pin 8 as output
 	digitalWrite(8, LOW); // set pin 8 to low
+	Serial.setTimeout(4000); // 2000ms constrains stress.py to 14 iterations
    // test_motors();
    Serial.println("{1:Hello! I am the motor hub.}");
 }
@@ -19,27 +16,31 @@ void loop() {
 		while (Serial.available()) {
 			str = str + Serial.readString();
 		}
-		String print_s = *(new String("{2:Received: ")) + str + *(new String("}"));
-		Serial.println(print_s);
-
+		String print_str = *(new String("{3:Received: ")) + str + *(new String("}"));
+		Serial.println(print_str);
+		
 		char *json_str = (char *) malloc((str.length() + 1) * sizeof(char));
 		str.toCharArray(json_str, str.length() + 1);
 
 		// Figure out StaticJsonBuffer
-		StaticJsonBuffer<1024> jsonBuffer;
+		StaticJsonBuffer<JSON_SIZE> jsonBuffer;
 		JsonObject& root = jsonBuffer.parseObject(json_str);
 
 		// Test if parsing succeeds.
 		if (!root.success()) {
 			Serial.println("{3:parseObject() failed}");
 			free(json_str);
+			Serial.println("{1:Next Instruction?}");
 			return;
 		}
 
 		String instr_type = root["type"];
-		Serial.println("{2:"+instr_type+"}");
+		Serial.println("{3:Instruction received: "+instr_type+"}");
 		
-		// if (strcmp("setup", instr_type) == 0) {
+		// if (instr_type == "setting") {
+		// 	Serial.println("{2:" + String(JSON_SIZE) + "}");
+		// 	Serial.println("{1:Max JSON size sent.}");
+		// } else 
 		if (instr_type == "setup") {
 			Serial.println("{2:Configuring motor setups...}");
 			configure_motors(root["data"]);

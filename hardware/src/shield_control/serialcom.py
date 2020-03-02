@@ -1,4 +1,4 @@
-import serial, json, sys, re
+import serial, json, sys, re, time
 import serial.tools.list_ports
 
 BAUD = 115200
@@ -6,8 +6,11 @@ BAUD = 115200
 # Main Function -----------------------------------
 def main():
 	ser = open_port() # initiate serial port connection
+	max_size = 4096
+	s_flag = False
 
 	while True:
+		# if (ser.inWaiting()):
 		data = read_port(ser)
 		# print(data)
 		status = 4
@@ -19,10 +22,19 @@ def main():
 		# print(data) # print incoming data
 		if (status == 1): # status = idle
 			msg_print(data[2:])
-			instr = input("Instruction:  ")
+			instr = input("Instruction: ")
+
 			if instr[0:2] == "w ":
-				# print("reading .json file")
-				send_data(ser, instr[2:] + ".json")
+				send_data(ser, instr[2:] + ".json", max_size)
+				if instr[2:] == "setting":
+					s_flag = True
+					# response = read_port(ser)
+					# response = response[2:]
+					# while not (re.match('^[0-9]*$', response)):
+					# 	response = read_port(ser)
+					# 	response = response[2:response.find("}")]
+					# print(type(response[ 2 : response.find("}") ]))
+					# max_size = int(response[2:])
 
 			elif instr == "c" or instr == "C":
 				ser.close() # close serial port
@@ -32,17 +44,16 @@ def main():
 				print("unable to interpret instr") 
 
 		elif (status == 2): # status = busy
+			if s_flag == True:
+				max_size = int(data[2:])
+				s_flag = False
 			msg_print(data[2:])
 
-		elif (status == 3): # status = error
-			print(data[2:])
+		elif (status == 3): # status = message
+			msg_print(data[2:])
 
 		else: # no data / invalid packet
 			print(data)
-
-def msg_print(msg):
-	print("------------------------------")
-	print(msg)
 
 # Function: Open Serial Port -----------------------------------
 def open_port():
@@ -76,7 +87,7 @@ def read_port(ser):
 	# if (ser.inWaiting()):
 	temp = ser.readline()
 	if temp != 10:
-		data += temp.decode('utf-8')
+		data = temp.decode('utf-8')
 	
 	if len(data) != 0 and "{" in data:
 		start_i = data.find("{")+1
@@ -89,20 +100,34 @@ def read_port(ser):
 
 	
 
-
 # Parse JSON & Serial Write --------------------------
-def send_data(ser, file_name):
+def send_data(ser, file_name, max_size):
 	with open(file_name) as json_file:
 		print("------------------------------")
 		print("Loading JSON file:")
 		data = json.load(json_file)
-		print(json.dumps(data, indent=1))
+		# print(json.dumps(data, indent=1))
 		data_bytes = bytes(json.dumps(data), "utf-8")
-		print("------------------------------")
-		print("Sending JSON file...")
-		ser.write(data_bytes) # write a string
-		ser.flush()
+		if len(data_bytes) <= max_size:
+			print("------------------------------")
+			print("Sending JSON file (" + str(len(data_bytes)) + " bytes)...")
+			start = time.time()
+			ser.write(data_bytes) # write a string
+			diff = time.time() - start
+			if diff < 0.000001:
+				print("Tx Time: " + str(diff))
+			else:
+				print('Tx Time: %.6f' % diff)
+			ser.flush()
+		else:
+			print("JSON file (" + str(len(data_bytes)) + " bytes) too large (max size: " + str(max_size) + ").")
 		
+def msg_print(msg):
+	print("------------------------------")
+	print(msg)
 
 if __name__ == "__main__":
 	main()
+
+# MOVE  INSTR: ~69 bytes 
+# MOVES INSTR: ~75 bytes + ~30-40bytes/instr
