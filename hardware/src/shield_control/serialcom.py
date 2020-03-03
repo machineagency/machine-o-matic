@@ -5,9 +5,10 @@ BAUD = 115200
 
 # Main Function -----------------------------------
 def main():
-	ser = open_port() # initiate serial port connection
-	max_size = 4096
+	max_size = 4096 
 	s_flag = False
+
+	ser = open_port() # initiate serial port connection
 
 	while True:
 		# if (ser.inWaiting()):
@@ -22,7 +23,7 @@ def main():
 		# print(data) # print incoming data
 		if (status == 1): # status = idle
 			msg_print(data[2:])
-			instr = input("Instruction: ")
+			instr = input("\nInstruction: ")
 
 			if instr[0:2] == "w ":
 				send_data(ser, instr[2:] + ".json", max_size)
@@ -82,20 +83,25 @@ def open_port():
 
 
 # Function: Read Serial Input ----------------------------------
+
 def read_port(ser):
 	data = ""
-	# if (ser.inWaiting()):
+	
+	# if (ser.inWaiting()):	
 	temp = ser.readline()
+
 	if temp != 10:
 		data = temp.decode('utf-8')
 	
-	if len(data) != 0 and "{" in data:
+	if len(data) != 0 and "{" in data and re.match('^[0-9]*$', data[1]):
 		start_i = data.find("{")+1
 		end_i = data.find("}")
 		if start_i != -1 and end_i != -1:
 			data = data[start_i:end_i] # retrieve data from packet
-		# print(data)
 		return data
+	else:
+		print(data)
+
 	return ""
 
 	
@@ -115,9 +121,9 @@ def send_data(ser, file_name, max_size):
 			ser.write(data_bytes) # write a string
 			diff = time.time() - start
 			if diff < 0.000001:
-				print("Tx Time: " + str(diff))
+				print("[ Tx Time: " + str(diff) + "]")
 			else:
-				print('Tx Time: %.6f' % diff)
+				print('[ Tx Time: %.6f ]' % diff)
 			ser.flush()
 		else:
 			print("JSON file (" + str(len(data_bytes)) + " bytes) too large (max size: " + str(max_size) + ").")

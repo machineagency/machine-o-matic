@@ -16,3 +16,5 @@ for x in range(0,max):
 
 with open("stress.json", "w") as write_file:
    json.dump(instrJSON, write_file, indent=2)
+   data_bytes = bytes(json.dumps(instrJSON), "utf-8")
+   print(str(len(data_bytes)) + " bytes")

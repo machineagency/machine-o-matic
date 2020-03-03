@@ -19,7 +19,7 @@
 // Constants
 #define MAX_STAGES 5
 #define MS_FACTOR 4
-#define SPEED 200.0
+#define SPEED 400.0
 #define JSON_SIZE 4096
 
 // Assumes all steppers are configured identically with the following settings:
@@ -39,7 +39,10 @@ int NUM_STAGES = 3;
 String stage_names[3]; // array of names of each of the motors
 AccelStepper phys_motors[3]; // array of AccelStepper classes for each motor
 int stage_to_phys[3] = { 0, 1, 2 }; // array of name to AccelStepper mapping
+
 String frame;
+uint16_t brackets = 0;
+bool packet_complete = false;
 
 /* Polar example */
 // const int NUM_STAGES = 2;
@@ -50,6 +53,7 @@ String frame;
 // int stage_to_phys[3] = { 0, 1, 2 };
 
 // Function Declarations
+void handle_instr(String, JsonObject&);
 StepperPins pin_map(int);
 int string_index_of(String);
 int get_motor_index(String);

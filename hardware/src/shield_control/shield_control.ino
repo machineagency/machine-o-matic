@@ -1,67 +1,127 @@
 #include "shield_control.h"
 
+/* Main Arduino Functions ----------------------------------------------------- */
+
 void setup() {
 	Serial.begin(115200); // set serial com baud rate
-	Serial.println("{2:Initiating Setup}");
 	pinMode(8, OUTPUT);   // set pin 8 as output
 	digitalWrite(8, LOW); // set pin 8 to low
-	Serial.setTimeout(4000); // 2000ms constrains stress.py to 14 iterations
-   // test_motors();
+	// Serial.setTimeout(4000); // 2000ms constrains stress.py to 14 iterations
    Serial.println("{1:Hello! I am the motor hub.}");
 }
 
 void loop() {
-	if (Serial.available()) {
-		String str = Serial.readString();
-		while (Serial.available()) {
-			str = str + Serial.readString();
-		}
-		String print_str = *(new String("{3:Received: ")) + str + *(new String("}"));
-		Serial.println(print_str);
+	// if (Serial.available()) {
+	// 	String str = Serial.readString();	
+	// 	while (Serial.available()) {
+	// 		str = str + Serial.readString(); delay(500);
+	// 	}
+
+	// 	Serial.println(str.length());
+	// 	String print_str = String("{3:") + str + String("}");
+	// 	Serial.println(print_str);
 		
-		char *json_str = (char *) malloc((str.length() + 1) * sizeof(char));
-		str.toCharArray(json_str, str.length() + 1);
+	// 	char *json_str = (char *) malloc((str.length() + 1) * sizeof(char));
+	// 	str.toCharArray(json_str, str.length() + 1);
+	
+	// 	// Figure out StaticJsonBuffer
+	// 	StaticJsonBuffer<JSON_SIZE> jsonBuffer;
+	// 	JsonObject& root = jsonBuffer.parseObject(json_str);
 
-		// Figure out StaticJsonBuffer
+	// free(json_str);
+
+	if (packet_complete) {
+		
 		StaticJsonBuffer<JSON_SIZE> jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(json_str);
-
+		JsonObject& root = jsonBuffer.parseObject(frame);
+		
 		// Test if parsing succeeds.
 		if (!root.success()) {
 			Serial.println("{3:parseObject() failed}");
-			free(json_str);
+			// free(json_str);
 			Serial.println("{1:Next Instruction?}");
 			return;
 		}
 
 		String instr_type = root["type"];
-		Serial.println("{3:Instruction received: "+instr_type+"}");
+		Serial.println("{3:Instr received: "+instr_type+"}");
+		handle_instr(instr_type, root);
 		
-		// if (instr_type == "setting") {
+		frame = "";
+		packet_complete = false;
+	}
+}
+
+void serialEvent() {
+	char c = Serial.read();
+
+	// Only add to packet if data is incomplete
+	if (!packet_complete) {
+		// if there are no open brackets, ignore the data
+		if (c == '{' || brackets > 0 || c == '\n') {
+			frame += c;
+		}
+
+		if (c == '{' || c == '[') {
+			brackets++;
+		} else if (c == '}' || c == ']') {
+			brackets--;
+		}
+
+		// String testing = "char:" + String(c) + ", brackets:" + String(brackets);
+		// Serial.println(testing);
+
+		// Check if packet is completed
+		if ((brackets == 0) && frame.length() > 0) {
+			packet_complete = true;
+			Serial.println(frame.length());
+			// Serial.println("data: " + frame.substring(0, 64));
+			// Serial.println(frame.substring(32, 42));
+			// Serial.println("data: " + frame.substring(64, 128));
+			// Serial.println(frame.substring(96, 128));
+			// Serial.println(frame.substring(128, 134));
+			// Serial.print("{3:Instr received: " + frame[0:64]);
+			// Serial.print(frame[64:128]);
+			
+		   
+		}
+		
+	}
+	// delay(1);
+}
+
+/* Helper Functions ----------------------------------------------------- */
+
+void handle_instr(String instr_type, JsonObject& root) {
+
+	// if (instr_type == "setting") {
 		// 	Serial.println("{2:" + String(JSON_SIZE) + "}");
 		// 	Serial.println("{1:Max JSON size sent.}");
 		// } else 
-		if (instr_type == "setup") {
-			Serial.println("{2:Configuring motor setups...}");
-			configure_motors(root["data"]);
-			Serial.println("{1:Setup complete!}");
+		
+	if (instr_type == "setup") {
+		Serial.println("{2:Configuring motor setups...}");
+		configure_motors(root["data"]);
+		Serial.println("{1:Setup complete!}");
+		// Serial.println("{3:Testing Movement...}");
+		// test_motors();
+		// Serial.println("{3:Testing Complete!}");
+		// Serial.println("{1:Setup complete!}");
 
-		} else if (instr_type == "move") {
-			Serial.println("{2:Executing move...}");
-			handle_move(root["data"]["steps"]);
-			Serial.println("{1:Move complete!}");
+	} else if (instr_type == "move") {
+		Serial.println("{2:Executing move...}");
+		handle_move(root["data"]["steps"]);
+		Serial.println("{1:Move complete!}");
 
-		} else if (instr_type == "moves") {
-			Serial.println("{2:Executing multi-moves...}");
-			handle_multiple_moves(root["data"]["stepsArray"]);
-			Serial.println("{1:Multi-moves complete!}");
-		}
-		free(json_str);
+	} else if (instr_type == "moves") {
+		Serial.println("{2:Executing multi-moves...}");
+		handle_multiple_moves(root["data"]["stepsArray"]);
+		Serial.println("{1:Multi-moves complete!}");
 	}
 }
 
 
-// Rewrite handle_move so that it works
+
 void configure_motors(JsonObject& data) {
 	NUM_STAGES = atoi(data["stages"]);
 	// Serial.println(NUM_STAGES); // value correct
@@ -71,29 +131,23 @@ void configure_motors(JsonObject& data) {
 	for (JsonObject& motor : motors) {
 		String name = motor["name"];
 		stage_names[index] = name;
-		Serial.println(index);
 		StepperPins mapping = pin_map(atoi(motor["map"]));
-		
-		// Serial.println(index); // values correct
-		// Serial.println(name + ": " + step + ", " + dir); // values correct
 		phys_motors[index] = AccelStepper(AccelStepper::DRIVER, mapping.step, mapping.dir);
 		set_motor_kinematics(index++);
+		// Serial.println(index); // values correct
+		// Serial.println(name + ": " + step + ", " + dir); // values correct
 	}
-
-	// Serial.println("{2:Testing Movement...}");
-	// test_motors();
-	// Serial.println("{2:Testing Complete!}");
 }
 
 
 StepperPins pin_map(int num) {
 	StepperPins output;
 	switch(num) {
-		case 0: output.step = STEP0; output.dir = DIR0; Serial.println("{2:Map to Step0 & Dir0 w/ " + String(num)); break;
-		case 1: output.step = STEP1; output.dir = DIR1; Serial.println("{2:Map to Step1 & Dir1 w/ " + String(num)); break;
-		case 2: output.step = STEP2; output.dir = DIR2; Serial.println("{2:Map to Step2 & Dir2 w/ " + String(num)); break;
-		case 3: output.step = STEP3; output.dir = DIR3; Serial.println("{2:Map to Step3 & Dir3 w/ " + String(num)); break;
-		default: output.step = STEP0; output.dir = DIR0; Serial.println("{2:Map to Step3 & Dir3 w/ " + String(num));break;
+		case 0:  output.step = STEP0; output.dir = DIR0; break;
+		case 1:  output.step = STEP1; output.dir = DIR1; break;
+		case 2:  output.step = STEP2; output.dir = DIR2; break;
+		case 3:  output.step = STEP3; output.dir = DIR3; break;
+		default: output.step = STEP0; output.dir = DIR0; break;
 	}
 	return output;
 }
@@ -115,13 +169,13 @@ void handle_move(JsonObject& steps) {
 		// Serial.println(motor.key);
 		int index = get_motor_index(motor.key);
 		if (index != -1) {
-			// Serial.println("{2:There's a match!}");
-			// Serial.println("{2:index: " + String(index) + "}");
 			steppers.addStepper(phys_motors[index]);
 			motor_steps[index++] = MS_FACTOR * motor.value.as<long>();
+			// Serial.println("{2:There's a match!}");
+			// Serial.println("{2:index: " + String(index) + "}");
 			// Serial.println("{2:" + String(motor_steps[index-1]) + "}");
 		} else {
-			Serial.println("{2:There isn't a match!}");
+			Serial.println("{3:Motor index not found.}");
 		}
 	}
 
@@ -132,18 +186,13 @@ void handle_move(JsonObject& steps) {
 
 
 void handle_multiple_moves(JsonArray& moves) {
-	// Note that steps is a _list_ of steps, unlike handle_move
-	for (JsonObject& move : moves) {
-		handle_move(move);
-	}
+	for (JsonObject& move : moves) handle_move(move);
 }
 
 
 int get_motor_index(String stage_name) {
 	int index = string_index_of(stage_name);
-	if (index == -1) {
-		Serial.println("{3:Error: cannot find stage}");
-	}
+	if (index == -1) Serial.println("{3:Cannot find stage}");
 	return index;
 }
 
