@@ -1,0 +1,16 @@
+{
+   "type" : "setup",
+   "data" : {
+      "stages" : 3,
+      "motors" : [{
+         "name" : "x1",
+         "map"  : 0
+      },{
+         "name" : "x2",
+         "map"  : 1
+      },{
+         "name" : "y",
+         "map"  : 2
+      }]
+   }
+}
