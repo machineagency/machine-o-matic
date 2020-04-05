@@ -135,6 +135,7 @@ class Interpreter(cmd.Cmd):
         }
         packet = { "inst" : "move", "steps" : steps_cleaned }
         packet_json = json.dumps(packet)
+        print(packet_json)
 
         try:
             Interpreter.PORT.write(packet_json + "\n")
