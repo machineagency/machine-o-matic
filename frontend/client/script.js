@@ -1,18 +1,18 @@
 'use strict';
 
+import { testExport } from './animation.js';
+import { onDocumentKeyDown, onDocumentMouseUp, onDocumentMouseDown } from './keypress.js';
+import { stageGui, initGui, connectionHandlesVisible } from './gui.js';
+
 let container, stats;
-let stageGui, connectionGui;
 let camera, scene, renderer;
 let topDirectionalLight, leftDirectionalLight, rightDirectionalLight;
 let mesh, lines, geometry;
 let tool;
 let programText;
-let clock;
-let mixers = [];
 
 let focusedStage;
 let activeSelectionHandle;
-let connectionHandlesVisible = false;
 
 let focus = (object) => {
     focusedStage = object;
@@ -395,32 +395,6 @@ let getControl = () => {
     return control;
 };
 
-let initGui = () => {
-    connectionGui = new dat.GUI( { width: 200 } );
-    stageGui = new dat.GUI( { width: 200 } );
-    stageGui.add({ AddLinearStage: () => {
-        addLinearStage();
-    } }, 'AddLinearStage');
-    stageGui.add({ AddRotaryStage: () => {
-        addRotaryStage();
-    } }, 'AddRotaryStage');
-};
-
-let _getIntersectsFromClickWithCandidates = (event, candidates) => {
-    let vector = new THREE.Vector3();
-    let raycaster = new THREE.Raycaster();
-    let dir = new THREE.Vector3();
-
-    vector.set((event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1, -1); // z = - 1 important!
-    vector.unproject(camera);
-    dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
-    raycaster.set(vector, dir);
-
-    let searchRecursively = true;
-    return raycaster.intersectObjects(candidates, searchRecursively);
-};
-
 let generateControlForGroup = (group) => {
     // Add controls to the new mesh group
     let lastPosition = new THREE.Vector3();
@@ -467,105 +441,9 @@ let getRootConnectionGroup = (group) => {
     return getRootConnectionGroup(group.parent);
 };
 
-let makeConnectionGroupForModules = (parentMod, childMod) => {
-    let cxnGroup = new THREE.Group();
-    cxnGroup.isConnectionGroup = true;
-    cxnGroup.add(parentMod);
-    cxnGroup.add(childMod);
-    cxnGroup.parent = parentMod.parent; // TODO: is this okay?
-    return cxnGroup;
-};
-
 /**
  * KEYPRESS LOGIC
  */
-let onDocumentMouseDown = (event) => {
-    // NOTE: do not fire click events if we click on the GUI
-    if (stageGui.domElement.contains(event.target)) {
-        if (event.target.className === "title") {
-            let maybeStage = findStageWithName(event.target.innerHTML);
-            if (maybeStage !== undefined) {
-                destroyControl();
-                generateControlForGroup(maybeStage);
-                focus(maybeStage);
-            }
-        }
-        return;
-    }
-
-    let candidates = getStages().concat(getTool()).concat(getConnectionHandles());
-    let isectGroups = _getIntersectsFromClickWithCandidates(event, candidates);
-    let isectControl;
-    if (getControl() === undefined) {
-        isectControl = [];
-    }
-    else {
-        isectControl = _getIntersectsFromClickWithCandidates(event, [getControl()]);
-    }
-    let possibleHandles = isectGroups.filter((result) => result.object.name === 'connectionHandle')
-    if (possibleHandles.length > 0) {
-        let currHandle = possibleHandles[0];
-        if (activeSelectionHandle === undefined) {
-            setActiveSelectionHandle(currHandle);
-        } else {
-            let fromModule;
-            if (activeSelectionHandle.object.parent.isTool) {
-                fromModule = getTool();
-            } else {
-                fromModule = findStageWithName(activeSelectionHandle.object.parent.stageName);
-            }
-            let fromPlace = activeSelectionHandle.object.place;
-            let toStage = findStageWithName(currHandle.object.parent.stageName);
-            let toPlace = currHandle.object.place;
-            connectParentChild(fromModule, fromPlace, toStage, toPlace);
-            releaseActiveSelectionHandle();
-        }
-    }
-    // Kludge: isectControl length >= 3 means we are clicking the controls
-    if (isectControl.length < 3 && isectGroups.length > 0) {
-        let stage = getObjectGroup(isectGroups[0].object);
-        // If we are holding shift, make a connection
-        if (event.shiftKey) {
-            if (getFocus().isTool) {
-                connectToolToStage(getFocus(), stage);
-            }
-            else {
-                let parentStageName = getStageName(getFocus());
-                let childStageName = getStageName(stage);
-                let place = prompt(`Where is ${parentStageName} connecting to ${childStageName}?`);
-                if (!(place === 'platform' || place === 'right' || place === 'left')) {
-                    return;
-                }
-                connectParentChild(getFocus(), stage, place);
-            }
-        }
-
-        // Otherwise, just focus the new stage
-        destroyControl();
-        generateControlForGroup(stage);
-        focus(stage);
-        openFolderForStage(stage);
-    }
-    else if (isectControl.length < 3) {
-        unfocus();
-        destroyControl();
-        openFolderForStage(null);
-    }
-};
-
-let onDocumentMouseUp = (event) => {
-    // If we had clicked on a stage folder, close all folders and let the
-    // datGui mouseup handler just open the one stage folder
-    if (stageGui.domElement.contains(event.target)) {
-        if (event.target.className === "title") {
-            openFolderForStage(null);
-        }
-        return;
-    }
-    // FIXME: better to do only on rotation, but this is easier
-    redetermineAllStageAxes();
-    redetermineAccepts();
-};
 
 let openFolderForStage = (stage) => {
     let groups = getStages();
@@ -579,29 +457,6 @@ let openFolderForStage = (stage) => {
             }
         }
     });
-};
-
-let onDocumentKeyDown = (event) => {
-    if (event.target.nodeName === "PRE" || event.target.nodeName === "INPUT") {
-        if (event.key === "Escape") {
-            document.activeElement.blur();
-        }
-        return;
-    }
-    if (event.key === "Backspace") {
-        if (getFocus() !== null && event.shiftKey) {
-            deleteStage(getFocus());
-        }
-    }
-    if (event.key === "m") {
-        swapControlMode();
-    }
-    if (event.key === "s") {
-        toggleConnectionHandles();
-    }
-    if (event.key === "Escape") {
-        releaseActiveSelectionHandle();
-    }
 };
 
 let initCamera = () => {
@@ -618,8 +473,8 @@ let initCamera = () => {
 };
 
 let initScene = () => {
+    console.log(testExport);
     scene = new THREE.Scene();
-    clock = new THREE.Clock();
     scene.background = new THREE.Color(0xf5f6f8);
     topDirectionalLight = new THREE.DirectionalLight( 0xffffff, 1.00 );
     leftDirectionalLight = new THREE.DirectionalLight( 0xffffff, 0.75 );
@@ -870,15 +725,6 @@ let gatherDeepParentStages = (childStage) => {
     return shallowParentStages.concat(deepStagesFlat);
 };
 
-let getConnectionHandles = () => {
-    let groups = getStages();
-    let tool = getTool();
-    let groupsAndTool = groups.concat(tool);
-    return groupsAndTool.map((group) => group.children)
-               .flat()
-               .filter((obj) => obj.name === 'connectionHandle');
-};
-
 let getMeshes = () => {
     let groups = getStages();
     let tool = getTool();
@@ -888,16 +734,6 @@ let getMeshes = () => {
                .filter((obj) => obj.name === 'stageCase'
                              || obj.name === 'stagePlatform'
                              || obj.name === 'tool');
-};
-
-let toggleConnectionHandles = () => {
-    let handles = getConnectionHandles();
-    let meshes = getMeshes();
-    connectionHandlesVisible = !connectionHandlesVisible;
-    handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
-    meshes.forEach((mesh) => {
-        mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
-    });
 };
 
 let setActiveSelectionHandle = (handle) => {
@@ -1217,10 +1053,6 @@ let onMouseHoldDoAxisFunction = (fn, axisName) => {
     }, sendingInterval);
 };
 
-let onClickDoAxisFunction = (fn, axisName) => {
-
-};
-
 let clearControlPad = () => {
     let controlPadDom = document.querySelector('.control-pad-row-container');
     while (controlPadDom.firstChild) {
@@ -1238,92 +1070,6 @@ let cappedFramerateRequestAnimationFrame = (framerate) => {
     }
 };
 
-let animateStagePlatformToDispl = (stage, displ) => {
-    let stagePlatformMeshes = getStagePlatformMeshes(stage);
-    let targetPos = new THREE.Vector3(0, 0, displ);
-    let mixerClipA = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[0], targetPos);
-    let mixerClipB = makeAnimateObjToPositionMixerClipPair(stagePlatformMeshes[1], targetPos);
-    let mixerClipPairs = [mixerClipA, mixerClipB];
-
-    let mixersOnly = mixerClipPairs.map((pair) => pair[0]);
-    mixersOnly.forEach((mixer) => {
-        mixers.push(mixer);
-    });
-
-    mixerClipPairs.forEach((pair) => {
-        let mixer = pair[0];
-        let clip = pair[1];
-        let action = mixer.clipAction(clip);
-        action.loop = THREE.LoopOnce;
-        action.play();
-    });
-
-    return mixerClipPairs;
-};
-
-let animateStageToPosition = (stage, position) => {
-    let mixerClipPair = makeAnimateObjToPositionMixerClipPair(stage, position);
-    let mixer = mixerClipPair[0];
-    let clip = mixerClipPair[1];
-    let action = mixer.clipAction(clip);
-    mixers.push(mixer);
-    action.loop = THREE.LoopOnce;
-    action.play();
-
-    return mixerClipPair;
-};
-
-let animateTranslateStageByDisplOnAxis = (stage, displ, axis) => {
-    let displOnAxis = new THREE.Vector3().copy(axis).multiplyScalar(displ);
-    let translatedPos = new THREE.Vector3().addVectors(displOnAxis,
-                                                       stage.position);
-    return animateStageToPosition(stage, translatedPos);
-};
-
-let moveStagePlatform = (stage, displ) => {
-    let siblingStages = getStageSiblings(stage);
-    animateStagePlatformToDispl(stage, displ);
-    siblingStages.forEach((stage) => {
-        animateStagePlatformToDispl(stage, displ);
-    });
-
-    let displDelta = displ - getPlatformDisplacementForStage(stage);
-    let stagePath = getPathToToolForStage(stage);
-    let parentStages = stagePath.slice(1);
-    let baseAxis = getStageWorldDirection(stage);
-    parentStages.forEach((stage) => {
-        animateTranslateStageByDisplOnAxis(stage, displDelta, baseAxis);
-    });
-};
-
-let makeAnimateObjToPositionMixerClipPair = (obj, newPos) => {
-    // TODO: check if an object is already being animated, if so, take existing
-    // KF into account and add it to the new mixer-action.
-    // Don't have time to currently implement this, so come back to it.
-    // mixers.forEach((mixer) => {
-    //     let mixerObj = mixer.getRoot();
-    //     if (mixerObj === obj) {
-    //         // TODO
-    //     }
-    // });
-
-    let mixer = new THREE.AnimationMixer(obj);
-    mixer.addEventListener('finished', (event) => {
-        mixer.stopAllAction();
-        let idx = mixers.indexOf(mixer);
-        if (idx !== -1) {
-            mixers.splice(idx, 1);
-        }
-        obj.position.set(newPos.x, newPos.y, newPos.z);
-    });
-    let currPos = obj.position;
-    let positionKF = new THREE.VectorKeyframeTrack('.position', [1,2],
-                        [currPos.x, currPos.y, currPos.z,
-                         newPos.x, newPos.y, newPos.z], THREE.InterpolateLinear);
-    let clip = new THREE.AnimationClip('Action', 2, [ positionKF ]);
-    return [mixer, clip];
-};
-
 let animate = () => {
     cappedFramerateRequestAnimationFrame(30);
     render();
@@ -1334,13 +1080,12 @@ let animate = () => {
 };
 
 let render = () => {
-    let deltaSeconds = clock.getDelta();
-    mixers.forEach((mixer) => {
-        mixer.update(deltaSeconds);
-    });
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
 };
 
 init();
 animate();
+
+export { addLinearStage, addRotaryStage, getStages, getTool, camera,
+         getControl };
 
