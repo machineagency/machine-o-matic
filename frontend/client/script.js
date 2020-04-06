@@ -2,7 +2,7 @@
 
 import { testExport } from './animation.js';
 import { onDocumentKeyDown, onDocumentMouseUp, onDocumentMouseDown } from './keypress.js';
-import { stageGui, initGui } from './gui.js';
+import { stageGui, initGui, connectionHandlesVisible } from './gui.js';
 
 let container, stats;
 let camera, scene, renderer;
@@ -13,7 +13,6 @@ let programText;
 
 let focusedStage;
 let activeSelectionHandle;
-let connectionHandlesVisible = false;
 
 let focus = (object) => {
     focusedStage = object;
@@ -396,21 +395,6 @@ let getControl = () => {
     return control;
 };
 
-let _getIntersectsFromClickWithCandidates = (event, candidates) => {
-    let vector = new THREE.Vector3();
-    let raycaster = new THREE.Raycaster();
-    let dir = new THREE.Vector3();
-
-    vector.set((event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1, -1); // z = - 1 important!
-    vector.unproject(camera);
-    dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
-    raycaster.set(vector, dir);
-
-    let searchRecursively = true;
-    return raycaster.intersectObjects(candidates, searchRecursively);
-};
-
 let generateControlForGroup = (group) => {
     // Add controls to the new mesh group
     let lastPosition = new THREE.Vector3();
@@ -741,15 +725,6 @@ let gatherDeepParentStages = (childStage) => {
     return shallowParentStages.concat(deepStagesFlat);
 };
 
-let getConnectionHandles = () => {
-    let groups = getStages();
-    let tool = getTool();
-    let groupsAndTool = groups.concat(tool);
-    return groupsAndTool.map((group) => group.children)
-               .flat()
-               .filter((obj) => obj.name === 'connectionHandle');
-};
-
 let getMeshes = () => {
     let groups = getStages();
     let tool = getTool();
@@ -759,16 +734,6 @@ let getMeshes = () => {
                .filter((obj) => obj.name === 'stageCase'
                              || obj.name === 'stagePlatform'
                              || obj.name === 'tool');
-};
-
-let toggleConnectionHandles = () => {
-    let handles = getConnectionHandles();
-    let meshes = getMeshes();
-    connectionHandlesVisible = !connectionHandlesVisible;
-    handles.forEach((handle) => { handle.visible = connectionHandlesVisible; });
-    meshes.forEach((mesh) => {
-        mesh.material.opacity = connectionHandlesVisible ? 0.5 : 1.0;
-    });
 };
 
 let setActiveSelectionHandle = (handle) => {
@@ -1120,4 +1085,7 @@ let render = () => {
 
 init();
 animate();
+
+export { addLinearStage, addRotaryStage, getStages, getTool, camera,
+         getControl };
 

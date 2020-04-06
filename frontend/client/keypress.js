@@ -1,4 +1,6 @@
 import { stageGui } from './gui.js';
+import { getStages, getTool, getControl, camera } from './script.js';
+import { getConnectionHandles } from './gui.js';
 
 let onDocumentMouseDown = (event) => {
     // NOTE: do not fire click events if we click on the GUI
@@ -85,8 +87,8 @@ let onDocumentMouseUp = (event) => {
         return;
     }
     // FIXME: better to do only on rotation, but this is easier
-    redetermineAllStageAxes();
-    redetermineAccepts();
+    // redetermineAllStageAxes();
+    // redetermineAccepts();
 };
 
 let onDocumentKeyDown = (event) => {
@@ -110,6 +112,21 @@ let onDocumentKeyDown = (event) => {
     if (event.key === "Escape") {
         releaseActiveSelectionHandle();
     }
+};
+
+let _getIntersectsFromClickWithCandidates = (event, candidates) => {
+    let vector = new THREE.Vector3();
+    let raycaster = new THREE.Raycaster();
+    let dir = new THREE.Vector3();
+
+    vector.set((event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1, -1); // z = - 1 important!
+    vector.unproject(camera);
+    dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
+    raycaster.set(vector, dir);
+
+    let searchRecursively = true;
+    return raycaster.intersectObjects(candidates, searchRecursively);
 };
 
 export { onDocumentKeyDown, onDocumentMouseUp, onDocumentMouseDown };
