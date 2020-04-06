@@ -4,6 +4,7 @@
 
 let clock;
 let mixers = [];
+let testExport = 42;
 
 let animateStagePlatformToDispl = (stage, displ) => {
     let stagePlatformMeshes = getStagePlatformMeshes(stage);
@@ -107,3 +108,6 @@ let render = () => {
     });
     renderer.render( scene, camera );
 };
+
+export { testExport };
+
